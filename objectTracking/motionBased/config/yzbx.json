@@ -1,0 +1,10 @@
+{
+  "UrbanTracker":{
+    "configFilePath": "/home/yzbx/git/opencv-qt/config/UrbanTracker/main.cfg"
+  },
+  "defaultOutputPath":"/home/yzbx/git/opencv-qt/output",
+  "input videos path":"/mnt/hgfs/I/Win7/dataset/大王卡口全景东向西_大王卡口全景东向西"
+  "input videos":["大王卡口全景东向西_大王卡口全景东向西_20150317000000.mp4",
+    "大王卡口全景东向西_大王卡口全景东向西_20150317005004.mp4",
+  ]
+}

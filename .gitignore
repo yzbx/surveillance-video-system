@@ -1,2 +1,7 @@
 *.asv
 *.mat
+*.sqlite
+*.txt
+build-*
+build
+*.pro.user

@@ -1,0 +1,13 @@
+# Package Information for pkg-config
+
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir_old=${prefix}/include/package_bgs
+includedir_new=${prefix}/include
+
+Name: BGSLibrary
+Description: Open Source Computer Vision Library
+Version: 2016.08.11
+Libs: -L${exec_prefix}/lib -lbgs
+Cflags: -I${includedir_old} -I${includedir_new}
