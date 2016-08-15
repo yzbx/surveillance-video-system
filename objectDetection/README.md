@@ -3,5 +3,31 @@
 - [DLib](https://github.com/davisking/dlib) 
 - [object detection papers](https://people.eecs.berkeley.edu/~rbg/latent/index.html)
 - [PArt Based object detection](https://github.com/mjmarin/libpabod)
-- [DLib blog](http://blog.dlib.net/2014/02/dlib-186-released-make-your-own-object.html)
-- [ccv](http://libccv.org/post/ccv-now-has-a-state-of-art-tracking-algorithm/)
+- [ccv](http://libccv.org/post/ccv-now-has-a-state-of-art-tracking-algorithm/): out of date.
+
+# dataset
+- [face detection benchmark](http://vis-www.cs.umass.edu/fddb/)
+http://tamaraberg.com/faceDataset/originalPics.tar.gz
+http://vis-www.cs.umass.edu/fddb/FDDB-folds.tgz
+http://vis-www.cs.umass.edu/fddb/README.txt
+- [vehicle detection benchmark](http://detrac-db.rit.albany.edu/Subpages/Detection/UA-DETRAC-Detection.html): more dataset can be find here, like Pedestrian Detection Benchmark.
+http://detrac-db.rit.albany.edu/Data/DETRAC-train-data.zip
+http://detrac-db.rit.albany.edu/Data/DETRAC-test-data.zip
+http://detrac-db.rit.albany.edu/Data/DETRAC-train-annotation.zip
+http://detrac-db.rit.albany.edu/Data/CheckGT.zip
+- [VOC 2005 Dataset](http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2005/index.html): more dataset like VOC 2007, VOC 2009 can be find here.
+http://host.robots.ox.ac.uk:8080/pascal/VOC/download/voc2005_1.tar.gz
+http://host.robots.ox.ac.uk:8080/pascal/VOC/download/voc2005_2.tar.gz
+http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2005/VOCcode.tar.gz
+http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2005/devkit_doc.pdf
+http://host.robots.ox.ac.uk:8080/pascal/VOC/voc2005/chapter.pdf
+
+# papers
+- [Multiple Object Tracking: A Literature Review]
+- [Multiple Object Tracking using K-Shortest Paths Optimization]
+- [Histograms of Oriented Gradients for Human Detection]
+- [Continuous energy minimization for multitarget tracking]
+- [Robust Object Tracking by Hierarchical Association of Detection Responses]
+
+# Chinese papers
+- [Review of object detection methods based on SVM]
