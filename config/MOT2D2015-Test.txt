@@ -1,0 +1,11 @@
+ADL-Rundle-1/img1
+ADL-Rundle-3/img1
+AVG-TownCentre/img1
+ETH-Crossing/img1
+ETH-Jelmoli/img1
+ETH-Linthescher/img1
+KITTI-16/img1
+KITTI-19/img1
+PETS09-S2L2/img1
+TUD-Crossing/img1
+Venice-1/img1

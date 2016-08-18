@@ -1,0 +1,8 @@
+*~
+*/build/*
+*/cmake/*
+*pro.user*
+*.autosave
+pro/
+tool/matlab
+tool/python

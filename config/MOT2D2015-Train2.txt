@@ -1,0 +1,11 @@
+ADL-Rundle-6/det/det.txt
+ADL-Rundle-8/det/det.txt
+ETH-Bahnhof/det/det.txt
+ETH-Pedcross2/det/det.txt
+ETH-Sunnyday/det/det.txt
+KITTI-13/det/det.txt
+KITTI-17/det/det.txt
+PETS09-S2L1/det/det.txt
+TUD-Campus/det/det.txt
+TUD-Stadtmitte/det/det.txt
+Venice-2/det/det.txt

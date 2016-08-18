@@ -1,0 +1,11 @@
+ADL-Rundle-6/img1
+ADL-Rundle-8/img1
+ETH-Bahnhof/img1
+ETH-Pedcross2/img1
+ETH-Sunnyday/img1
+KITTI-13/img1
+KITTI-17/img1
+PETS09-S2L1/img1
+TUD-Campus/img1
+TUD-Stadtmitte/img1
+Venice-2/img1

@@ -1,0 +1,15 @@
+Dataset1/Cam1.dat
+Dataset1/Cam2.dat
+Dataset1/Cam3.dat
+Dataset2/Cam1.dat
+Dataset2/Cam2.dat
+Dataset2/Cam3.dat
+Dataset3/Cam1.dat
+Dataset3/Cam2.dat
+Dataset3/Cam3.dat
+Dataset3/Cam4.dat
+Dataset4/Cam1.dat
+Dataset4/Cam2.dat
+Dataset4/Cam3.dat
+Dataset4/Cam4.dat
+Dataset4/Cam5.dat

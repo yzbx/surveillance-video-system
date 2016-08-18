@@ -1,0 +1,15 @@
+dataset1/Cam1.avi
+dataset1/Cam2.avi
+dataset1/Cam3.avi
+dataset2/Cam1.avi
+dataset2/Cam2.avi
+dataset2/Cam3.avi
+dataset3/Cam1.avi
+dataset3/Cam2.avi
+dataset3/Cam3.avi
+dataset3/Cam4.avi
+dataset4/Cam1.avi
+dataset4/Cam2.avi
+dataset4/Cam3.avi
+dataset4/Cam4.avi
+dataset4/Cam5.avi

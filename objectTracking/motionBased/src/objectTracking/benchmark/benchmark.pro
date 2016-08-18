@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2016-08-09T20:53:03
+# Project created by QtCreator 2016-08-17T15:45:23
 #
 #-------------------------------------------------
 
@@ -8,27 +8,20 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 CONFIG +=c++11
-QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3"
-QMAKE_LFLAGS +="-lgcov --coverage"
 
-TARGET = main
+TARGET = benchmark
 TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp \
+        benchmark.cpp
 
-HEADERS  += mainwindow.h \
+HEADERS  += benchmark.h
 
-FORMS    += mainwindow.ui
+FORMS    += benchmark.ui
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += opencv bgslibrary
-
-LIBS += \
-    -lboost_system \
-    -lboost_program_options \
-    -lboost_filesystem \
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/release/ -lyzbxLib

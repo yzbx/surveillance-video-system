@@ -1,0 +1,11 @@
+ADL-Rundle-1/det/det.txt
+ADL-Rundle-3/det/det.txt
+AVG-TownCentre/det/det.txt
+ETH-Crossing/det/det.txt
+ETH-Jelmoli/det/det.txt
+ETH-Linthescher/det/det.txt
+KITTI-16/det/det.txt
+KITTI-19/det/det.txt
+PETS09-S2L2/det/det.txt
+TUD-Crossing/det/det.txt
+Venice-1/det/det.txt

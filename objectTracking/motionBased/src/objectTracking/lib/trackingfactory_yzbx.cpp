@@ -16,7 +16,7 @@ Tracking_yzbx *trackingFactory_yzbx::getTrackingAlgorithm(QString trackingType)
         return t;
     }
     else{
-        qDebug()<<"unexpected trackingType";
+        qDebug()<<"unexpected trackingType:"<<trackingType;
         return NULL;
     }
 }

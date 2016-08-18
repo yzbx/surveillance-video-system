@@ -48,6 +48,23 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_4">
        <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Dataset</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_dataset">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QLabel" name="label_4">
          <property name="text">
           <string>input video </string>
@@ -55,7 +72,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_video"/>
+        <widget class="QComboBox" name="comboBox_video">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
       </layout>
      </item>
@@ -69,7 +93,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_bgsType"/>
+        <widget class="QComboBox" name="comboBox_bgsType">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_bgs">
@@ -90,7 +121,14 @@
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="comboBox_trackingType"/>
+        <widget class="QComboBox" name="comboBox_trackingType">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_tracking">
@@ -104,14 +142,34 @@
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_5">
        <item>
-        <widget class="QLabel" name="label_5">
-         <property name="text">
-          <string>record path</string>
+        <widget class="QComboBox" name="comboBox_replay">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
          </property>
+         <item>
+          <property name="text">
+           <string>record</string>
+          </property>
+         </item>
+         <item>
+          <property name="text">
+           <string>annotation</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_recordPath"/>
+        <widget class="QLineEdit" name="lineEdit_recordPath">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+        </widget>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_recordReplay">
