@@ -2,10 +2,10 @@
 
 UrbanTracker_tracking::UrbanTracker_tracking()
 {
-
+    globalProcess=NULL;
 }
 
-void UrbanTracker_tracking::process(QString configFile,QString videoFile)
+void UrbanTracker_tracking::process(QString configFile, QString videoFile, TrackingStatus *status)
 {
     boost::property_tree::ptree pt;
     boost::property_tree::ini_parser::read_ini(configFile.toStdString(),pt);
@@ -32,6 +32,26 @@ void UrbanTracker_tracking::process(QString configFile,QString videoFile)
     boost::property_tree::ini_parser::write_ini(filecfg.toStdString(),filept);
 
     cmd=App+" "+maincfg;
-//    QProcess::startDetached(cmd);
-    QProcess::execute(cmd);
+
+    if(globalProcess==NULL){
+        globalProcess=new QProcess;
+        globalProcess->start(cmd);
+    }
+    else{
+        globalProcess->close();
+        globalProcess=new QProcess;
+        globalProcess->start(cmd);
+    }
+}
+
+void UrbanTracker_tracking::run()
+{
+    qDebug()<<"start UrbanTracker, but nothing";
+}
+
+void UrbanTracker_tracking::stop()
+{
+    qDebug()<<"stop UrbanTracker";
+    globalProcess->close();
+    globalProcess=NULL;
 }

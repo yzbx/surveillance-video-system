@@ -7,7 +7,7 @@
 QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
-CONFIG +=c++11
+CONFIG +=c++14
 QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3"
 QMAKE_LFLAGS +="-lgcov --coverage"
 
@@ -23,12 +23,14 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += opencv bgslibrary
+unix: PKGCONFIG += opencv bgslibrary dlib-1
 
 LIBS += \
     -lboost_system \
     -lboost_program_options \
     -lboost_filesystem \
+
+LIBS += -L/home/yzbx/linux/miniconda2/lib -lmkl_rt
 
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/release/ -lyzbxLib

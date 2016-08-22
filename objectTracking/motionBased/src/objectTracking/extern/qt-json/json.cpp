@@ -176,8 +176,8 @@ namespace QtJson {
         } else if ((data.type() == QVariant::String) ||
                    (data.type() == QVariant::ByteArray)) {// a string or a byte array?
             str = sanitizeString(data.toString()).toUtf8();
-        } else if (data.type() == QVariant::Double) { // double?
-            double value = data.toDouble(&success);
+        } else if (data.type() == QVariant::Double) { // float?
+            float value = data.toDouble(&success);
             if (success) {
                 str = QByteArray::number(value, 'g');
                 if (!str.contains(".") && ! str.contains("e")) {

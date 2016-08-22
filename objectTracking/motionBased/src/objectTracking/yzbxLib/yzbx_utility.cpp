@@ -223,6 +223,13 @@ void icvprCcaByTwoPass(const cv::Mat& _binImg, cv::Mat& _lableImg, std::vector<i
     if (_binImg.empty() ||
             _binImg.type() != CV_8UC1)
     {
+        if(_binImg.empty())
+            qDebug()<<"empty _binImg";
+        else{
+            int imgTypeInt=_binImg.type();
+            string ImageTypeStr=getImgType(imgTypeInt);
+            std::cout<<"not CV_8UC1, but "<<ImageTypeStr<<std::endl;
+        }
         return ;
     }
 

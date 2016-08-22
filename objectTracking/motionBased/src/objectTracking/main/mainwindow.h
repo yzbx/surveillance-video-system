@@ -8,6 +8,14 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
+#include <dlib/svm_threaded.h>
+#include <dlib/gui_widgets.h>
+#include <dlib/image_processing.h>
+#include <dlib/data_io.h>
+#include <dlib/opencv.h>
+#include <dlib/image_processing/frontal_face_detector.h>
+#include <dlib/image_processing/render_face_detections.h>
+typedef dlib::scan_fhog_pyramid<dlib::pyramid_down<6> > image_scanner_type;
 
 namespace Ui {
 class MainWindow;
@@ -34,6 +42,16 @@ private slots:
 
     void on_comboBox_replay_currentIndexChanged(const QString &arg1);
 
+    void on_comboBox_bgsType_currentIndexChanged(const QString &arg1);
+
+    void on_comboBox_video_currentIndexChanged(const QString &arg1);
+
+    void on_pushButton_stopBgs_clicked();
+
+    void on_pushButton_stopTracking_clicked();
+
+    void on_pushButton_detect_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);
@@ -43,8 +61,12 @@ private:
     QStringList globalDatasetList;
     QString globalAnnotationHome;
     QStringList globalAnnotationList;
+    QStringList globalDetectionModelList;
     bool globalInited=false;
     bool globalDatasetChanged=false;
+    TrackingStatus globalTrackingStatus;
+    boost::property_tree::ptree globalPt;
+    Tracking_yzbx *globalTracker=NULL;
 };
 
 #endif // MAINWINDOW_H

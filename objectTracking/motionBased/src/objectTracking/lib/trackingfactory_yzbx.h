@@ -1,6 +1,8 @@
 #ifndef TRACKINGFACTORY_YZBX_H
 #define TRACKINGFACTORY_YZBX_H
 #include "urbantracker_tracking.h"
+#include "motionbasedtracker.h"
+#include "multiobjecttracking.h"
 
 class trackingFactory_yzbx
 {

@@ -1,10 +1,25 @@
 #object tracking
 for multi-object tracking.
 
+## to use dlib
+```
+unix: CONFIG += link_pkgconfig
+unix: PKGCONFIG += dlib-1
+
+LIBS += -L/home/yzbx/linux/miniconda2/lib -lmkl_rt
+```
+
 ## motionBased
 for fixed video
 1. foreground detection (bgslibrary)
 2. tracking (feature point, kalman)
+
+### the gui of Motion Based Tracking
+![](GUI.jpg)
+### the pipeline of Motion Based Tracking
+![](program.png)
+
+---
 
 ## detectionBased
 for fixed and unfixed video
@@ -32,15 +47,18 @@ for fixed and unfixed video
 - [point cloud based tracking](https://github.com/hojonathanho/tracking)
 - [object tracking using multiple instance learning and particle filter](https://github.com/qqibrow/simple-object-tracking)
 - [Simple, online, and realtime tracking of multiple objects in a video sequence](https://github.com/abewley/sort)
-- [Online multi-object tracking - C++](https://github.com/safeng/Online_Adaptive_Multi-Object_Tracking)
+- [Online multi-object tracking - C++](https://github.com/safeng/Online_Adaptive_Multi-Object_Tracking): good, but no documence.
 - [Object Tracker written in Python using dlib and OpenCV](https://github.com/bikz05/object-tracker)
 - [Object Tracking For Vehicles and Pedestrians](https://github.com/youxiamotors/object-tracking)
 
 ## benchmark
 - [online object tracking](http://cvlab.hanyang.ac.kr/tracker_benchmark/datasets.html): single object tracking
+![](obt.png)
 - [multiple object tracking](https://motchallenge.net/)
+![](mot.png)
 - [rgbd object tracking](http://tracking.cs.princeton.edu/)
 - [various objects tracking](http://www.votchallenge.net/vot2014/dataset.html): single object tracking.
+![](vot.png)
 
 
 ## reference

@@ -15,6 +15,14 @@ Tracking_yzbx *trackingFactory_yzbx::getTrackingAlgorithm(QString trackingType)
         UrbanTracker_tracking *t=new UrbanTracker_tracking;
         return t;
     }
+    else if(trackingType.compare("MotionBasedTracker",Qt::CaseInsensitive)==0){
+        MotionBasedTracker *t=new MotionBasedTracker;
+        return t;
+    }
+    else if(trackingType.compare("MultiObjectTracking",Qt::CaseInsensitive)==0){
+        MultiObjectTracking *t=new MultiObjectTracking;
+        return t;
+    }
     else{
         qDebug()<<"unexpected trackingType:"<<trackingType;
         return NULL;
@@ -24,6 +32,6 @@ Tracking_yzbx *trackingFactory_yzbx::getTrackingAlgorithm(QString trackingType)
 QStringList trackingFactory_yzbx::getTrackingTypeList()
 {
     QStringList list;
-    list<<"UrbanTracker"<<"default";
+    list<<"UrbanTracker"<<"default"<<"MotionBasedTracker"<<"MultiObjectTracking";
     return list;
 }

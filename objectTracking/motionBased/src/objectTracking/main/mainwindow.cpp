@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QString configFilePath="/home/yzbx/config/surveillance-video-system.ini";
     ui->lineEdit_inputPath->setText(configFilePath);
+
     loadIni(configFilePath);
 }
 
@@ -36,14 +37,14 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_inputPath_clicked()
 {
-        QString fileName = QFileDialog::getOpenFileName(this,
-                                                        tr("Open config file"), "",
-                                                        tr("ini (*.ini)"));
+    QString fileName = QFileDialog::getOpenFileName(this,
+                                                    tr("Open config file"), "",
+                                                    tr("ini (*.ini)"));
 
-//    QString fileName = QFileDialog::getExistingDirectory(this, tr("Open Input Directory"),
-//                                                         ".",
-//                                                         QFileDialog::ShowDirsOnly
-//                                                         | QFileDialog::DontResolveSymlinks);
+    //    QString fileName = QFileDialog::getExistingDirectory(this, tr("Open Input Directory"),
+    //                                                         ".",
+    //                                                         QFileDialog::ShowDirsOnly
+    //                                                         | QFileDialog::DontResolveSymlinks);
     if(!fileName.isEmpty()){
         ui->lineEdit_inputPath->setText(fileName);
 
@@ -85,20 +86,20 @@ void MainWindow::on_pushButton_bgs_clicked()
 
 void MainWindow::loadIni(QString filepath)
 {
-    boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini(filepath.toStdString(),pt);
+    boost::property_tree::ini_parser::read_ini(filepath.toStdString(),globalPt);
 
-
-    QString RecordHome=QString::fromStdString(pt.get<std::string>("General.RecordHome"));
-    QString Dataset=QString::fromStdString(pt.get<std::string>("General.Dataset"));
+    QString RecordHome=QString::fromStdString(globalPt.get<std::string>("General.RecordHome"));
+    QString Dataset=QString::fromStdString(globalPt.get<std::string>("General.Dataset"));
     if(globalInited){
         Dataset=ui->comboBox_dataset->currentText();
+        globalPt.put("General.Dataset",Dataset.toStdString());
+        boost::property_tree::ini_parser::write_ini(filepath.toStdString(),globalPt);
     }
 
-    QString VideoHome=QString::fromStdString(pt.get<std::string>(Dataset.toStdString()+".VideoHome"));
-    QString VideoTxt=QString::fromStdString(pt.get<std::string>(Dataset.toStdString()+".VideoTxt"));
-    QString AnnotationHome=QString::fromStdString(pt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
-    QString AnnotationTxt=QString::fromStdString(pt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
+    QString VideoHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoHome"));
+    QString VideoTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoTxt"));
+    QString AnnotationHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
+    QString AnnotationTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
 
     VideoHome=absoluteFilePath(filepath,VideoHome);
     VideoTxt=absoluteFilePath(filepath,VideoTxt);
@@ -133,10 +134,28 @@ void MainWindow::loadIni(QString filepath)
         file.close();
     }
 
+    QString DetectionModelTxt=QString::fromStdString(globalPt.get<std::string>("Detection.DetectionModelTxt"));
+    DetectionModelTxt=absoluteFilePath(filepath,DetectionModelTxt);
+    file.setFileName(DetectionModelTxt);
+    if (!file.open(QFile::ReadOnly | QFile::Text)) {
+        qDebug()<<"cannot open file "<<DetectionModelTxt;
+        exit(-1);
+    } else {
+        QTextStream in(&file);
+        filedata=in.readAll();
+        globalDetectionModelList=filedata.split("\n",QString::SkipEmptyParts);
+        file.close();
+    }
+
+    if(!globalInited){
+        ui->comboBox_detection->clear();
+        ui->comboBox_detection->addItems(globalDetectionModelList);
+    }
+
     if(!globalInited||globalDatasetChanged){
         ui->comboBox_video->clear();
-        ui->comboBox_video->addItem("all");
         ui->comboBox_video->addItems(globalVideosList);
+        ui->comboBox_video->addItem("all");
     }
     ui->lineEdit_recordPath->setText(RecordHome);
 
@@ -184,26 +203,49 @@ QString MainWindow::absoluteFilePath(QString currentPathOrFile, QString fileName
 
 void MainWindow::on_pushButton_tracking_clicked()
 {
-    cv::destroyAllWindows();
+    //    cv::destroyAllWindows();
+    if(globalTracker!=NULL){
+        globalTracker->stop();
+        cv::destroyAllWindows();
+        globalTracker=NULL;
+    }
     QString trackType=ui->comboBox_trackingType->currentText();
     QString configFile=ui->lineEdit_inputPath->text();
 
 
     trackingFactory_yzbx trackerFac;
     Tracking_yzbx *tracker=trackerFac.getTrackingAlgorithm(trackType);
+
+    globalTracker=tracker;
+
     QString videoFilePath=ui->comboBox_video->currentText();
     if(videoFilePath.compare("all")!=0){
         QString inputPath=globalVideoHome+"/"+videoFilePath;
-        tracker->process(configFile,inputPath);
+        //        tracker->process(configFile,inputPath);
+        if(trackType.compare("motionBasedTracker",Qt::CaseInsensitive)==0){
+            tracker->process(configFile,inputPath,&globalTrackingStatus);
+        }
+        else if(trackType.compare("MultiObjectTracking",Qt::CaseInsensitive)==0){
+            tracker->process(configFile,inputPath,&globalTrackingStatus);
+        }
+        else{
+            tracker->process(configFile,inputPath);
+        }
     }
     else{
         int n=globalVideosList.length();
 
         for(int i=0;i<n;i++){
             QString inputPath=globalVideoHome+"/"+globalVideosList.at(i);
-            tracker->process(configFile,inputPath);
+            if(trackType.compare("motionBasedTracker",Qt::CaseInsensitive)==0){
+                tracker->process(configFile,inputPath,&globalTrackingStatus);
+            }
+            else{
+                tracker->process(configFile,inputPath);
+            }
         }
     }
+
 }
 
 void MainWindow::on_pushButton_recordReplay_clicked()
@@ -283,6 +325,97 @@ void MainWindow::on_comboBox_replay_currentIndexChanged(const QString &arg1)
 {
     if(globalInited){
         qDebug()<<"replay type: "<<arg1;
-        loadIni(ui->lineEdit_inputPath->text());
+        if(ui->comboBox_replay->currentText()=="record"){
+            QString RecordHome=QString::fromStdString(globalPt.get<std::string>("General.RecordHome"));
+            ui->lineEdit_recordPath->setText(RecordHome);
+        }
+        else{
+            ui->lineEdit_recordPath->setText(globalAnnotationHome);
+        }
     }
+}
+
+void MainWindow::on_comboBox_bgsType_currentIndexChanged(const QString &arg1)
+{
+    if(globalInited){
+        qDebug()<<"bgs type: "<<arg1;
+        globalPt.put("General.BGSType",arg1.toStdString());
+        QString filepath=ui->lineEdit_inputPath->text();
+        boost::property_tree::ini_parser::write_ini(filepath.toStdString(),globalPt);
+    }
+}
+
+void MainWindow::on_comboBox_video_currentIndexChanged(const QString &arg1)
+{
+    if(globalInited){
+        qDebug()<<"change videos"<<arg1;
+    }
+}
+
+void MainWindow::on_pushButton_stopBgs_clicked()
+{
+    qDebug()<<"stop bgs wait to be implement!";
+}
+
+void MainWindow::on_pushButton_stopTracking_clicked()
+{
+    if(ui->pushButton_stopTracking->text()=="stop"){
+        if(globalTracker==NULL){
+            qDebug()<<"nothing to stop";
+        }
+        else{
+            if(globalTracker->isRunning()){
+                globalTracker->stop();
+                ui->pushButton_stopTracking->setText("continue");
+            }
+            else{
+                qWarning()<<"already stop!";
+                globalTracker->start();
+            }
+        }
+    }
+    else{
+        if(globalTracker==NULL){
+            qDebug()<<"nothing to continue";
+        }
+        else{
+            if(globalTracker->isRunning()){
+                qWarning()<<"still running";
+                globalTracker->stop();
+            }
+            else{
+                globalTracker->start();
+                ui->pushButton_stopTracking->setText("stop");
+            }
+        }
+    }
+}
+
+void MainWindow::on_pushButton_detect_clicked()
+{
+    QString model=ui->comboBox_detection->currentText();
+    dlib::object_detector<image_scanner_type> detector;
+//    deserialize("face_detector.svm") >> detector2;
+    dlib::deserialize(model.toStdString()) >>detector;
+    dlib::array<dlib::array2d<unsigned char> > images_test;
+
+    QString videoFile=globalVideoHome+"/"+ui->comboBox_video->currentText();
+    FrameInput frameinput;
+    cv::Mat img_input;
+    frameinput.getNextFrame(videoFile,img_input);
+    dlib::image_window win;
+
+    while(!img_input.empty()){
+        dlib::cv_image<dlib::bgr_pixel> dimg(img_input);
+        std::vector<dlib::rectangle> faces = detector(dimg);
+        win.clear_overlay();
+        win.set_image(dimg);
+        win.add_overlay(faces, dlib::rgb_pixel(255,0,0));
+
+        img_input.release();
+        frameinput.getNextFrame(videoFile,img_input);
+    }
+
+    dlib::get
+
 }
