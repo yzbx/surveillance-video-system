@@ -67,6 +67,7 @@ private:
     TrackingStatus globalTrackingStatus;
     boost::property_tree::ptree globalPt;
     Tracking_yzbx *globalTracker=NULL;
+    TrackingResultReplay replay;
 };
 
 #endif // MAINWINDOW_H

@@ -1,5 +1,11 @@
 #ifndef YZBX_CONFIG
 #define YZBX_CONFIG
+#include <opencv2/opencv.hpp>
+
+//for tracking library
+typedef float track_t;
+typedef cv::Point_<track_t> Point_t;
+#define Mat_t CV_32FC
 
 //separate FG strategy
 //A-B,B-A,A&B

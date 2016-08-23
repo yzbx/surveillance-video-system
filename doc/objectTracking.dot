@@ -1,0 +1,31 @@
+digraph G {
+
+	subgraph Ncluster_0 {
+		style=filled;
+		color=lightgrey;
+		node [style=filled,color=lightgray];
+		start -> "motion detection" -> "connected component analysis" -> "small area filter" -> "object feature extraction" -> "object association" -> "association graph" -> "find min tree";
+		class -> "IBGS.process()" -> "icvprCcaByTwoPass()" -> "QYzbxTrackingFeature.getObjectsFromMask()" -> "QYzbxTrackingFeature.getObjects()" -> "TrackingObjectAssociation.adjecentObjectAssociation()" -> "TrackingObjectAssociation.process()" -> "MotionBasedTracker.objectTracking()";
+		data -> "image:CV_8UC3" -> "mask:CV_8UC1" -> "vector<mask>" -> "vector<ObjectFeature>" -> "list<FrameFeature>" ->"DirectGraph"->"tracking record";
+		label="2016/08/20: Connected Component Analysis"
+	}
+
+	subgraph Ncluster_1 {
+		style=filled
+		color=blue
+		node [style=filled,color=lightpink];
+		"motion detection" -> "contour analysis" -> "kalman filter" -> "hungrian algorithm" -> "trakcking result"
+		data -> "image:CV_8UC3" -> "mask:CV_8UC1" -> "contour:vector<Point>" -> "vector<trackingObjectFeature>" -> "MultiObjectTracker:vector<singleObjectTracker>"
+		label="2016/08/22: findContour"
+	}
+	
+	subgraph Ncluster_2 {
+		style=filled
+		color=red
+		node [style=filled,color=lightyellow];
+		"motion detection" -> "blob detection" -> "kalman filter" -> "hungrian algorithm" -> "trakcking result"
+		data -> "image:CV_8UC3" -> "mask:CV_8UC1" -> "blob feature" -> "vector<trackingObjectFeature>" -> "MultiObjectTracker:vector<singleObjectTracker>"
+		label="2016/08/23: blob detector"
+	}
+	
+}

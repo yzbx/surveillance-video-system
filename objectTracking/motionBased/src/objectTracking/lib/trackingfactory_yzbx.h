@@ -3,6 +3,7 @@
 #include "urbantracker_tracking.h"
 #include "motionbasedtracker.h"
 #include "multiobjecttracking.h"
+#include "blobbasedtracker.h"
 
 class trackingFactory_yzbx
 {

@@ -1,0 +1,17 @@
+digraph test{
+"config file changed"->"load init";
+"load init" -> {"init dataset","set record path"} [label="globalInited=false"];
+"init dataset" -> "video changed"
+"dataset changed" -> "video changed" -> "bgs need reinit" -> "tracker need reinit";
+"bgs type changed" -> "bgs need reinit";
+"tracker type changed" -> "tracker need reinit";
+
+"video changed" -> "need sync";
+"bgs type changed" -> "need sync";
+"tracker type changed" -> "need sync";
+
+"need sync" -> "run bgs" -> "run tracker"
+"run tracker" -> "tracker status"[label="no change"]
+"run tracker" -> "video changed" -> "init tracker status" -> "tracker status" -> "get next frame" -> "run tracker"
+"run tracker" -> "bgs type changed" -> "init tracker status"
+}

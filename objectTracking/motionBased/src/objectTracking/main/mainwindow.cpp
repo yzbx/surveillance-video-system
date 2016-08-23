@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_inputPath->setReadOnly(true);
     ui->lineEdit_inputPath->setEnabled(false);
 
-    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"<<"VisualTrackerBenchmark";
+    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"<<"VisualTrackerBenchmark"<<"UserDefine";
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
 
@@ -98,13 +98,10 @@ void MainWindow::loadIni(QString filepath)
 
     QString VideoHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoHome"));
     QString VideoTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoTxt"));
-    QString AnnotationHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
-    QString AnnotationTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
 
     VideoHome=absoluteFilePath(filepath,VideoHome);
     VideoTxt=absoluteFilePath(filepath,VideoTxt);
-    AnnotationHome=absoluteFilePath(filepath,AnnotationHome);
-    AnnotationTxt=absoluteFilePath(filepath,AnnotationTxt);
+
     RecordHome=absoluteFilePath(filepath,RecordHome);
 
     QString filedata;
@@ -121,18 +118,25 @@ void MainWindow::loadIni(QString filepath)
         file.close();
     }
 
+    QString AnnotationHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
+    if(Dataset.compare("UserDefine")!=0||!AnnotationHome.isEmpty()){
+        QString AnnotationTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
+        AnnotationHome=absoluteFilePath(filepath,AnnotationHome);
+        AnnotationTxt=absoluteFilePath(filepath,AnnotationTxt);
 
-    file.setFileName(AnnotationTxt);
-    if (!file.open(QFile::ReadOnly | QFile::Text)) {
-        qDebug()<<"cannot open file "<<AnnotationTxt;
-        exit(-1);
-    } else {
-        QTextStream in(&file);
-        filedata=in.readAll();
-        globalAnnotationList=filedata.split("\n",QString::SkipEmptyParts);
-        globalAnnotationHome=AnnotationHome;
-        file.close();
+        file.setFileName(AnnotationTxt);
+        if (!file.open(QFile::ReadOnly | QFile::Text)) {
+            qDebug()<<"cannot open file "<<AnnotationTxt;
+            exit(-1);
+        } else {
+            QTextStream in(&file);
+            filedata=in.readAll();
+            globalAnnotationList=filedata.split("\n",QString::SkipEmptyParts);
+            globalAnnotationHome=AnnotationHome;
+            file.close();
+        }
     }
+
 
     QString DetectionModelTxt=QString::fromStdString(globalPt.get<std::string>("Detection.DetectionModelTxt"));
     DetectionModelTxt=absoluteFilePath(filepath,DetectionModelTxt);
@@ -206,8 +210,14 @@ void MainWindow::on_pushButton_tracking_clicked()
     //    cv::destroyAllWindows();
     if(globalTracker!=NULL){
         globalTracker->stop();
+        if(!globalTracker->isFinished()){
+            qDebug()<<"previous tracking not finished!!!";
+            return;
+        }
         cv::destroyAllWindows();
-        globalTracker=NULL;
+        delete globalTracker;
+        globalTrackingStatus.bgsInited=false;
+        if(globalTrackingStatus.ibgs!=NULL) delete globalTrackingStatus.ibgs;
     }
     QString trackType=ui->comboBox_trackingType->currentText();
     QString configFile=ui->lineEdit_inputPath->text();
@@ -222,14 +232,14 @@ void MainWindow::on_pushButton_tracking_clicked()
     if(videoFilePath.compare("all")!=0){
         QString inputPath=globalVideoHome+"/"+videoFilePath;
         //        tracker->process(configFile,inputPath);
-        if(trackType.compare("motionBasedTracker",Qt::CaseInsensitive)==0){
-            tracker->process(configFile,inputPath,&globalTrackingStatus);
+        if(trackType.compare("default",Qt::CaseInsensitive)==0){
+            tracker->process(configFile,inputPath);
         }
-        else if(trackType.compare("MultiObjectTracking",Qt::CaseInsensitive)==0){
-            tracker->process(configFile,inputPath,&globalTrackingStatus);
+        else if(trackType.compare("UrbanTracker",Qt::CaseInsensitive)==0){
+            tracker->process(configFile,inputPath);
         }
         else{
-            tracker->process(configFile,inputPath);
+            tracker->process(configFile,inputPath,&globalTrackingStatus);
         }
     }
     else{
@@ -237,11 +247,11 @@ void MainWindow::on_pushButton_tracking_clicked()
 
         for(int i=0;i<n;i++){
             QString inputPath=globalVideoHome+"/"+globalVideosList.at(i);
-            if(trackType.compare("motionBasedTracker",Qt::CaseInsensitive)==0){
-                tracker->process(configFile,inputPath,&globalTrackingStatus);
+            if(trackType.compare("default",Qt::CaseInsensitive)==0||trackType.compare("UrbanTracker",Qt::CaseInsensitive)==0){
+                tracker->process(configFile,inputPath);
             }
             else{
-                tracker->process(configFile,inputPath);
+                tracker->process(configFile,inputPath,&globalTrackingStatus);
             }
         }
     }
@@ -251,6 +261,7 @@ void MainWindow::on_pushButton_tracking_clicked()
 void MainWindow::on_pushButton_recordReplay_clicked()
 {
     QString Dataset=ui->comboBox_dataset->currentText();
+    replay.Init(Dataset);
     QString recordFormat;
     //for urbantracker, find *.sqlite.
     if(Dataset=="Multi-CameraTracking"){
@@ -284,6 +295,7 @@ void MainWindow::on_pushButton_recordReplay_clicked()
             QFileInfo info(recordFilePath);
             if(info.exists()){
                 qDebug()<<i<<" record file path is "<<recordFilePath<<videoFilePath;
+                replay.process(videoFilePath,recordFilePath);
             }
             else{
                 qDebug()<<"cannot find file"<<recordFilePath<<"under RecordHome:"<<RecordHome;
@@ -302,6 +314,7 @@ void MainWindow::on_pushButton_recordReplay_clicked()
         QFileInfo info(recordFilePath);
         if(info.exists()){
             qDebug()<<i<<" record file path is "<<recordFilePath<<videoFilePath;
+            replay.process(videoFilePath,recordFilePath);
         }
         else{
             qDebug()<<"cannot find file"<<recordFilePath<<"under RecordHome:"<<RecordHome;
@@ -415,7 +428,5 @@ void MainWindow::on_pushButton_detect_clicked()
         img_input.release();
         frameinput.getNextFrame(videoFile,img_input);
     }
-
-    dlib::get
 
 }

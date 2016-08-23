@@ -6,8 +6,22 @@ a matlab surveillance video system
 - [surviellance video system](http://blog.csdn.net/u010598445/article/details/47822195)
 
 # foreground detection
+- use bgslibrary.
+- add background init.
+- remove noise of foreground mask.
+- remove abrupt mask change due to light change.
 
-# object tracking
+# [blob detection / blob feature extraction](https://www.learnopencv.com/blob-detection-using-opencv-python-c/)
+- use `connected component analysis` --> `findContours` --> `SimpleBlobDetector`
+- corner/point feature: `surf, `
+- edge/contour feature: `???`
+- blob/area feature `???`
+
+# object tracking / multi-object tracking
+- use kalman + hungarian
+- hierarchy tracking
+- graph-based / tree-based
+- energy-based
 
 # object recognization
 
@@ -22,7 +36,7 @@ a matlab surveillance video system
 
 ---
 
-# bug for new library, but this can make compile success.
+# bug for use DLib, but this can make compile success.
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib:/home/yzbx/linux/miniconda2/lib
 ```
 $: pkg-config --libs bgsawk: symbol lookup error: /home/yzbx/linux/miniconda2/lib/libreadline.so.6: undefined symbol: PC

@@ -1,18 +1,23 @@
 #ifndef TRACKINGOBJECTFEATURE_H
 #define TRACKINGOBJECTFEATURE_H
 #include <opencv2/opencv.hpp>
+#include "yzbx_config.h"
 
-typedef float track_t;
-typedef cv::Point_<track_t> Point_t;
-#define Mat_t CV_32FC
 
 class trackingObjectFeature
 {
 public:
     trackingObjectFeature();
     Point_t pos;
-    track_t size;
     cv::Rect rect;
+
+    //size is area, and range from [minArea,+Inf]
+    track_t size;
+    //range from [0,+Inf]
+    track_t Convexity;
+    track_t Circularity;
+    track_t Inertia;
+    track_t radius;
 };
 
 #endif // TRACKINGOBJECTFEATURE_H

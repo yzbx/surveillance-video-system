@@ -7,6 +7,7 @@ FrameInput::FrameInput()
 
 void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
 {
+    nextFrame.release();
     qDebug()<<"get Next Frame "<<this->frameNum<<"from "<<videoFile;
     if(videoFile==this->videoFilePath){
         QFileInfo info(videoFile);
@@ -47,7 +48,8 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
 
     if(nextFrame.empty()){
         qDebug()<<"get next frame failed !!!";
-        exit(-1);
+        qDebug()<<"maybe the end of videos";
+//        exit(-1);
     }
 }
 

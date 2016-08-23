@@ -3,8 +3,7 @@
 
 #include <QMainWindow>
 #include <QtCore>
-#include "../lib/bgsfactory_yzbx.h"
-#include "../yzbxLib/qyzbxlib.h"
+
 
 namespace Ui {
 class Benchmark;

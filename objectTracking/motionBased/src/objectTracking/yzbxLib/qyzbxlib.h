@@ -8,6 +8,7 @@
 #include "../lib/trackingfactory_yzbx.h"
 #include "../extern/qt-json/json.h"
 #include "frameinput.h"
+#include "TrackingResultReplay.h"
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

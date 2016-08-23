@@ -1,0 +1,42 @@
+digraph G{
+	{node[style=filled,color=lightyellow]
+		input
+		"QString:configFile"
+		"QString:videoFile"
+		"TrackingStatus*:status"
+	}
+	
+	{node[style=filled,color=lightpink]
+		function
+		"void:process()"
+		"void:processOne()"
+		"void:blobDetector.getBlobFeature()"
+		"void:Tracking()"
+		"void:run()"
+		"void:stop()"
+	}
+	
+	{node[style=filled,color=lightblue]
+		explain
+		"show tracking result"
+		"init singleObjectTracker"
+		"update singleObjectTracker"
+	}
+	
+	{"QString:configFile","QString:videoFile"}->"void:process()"
+	"void:process()"->{"Mat:img_input","Mat:img_foreground","Mat:img_background"}
+	"void:process()"->"void:processOne()"->"void:blobDetector.getBlobFeature()"->"vector<trackingObjectFeature>"->"void:Tracking()"
+	"void:Tracking()"->"init singleObjectTracker"->"update singleObjectTracker"[label="kalman and hungrian"]
+	"void:processOne()"->"show tracking result"
+	"void:process()"->"void:run()"->"void:processOne()"
+	
+	{"Mat:img_input","Mat:img_foreground","Mat:img_background","TrackingStatus*:status"}->"void:processOne()"
+	
+	{edge [dir=both;penwidth=3]
+		"TrackingStatus*:status"->"TrackingStatus*:globalTrackingStatus"[label="always equal to"]
+		{"TrackingStatus*:globalTrackingStatus","bool:globalStop"}->"void:run()"
+		"void:process()"->"TrackingStatus*:status"
+	}
+	
+	"void:stop()"->"bool:globalStop"
+}
