@@ -39,7 +39,7 @@ BlobDetector::BlobDetector()
 
     // Draw detected blobs as red circles.
     // DrawMatchesFlags::DRAW_RICH_KEYPOINTS flag ensures the size of the circle corresponds to the size of blob
-//    Mat im_with_keypoints;
+    //    Mat im_with_keypoints;
     //    drawKeypoints( im, keypoints, im_with_keypoints, Scalar(0,0,255), DrawMatchesFlags::DRAW_RICH_KEYPOINTS );
 }
 
@@ -50,8 +50,16 @@ BlobDetector::~BlobDetector()
 
 void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features)
 {
-    Mat image = _image.getMat(), binaryImage = _binaryImage.getMat();
+    Mat image = _image.getMat(), binaryImage0 = _binaryImage.getMat();
     (void)image;
+
+    //postprocessing for binaryImage
+    int morph_size = 2;
+    Mat element =cv::getStructuringElement( MORPH_RECT, Size( 2*morph_size + 1, 2*morph_size+1 ),
+                                         Point( morph_size, morph_size ) );
+    Mat binaryImage;
+    cv::morphologyEx(binaryImage0, binaryImage, MORPH_OPEN, element);
+    imshow("binaryImage",binaryImage);
 
     std::vector < std::vector<Point> > contours;
     Mat tmpBinaryImage = binaryImage.clone();
@@ -64,6 +72,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
 
         double area = moms.m00;
         of.size=area;
+        params.minArea=binaryImage.rows*binaryImage.cols/5000.0;
         if (params.filterByArea&&(area < params.minArea || area >= params.maxArea)){
             continue;
         }

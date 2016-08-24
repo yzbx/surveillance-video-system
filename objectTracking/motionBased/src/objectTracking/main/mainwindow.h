@@ -29,6 +29,8 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    void pureTrackingInit(QString videoFile);
+    void pureTrackingOne(QString videoFile);
 private slots:
     void on_pushButton_inputPath_clicked();
 
@@ -52,6 +54,12 @@ private slots:
 
     void on_pushButton_detect_clicked();
 
+    void on_pushButton_pureTracking_clicked();
+
+    void on_pushButton_globalStop_clicked();
+
+    void on_pushButton_pureTrackingStop_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);
@@ -68,6 +76,15 @@ private:
     boost::property_tree::ptree globalPt;
     Tracking_yzbx *globalTracker=NULL;
     TrackingResultReplay replay;
+
+    //for pure tracking
+    HungarianBasedTracking *pureTracker=NULL;
+    IBGS *ibgs=NULL;
+    QString globalPureTrackingVideoFile;
+    FrameInput frameInput;
+
+    //for all loop
+    bool globalStop=false;
 };
 
 #endif // MAINWINDOW_H

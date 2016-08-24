@@ -20,7 +20,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_inputPath->setReadOnly(true);
     ui->lineEdit_inputPath->setEnabled(false);
 
-    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"<<"VisualTrackerBenchmark"<<"UserDefine";
+    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"
+                    <<"VisualTrackerBenchmark"<<"UserDefine"<<"UrbanTrackerDataset";
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
 
@@ -119,7 +120,7 @@ void MainWindow::loadIni(QString filepath)
     }
 
     QString AnnotationHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
-    if(Dataset.compare("UserDefine")!=0||!AnnotationHome.isEmpty()){
+    if(Dataset.compare("UserDefine")!=0&&!AnnotationHome.isEmpty()){
         QString AnnotationTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
         AnnotationHome=absoluteFilePath(filepath,AnnotationHome);
         AnnotationTxt=absoluteFilePath(filepath,AnnotationTxt);
@@ -430,4 +431,112 @@ void MainWindow::on_pushButton_detect_clicked()
         frameinput.getNextFrame(videoFile,img_input);
     }
 
+}
+
+void MainWindow::on_pushButton_pureTracking_clicked()
+{
+    QString video=ui->comboBox_video->currentText();
+    if(video.compare("all")==0){
+        for(int i=0;i<globalVideosList.size();i++){
+            QString videoFile=globalVideosList[i];
+            pureTrackingInit(videoFile);
+            pureTrackingOne(videoFile);
+        }
+    }
+    else{
+        QString videoFile=video;
+        pureTrackingInit(videoFile);
+        pureTrackingOne(videoFile);
+    }
+
+}
+
+void MainWindow::pureTrackingInit(QString videoFile){
+    //init pure tracker
+
+    //1. new bgs, tracker
+    QString pureTrackingType=ui->comboBox_pureTracking->currentText();
+    if(pureTracker!=NULL){
+        delete pureTracker;
+    }
+
+    if(pureTrackingType=="HungarianBasedTracking"){
+        pureTracker=new HungarianBasedTracking;
+    }
+    else{
+        assert(false);
+    }
+
+    if(ibgs!=NULL){
+        delete ibgs;
+    }
+
+    QString bgsType=ui->comboBox_bgsType->currentText();
+    bgsFactory_yzbx bgsFac;
+    ibgs=bgsFac.getBgsAlgorithm(bgsType);
+
+    //2. init input,bgs,tracker
+    frameInput.init(globalVideoHome+"/"+videoFile);
+    frameInput.initBgs(ibgs);
+
+    QString outputFileName=videoFile;
+
+    globalPureTrackingVideoFile=videoFile;
+    videoFile=globalVideoHome+"/"+videoFile;
+    QFileInfo info(videoFile);
+    if(info.isDir()){
+        outputFileName.replace("/","_");
+        outputFileName+=".txt";
+    }
+    else if(info.isFile()){
+        outputFileName.replace("/","_");
+        outputFileName.replace(info.suffix(),"txt");
+    }
+    else{
+        assert(false);
+    }
+
+    qDebug()<<"output filename: "<<outputFileName;
+    pureTracker->init(outputFileName);
+}
+
+void MainWindow::pureTrackingOne(QString videoFile){
+    assert(ibgs!=NULL);
+    assert(pureTracker!=NULL);
+
+    videoFile=globalVideoHome+"/"+videoFile;
+
+    while(1){
+        //1. get input frame
+        cv::Mat img_fg,img_input,img_bg;
+        frameInput.getNextFrame(videoFile,img_input);
+        if(img_input.empty()||globalStop){
+            break;
+        }
+
+        //2. detection and tracking
+        ibgs->process(img_input,img_fg,img_bg);
+        if(!img_fg.empty()){
+            pureTracker->tracking(img_input,img_fg);
+        }
+
+        //3. process event of stop
+        QApplication::processEvents();
+    }
+    globalStop=false;
+}
+void MainWindow::on_pushButton_globalStop_clicked()
+{
+    globalStop=true;
+}
+
+void MainWindow::on_pushButton_pureTrackingStop_clicked()
+{
+    assert(pureTracker!=NULL);
+    if(pureTracker->isRunning()){
+        globalStop=true;
+    }
+    else{
+        pureTrackingOne(globalPureTrackingVideoFile);
+    }
 }

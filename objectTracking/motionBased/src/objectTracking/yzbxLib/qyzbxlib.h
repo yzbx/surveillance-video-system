@@ -9,6 +9,8 @@
 #include "../extern/qt-json/json.h"
 #include "frameinput.h"
 #include "TrackingResultReplay.h"
+#include "HungarianBasedTracking.h"
+#include <assert.h>
 
 namespace yzbxlib
 {
