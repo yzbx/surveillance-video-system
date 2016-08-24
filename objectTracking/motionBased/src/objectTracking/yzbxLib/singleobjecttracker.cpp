@@ -7,9 +7,16 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     KF(of.pos, dt, Accel_noise_mag)
 {
     feature=new trackingObjectFeature;
-    feature->pos=of.pos;
-    feature->rect=of.rect;
+
+    feature->Circularity=of.Circularity;
+    feature->Convexity=of.Convexity;
+    feature->Inertia=of.Inertia;
+    feature->onBoundary=of.onBoundary;
+    feature->pos = of.pos;
+    feature->radius=of.radius;
+    feature->rect = of.rect;
     feature->size=of.size;
+    status=NEW_STATUS;
 }
 
 track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
@@ -32,8 +39,26 @@ track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
     }
     track_t distR=sqrtf(dist);
 
+    track_t sizeRatio;
+    {
+        if(of.onBoundary||feature->onBoundary){
+            sizeRatio=1;
+        }
+        else{
+           float ratio=of.size/feature->size;
+           ratio=(ratio+1/ratio)/2;
+           float tolerateRatio=0.2;
+           if(ratio<1-tolerateRatio||ratio>1+tolerateRatio){
+               sizeRatio=1+(1-ratio)*(1-ratio)-tolerateRatio*tolerateRatio;
+           }
+           else{
+               sizeRatio=1;
+           }
+        }
+    }
+
     track_t weight=distR+distP;
-    return weight;
+    return weight*sizeRatio;
 }
 
 void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length)
@@ -45,6 +70,17 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
     if (dataCorrect)
     {
         feature->rect = of.rect;
+        feature->Circularity=of.Circularity;
+        feature->Convexity=of.Convexity;
+        feature->Inertia=of.Inertia;
+        feature->onBoundary=of.onBoundary;
+        feature->radius=of.radius;
+        feature->size=of.size;
+        feature->pos=of.pos;
+        status=NORMAL_STATUS;
+    }
+    else{
+        status=MISSING_STATUS;
     }
 
     if (trace.size() > max_trace_length)

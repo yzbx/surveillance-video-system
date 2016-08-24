@@ -210,11 +210,12 @@ void MainWindow::on_pushButton_tracking_clicked()
     //    cv::destroyAllWindows();
     if(globalTracker!=NULL){
         globalTracker->stop();
+        cv::destroyAllWindows();
         if(!globalTracker->isFinished()){
             qDebug()<<"previous tracking not finished!!!";
             return;
         }
-        cv::destroyAllWindows();
+
         delete globalTracker;
         globalTrackingStatus.bgsInited=false;
         if(globalTrackingStatus.ibgs!=NULL) delete globalTrackingStatus.ibgs;

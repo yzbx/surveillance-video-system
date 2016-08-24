@@ -12,8 +12,12 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
     if(videoFile==this->videoFilePath){
         QFileInfo info(videoFile);
         if(info.isDir()){
+            if(frameNum>=pictureList.size()){
+                qDebug()<<"end of picture list!!!";
+                return;
+            }
             QString imagestr=videoFile+"/"+pictureList.at(this->frameNum);
-            qDebug()<<"frameNum="<<this->frameNum;
+            qDebug()<<"frameNum="<<this->frameNum<<" for image "<<imagestr;
             nextFrame=cv::imread(imagestr.toStdString());
         }
         else{

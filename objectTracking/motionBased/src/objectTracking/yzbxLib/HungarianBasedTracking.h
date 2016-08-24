@@ -1,0 +1,99 @@
+#ifndef HUNGARIANBASEDTRACKING_H
+#define HUNGARIANBASEDTRACKING_H
+#include <QtCore>
+#include <opencv2/opencv.hpp>
+#include "BlobDetector.h"
+#include "../lib/tracking_yzbx.h"
+#include "singleobjecttracker.h"
+#include "HungarianAlg.h"
+#include "yzbx_config.h"
+
+class HungarianBasedTracking: public QThread
+{
+public:
+    HungarianBasedTracking()
+    {
+        //tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
+        //KF(of.pos, dt, Accel_noise_mag)
+        //the ID for every singleObjectTracker
+        NextTrackID=0;
+        dt=0.2f;
+        Accel_noise_mag=0.1f;
+
+        //if (Cost[i + assignment[i] * N] > dist_thres)
+        dist_thres = 60;
+
+        maximum_allowed_skipped_frames = 10;
+        max_trace_length=100;
+
+        globalFirstDump=true;
+        frameNum=0;
+        outputFileName="out.txt";
+    }
+
+    void init(QString dumpFileName){
+        outputFileName=dumpFileName;
+        globalFirstDump=true;
+        frameNum=0;
+    }
+
+    void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
+private:
+
+    void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
+    void hungarianTracking(vector<trackingObjectFeature> &fv);
+    void run();
+
+    BlobDetector blobDetector;
+    void dump(){
+        QFile data(outputFileName);
+        if(globalFirstDump){
+            if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
+                qDebug()<<"cannot open file "<<outputFileName;
+                exit(-1);
+            }
+        }
+        else{
+            if (!data.open(QFile::ReadWrite|QFile::Append)) {
+                qDebug()<<"cannot open file "<<outputFileName;
+                exit(-1);
+            }
+        }
+
+        QTextStream out(&data);
+        if(globalFirstDump){
+            QStringList formatList;
+            formatList<<"frameNum"<<"track_id"<<"status"
+                     <<"predict.x"<<"predict.y"<<"skipped_frames"
+                     <<"pox.x"<<"pos.y"
+                     <<"rect.x"<<"rect.y"<<"rect.width"<<"rect.height"
+                     <<"size"<<"radius"<<"Convexity"<<"Circularity"<<"Inertia";
+            out<<formatList.join("\t")<<"\n";
+        }
+        for(uint i;i<tracks.size();i++){
+            QString dumpstr=QString::number(frameNum-1)+"\t"+tracks[i]->dump()+"\n";
+            qDebug()<<"dumpstr="<<dumpstr;
+            out<<dumpstr;
+        }
+        data.close();
+        globalFirstDump=false;
+    }
+
+    std::vector<std::unique_ptr<singleObjectTracker>> tracks;
+
+    int NextTrackID;
+    track_t dt;
+    track_t Accel_noise_mag;
+
+    track_t dist_thres;
+    size_t maximum_allowed_skipped_frames;
+    size_t max_trace_length;
+
+    cv::Mat img_input,img_fg;
+
+    int frameNum;
+    QString outputFileName;
+    bool globalFirstDump;
+};
+
+#endif // HUNGARIANBASEDTRACKING_H

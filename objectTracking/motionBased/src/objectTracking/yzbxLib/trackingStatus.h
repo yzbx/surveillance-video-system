@@ -1,7 +1,7 @@
 #ifndef TRACKINGSTATUS_H
 #define TRACKINGSTATUS_H
 #include <QtCore>
-#include <frameinput.h>
+#include "frameinput.h"
 #include "qyzbxTrackingFeatures.h"
 
 

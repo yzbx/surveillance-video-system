@@ -2,7 +2,7 @@
 #define TRACKINGOBJECTFEATURE_H
 #include <opencv2/opencv.hpp>
 #include "yzbx_config.h"
-
+#include <QtCore>
 
 class trackingObjectFeature
 {
@@ -18,6 +18,10 @@ public:
     track_t Circularity;
     track_t Inertia;
     track_t radius;
+    bool onBoundary;
+
+    QString dump();
+    void fromString(QString str);
 };
 
 #endif // TRACKINGOBJECTFEATURE_H

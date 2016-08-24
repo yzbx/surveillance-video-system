@@ -16,6 +16,8 @@ public:
     void run();
 
     BlobDetector blobDetector;
+    bool globalFirstDump;
+    void dumpFeatureVector(std::vector<trackingObjectFeature> &featureVector);
 };
 
 #endif // BLOBBASEDTRACKER_H

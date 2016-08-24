@@ -4,6 +4,7 @@
 #include <QtCore>
 #include "trackingobjectfeature.h"
 #include "Kalman.h"
+#include "yzbx_config.h"
 
 class singleObjectTracker
 {
@@ -15,11 +16,20 @@ public:
     int skipped_frames;
     Point_t prediction;
     trackingObjectFeature *feature;
+    STATUS status;
 
     track_t CalcDist(trackingObjectFeature &of);
     void Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length);
-
-
+    QString dump(){
+        QStringList dumpstrs;
+        dumpstrs<<QString::number(track_id)
+               <<QString::number(status)
+               <<QString::number(prediction.x)
+               <<QString::number(prediction.y)
+               <<QString::number(skipped_frames)
+              <<feature->dump();
+        return dumpstrs.join("\t");
+    }
 };
 
 #endif // SINGLEOBJECTTRACKER_H

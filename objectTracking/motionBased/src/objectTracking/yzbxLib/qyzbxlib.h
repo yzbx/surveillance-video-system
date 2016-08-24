@@ -10,6 +10,11 @@
 #include "frameinput.h"
 #include "TrackingResultReplay.h"
 
+namespace yzbxlib
+{
+QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
+}
+
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {
 

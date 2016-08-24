@@ -89,6 +89,11 @@ enum StatisticDistanceMat{
     LBP_DISTANCE_STD
 };
 
+enum STATUS{
+    MISSING_STATUS,NEW_STATUS,NORMAL_STATUS
+};
+
+
 //#define REPLACE_ALL 0
 //#define REPLACE_LAB_ONLY 1
 //#define UPDATE_ALL 2

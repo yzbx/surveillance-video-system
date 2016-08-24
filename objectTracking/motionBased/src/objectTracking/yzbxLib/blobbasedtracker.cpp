@@ -26,6 +26,8 @@ BlobBasedTracker::BlobBasedTracker()
 void BlobBasedTracker::process(QString configFile, QString videoFile, TrackingStatus *status)
 {
     qDebug()<<"BlobBasedTracker .................";
+    globalTrackingStatus=status;
+    globalFirstDump=true;
 
     boost::property_tree::ptree pt;
     boost::property_tree::ini_parser::read_ini(configFile.toStdString(),pt);
@@ -45,14 +47,10 @@ void BlobBasedTracker::process(QString configFile, QString videoFile, TrackingSt
             status->frameinput.initBgs(status->ibgs,status->initFrameNum);
             status->bgsInited=true;
         }
-
-        cv::Mat img_input,img_foreground,img_background;
-        status->frameinput.getNextFrame(videoFile,img_input);
-        processOne(img_input,img_foreground,img_background,status);
     }
 
-    globalTrackingStatus=status;
-    qDebug()<<"start new process........................................................";
+
+    qDebug()<<"start new process ........................................................";
     this->start();
 }
 
@@ -70,7 +68,7 @@ void BlobBasedTracker::processOne(const Mat &img_input, Mat &img_foreground, Mat
         blobDetector.getBlobFeature(img_input,img_foreground,featureVector);
         //use the Tracking() function from MultiObjectTracking by inherit.
         Tracking(featureVector);
-
+        dumpFeatureVector(featureVector);
         cv::Mat img_tracking=img_input.clone();
         for (int i=0;i<featureVector.size();i++)
         {
@@ -111,4 +109,36 @@ void BlobBasedTracker::run()
         processOne(img_input,img_foreground,img_background,globalTrackingStatus);
     }
     globalStop=false;
+}
+
+void BlobBasedTracker::dumpFeatureVector(std::vector<trackingObjectFeature> & featureVector){
+    QString videoFilePath=globalTrackingStatus->frameinput.videoFilePath;
+    int frameNum=globalTrackingStatus->frameinput.frameNum-1;
+
+    QFileInfo info(videoFilePath);
+    QString outputFileName=info.baseName()+".txt";
+    QFile data(outputFileName);
+    if(globalFirstDump){
+        if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
+            qDebug()<<"cannot open file "<<outputFileName;
+            exit(-1);
+        }
+        globalFirstDump=false;
+    }
+    else{
+        if (!data.open(QFile::ReadWrite|QFile::Append)) {
+            qDebug()<<"cannot open file "<<outputFileName;
+            exit(-1);
+        }
+    }
+
+    QTextStream out(&data);
+
+    for(int i=0;i<featureVector.size();i++){
+        QString dumpstr=QString::number(frameNum)+" "+featureVector[i].dump()+"\n";
+        qDebug()<<"dumpstr="<<dumpstr;
+        out<<dumpstr;
+    }
+
+    data.close();
 }

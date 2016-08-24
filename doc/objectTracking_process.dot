@@ -1,0 +1,7 @@
+digraph g{
+start->"background init"->"motion detection"->"mask postprocessing"->"blob feature extraction"->"object node"
+{edge[dir=both]
+"kalman filter"->"object node";[label="predict and update"]
+"hungarian algorithm"->"object node";[label="match and update"]
+}
+}

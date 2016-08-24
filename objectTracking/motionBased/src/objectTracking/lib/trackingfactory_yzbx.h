@@ -2,7 +2,7 @@
 #define TRACKINGFACTORY_YZBX_H
 #include "urbantracker_tracking.h"
 #include "motionbasedtracker.h"
-#include "multiobjecttracking.h"
+#include "../yzbxLib/multiobjecttracking.h"
 #include "blobbasedtracker.h"
 
 class trackingFactory_yzbx

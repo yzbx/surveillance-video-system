@@ -35,7 +35,8 @@ SOURCES += qyzbxlib.cpp \
     multiobjecttracking.cpp \
     blobbasedtracker.cpp \
     BlobDetector.cpp \
-    TrackingResultReplay.cpp
+    TrackingResultReplay.cpp \
+    HungarianBasedTracking.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -61,7 +62,8 @@ HEADERS += qyzbxlib.h\
     multiobjecttracking.h \
     blobbasedtracker.h \
     BlobDetector.h \
-    TrackingResultReplay.h
+    TrackingResultReplay.h \
+    HungarianBasedTracking.h
 
 unix {
     target.path = /usr/lib
