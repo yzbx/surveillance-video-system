@@ -34,4 +34,23 @@ QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName)
     }
 }
 
+bool isSameImage(const Mat &A_8U, const Mat &B_8U)
+{
+    cv::Mat C;
+    cv::absdiff(A_8U,B_8U,C);
+    cv::Scalar s=cv::sum(C);
+    if(C.channels()==3){
+        if(s[0]==0&&s[1]==0&&s[2]==0){
+            return true;
+        }
+    }
+    else{
+        if(s[0]==0){
+            return true;
+        }
+    }
+
+    return false;
+}
+
 }

@@ -58,7 +58,7 @@ track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
     }
 
     track_t weight=distR+distP;
-    return weight*sizeRatio;
+    return weight;
 }
 
 void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length)

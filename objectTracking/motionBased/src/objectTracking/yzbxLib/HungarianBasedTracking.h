@@ -21,7 +21,7 @@ public:
         Accel_noise_mag=0.1f;
 
         //if (Cost[i + assignment[i] * N] > dist_thres)
-        dist_thres = 60;
+        dist_thres = 100;
 
         maximum_allowed_skipped_frames = 10;
         max_trace_length=100;

@@ -457,7 +457,24 @@ void MainWindow::pureTrackingInit(QString videoFile){
     //1. new bgs, tracker
     QString pureTrackingType=ui->comboBox_pureTracking->currentText();
     if(pureTracker!=NULL){
-        delete pureTracker;
+        if(pureTracker->isRunning()){
+            qWarning()<<"still running!";
+        }
+        else if(pureTracker->isFinished()){
+            qWarning()<<"finished!";
+        }
+
+        //wait for 10s
+        qWarning()<<"wait for 10s";
+        pureTracker->wait(10*1000);
+        if(pureTracker->isRunning()){
+            qWarning()<<"still running!";
+        }
+        else if(pureTracker->isFinished()){
+            qWarning()<<"finished!";
+        }
+
+        pureTracker->deleteLater();
     }
 
     if(pureTrackingType=="HungarianBasedTracking"){
@@ -477,7 +494,7 @@ void MainWindow::pureTrackingInit(QString videoFile){
 
     //2. init input,bgs,tracker
     frameInput.init(globalVideoHome+"/"+videoFile);
-    frameInput.initBgs(ibgs);
+    frameInput.initBgs(ibgs,10);
 
     QString outputFileName=videoFile;
 
@@ -506,10 +523,22 @@ void MainWindow::pureTrackingOne(QString videoFile){
 
     videoFile=globalVideoHome+"/"+videoFile;
 
+    cv::Mat img_before;
     while(1){
         //1. get input frame
         cv::Mat img_fg,img_input,img_bg;
         frameInput.getNextFrame(videoFile,img_input);
+        while(!img_input.empty()&&!img_before.empty()){
+            if(yzbxlib::isSameImage(img_input,img_before)){
+                qWarning()<<"the same image find!";
+                frameInput.getNextFrame(videoFile,img_input);
+            }
+            else{
+                break;
+            }
+        }
+        img_before=img_fg;
+
         if(img_input.empty()||globalStop){
             break;
         }

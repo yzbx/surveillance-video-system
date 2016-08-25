@@ -8,7 +8,8 @@ FrameInput::FrameInput()
 void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
 {
     nextFrame.release();
-    qDebug()<<"get Next Frame "<<this->frameNum<<"from "<<videoFile;
+//    qDebug()<<"get Next Frame "<<this->frameNum<<"from "<<videoFile;
+
     if(videoFile==this->videoFilePath){
         QFileInfo info(videoFile);
         if(info.isDir()){
@@ -17,7 +18,7 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
                 return;
             }
             QString imagestr=videoFile+"/"+pictureList.at(this->frameNum);
-            qDebug()<<"frameNum="<<this->frameNum<<" for image "<<imagestr;
+//            qDebug()<<"frameNum="<<this->frameNum<<" for image "<<imagestr;
             nextFrame=cv::imread(imagestr.toStdString());
         }
         else{
@@ -36,7 +37,7 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
             this->pictureList=videoDir.entryList(this->pictureFormatList,QDir::Files,QDir::Name);
 
             QString imagestr=videoFile+"/"+pictureList.at(this->frameNum);
-            qDebug()<<"frameNum="<<this->frameNum;
+//            qDebug()<<"frameNum="<<this->frameNum;
             nextFrame=cv::imread(imagestr.toStdString());
         }
         else{

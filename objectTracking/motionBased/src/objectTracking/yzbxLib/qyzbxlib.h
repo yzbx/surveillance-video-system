@@ -15,6 +15,7 @@
 namespace yzbxlib
 {
 QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
+bool isSameImage(const cv::Mat &A_8U,const cv::Mat &B_8U);
 }
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
