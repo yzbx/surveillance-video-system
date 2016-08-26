@@ -72,7 +72,7 @@ private:
         }
         for(uint i;i<tracks.size();i++){
             QString dumpstr=QString::number(frameNum-1)+"\t"+tracks[i]->dump()+"\n";
-            qDebug()<<"dumpstr="<<dumpstr;
+//            qDebug()<<"dumpstr="<<dumpstr;
             out<<dumpstr;
         }
         data.close();

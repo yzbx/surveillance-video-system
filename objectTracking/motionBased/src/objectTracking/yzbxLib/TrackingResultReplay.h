@@ -4,6 +4,8 @@
 #include <opencv2/opencv.hpp>
 #include <iostream>
 #include "frameinput.h"
+#include <boost/lexical_cast.hpp>
+
 using namespace std;
 class TrackingResultReplay
 {
@@ -25,18 +27,14 @@ public:
         int ID;
     };
 public:
-    TrackingResultReplay(QString datasetName="");
+    TrackingResultReplay();
     void process(QString videoFilePath,QString recordFilePath);
-    QStringList datasetNameList;
-    QString datasetName;
-    bool globalInit;
-    void Init(QString datasetName);
 
     const string winname="replay";
     int MaxSkipFrame=20;
     void replay(cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum);
 public slots:
-    void removeOldObjects(vector<object> &objects, int readToFrameNum);
+    void removeOldObjects(vector<object> &objects, int readToFrameNum, std::set<int> &idSet);
 };
 
 #endif // TRACKINGRESULTREPLAY_H

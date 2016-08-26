@@ -70,6 +70,8 @@ private:
     QString globalAnnotationHome;
     QStringList globalAnnotationList;
     QStringList globalDetectionModelList;
+    QStringList globalRecordList;
+    QStringList globalRecordHome;
     bool globalInited=false;
     bool globalDatasetChanged=false;
     TrackingStatus globalTrackingStatus;

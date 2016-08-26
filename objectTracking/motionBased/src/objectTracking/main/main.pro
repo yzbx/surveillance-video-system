@@ -39,3 +39,6 @@ else:unix: LIBS += -L$$OUT_PWD/../yzbxLib/ -lyzbxLib
 
 INCLUDEPATH += $$PWD/../yzbxLib
 DEPENDPATH += $$PWD/../yzbxLib
+
+DISTFILES += \
+    ConvertOutputFormat.py

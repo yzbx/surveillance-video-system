@@ -20,8 +20,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEdit_inputPath->setReadOnly(true);
     ui->lineEdit_inputPath->setEnabled(false);
 
-    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"
-                    <<"VisualTrackerBenchmark"<<"UserDefine"<<"UrbanTrackerDataset";
+    //    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"
+    //                    <<"VisualTrackerBenchmark"<<"UserDefine"<<"UrbanTrackerDataset";
+
+    globalDatasetList<<"Multi-CameraTracking"<<"UrbanTrackerDataset";
+
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
 
@@ -89,7 +92,7 @@ void MainWindow::loadIni(QString filepath)
 {
     boost::property_tree::ini_parser::read_ini(filepath.toStdString(),globalPt);
 
-    QString RecordHome=QString::fromStdString(globalPt.get<std::string>("General.RecordHome"));
+
     QString Dataset=QString::fromStdString(globalPt.get<std::string>("General.Dataset"));
     if(globalInited){
         Dataset=ui->comboBox_dataset->currentText();
@@ -97,13 +100,14 @@ void MainWindow::loadIni(QString filepath)
         boost::property_tree::ini_parser::write_ini(filepath.toStdString(),globalPt);
     }
 
+    assert(Dataset=="Multi-CameraTracking"||Dataset=="UrbanTrackerDataset");
+
+
     QString VideoHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoHome"));
     QString VideoTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoTxt"));
 
     VideoHome=absoluteFilePath(filepath,VideoHome);
     VideoTxt=absoluteFilePath(filepath,VideoTxt);
-
-    RecordHome=absoluteFilePath(filepath,RecordHome);
 
     QString filedata;
     QFile file;
@@ -120,7 +124,7 @@ void MainWindow::loadIni(QString filepath)
     }
 
     QString AnnotationHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationHome"));
-    if(Dataset.compare("UserDefine")!=0&&!AnnotationHome.isEmpty()){
+    if(!AnnotationHome.isEmpty()){
         QString AnnotationTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".AnnotationTxt"));
         AnnotationHome=absoluteFilePath(filepath,AnnotationHome);
         AnnotationTxt=absoluteFilePath(filepath,AnnotationTxt);
@@ -138,6 +142,24 @@ void MainWindow::loadIni(QString filepath)
         }
     }
 
+    QString RecordHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".RecordHome"));
+    if(!RecordHome.isEmpty()){
+        QString RecordTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".RecordTxt"));
+        RecordHome=absoluteFilePath(filepath,RecordHome);
+        RecordTxt=absoluteFilePath(filepath,RecordTxt);
+
+        file.setFileName(AnnotationTxt);
+        if (!file.open(QFile::ReadOnly | QFile::Text)) {
+            qDebug()<<"cannot open file "<<AnnotationTxt;
+            exit(-1);
+        } else {
+            QTextStream in(&file);
+            filedata=in.readAll();
+            globalRecordList=filedata.split("\n",QString::SkipEmptyParts);
+            globalRecordHome=AnnotationHome;
+            file.close();
+        }
+    }
 
     QString DetectionModelTxt=QString::fromStdString(globalPt.get<std::string>("Detection.DetectionModelTxt"));
     DetectionModelTxt=absoluteFilePath(filepath,DetectionModelTxt);
@@ -162,13 +184,14 @@ void MainWindow::loadIni(QString filepath)
         ui->comboBox_video->addItems(globalVideosList);
         ui->comboBox_video->addItem("all");
     }
-    ui->lineEdit_recordPath->setText(RecordHome);
 
     if(ui->comboBox_replay->currentText()=="record"){
-        ui->lineEdit_recordPath->setText(RecordHome);
+        ui->comboBox_replayFiles->clear();
+        ui->comboBox_replayFiles->addItems(globalRecordList);
     }
     else{
-        ui->lineEdit_recordPath->setText(AnnotationHome);
+        ui->comboBox_replayFiles->clear();
+        ui->comboBox_replayFiles->addItems(globalAnnotationList);
     }
 
     if(!globalInited){
@@ -262,68 +285,33 @@ void MainWindow::on_pushButton_tracking_clicked()
 
 void MainWindow::on_pushButton_recordReplay_clicked()
 {
-    QString Dataset=ui->comboBox_dataset->currentText();
-    replay.Init(Dataset);
-    QString recordFormat;
-    //for urbantracker, find *.sqlite.
-    if(Dataset=="Multi-CameraTracking"){
-        recordFormat="txt";
-    }
-    else if(Dataset=="MOT2D2015-Train"||Dataset=="MOT2D2015-Test"){
-        recordFormat="dat";
-    }
-    else if(Dataset=="VisualTrackerBenchmark"){
-        recordFormat="txt";
+    QString ReplayHome;
+    if(ui->comboBox_replay->currentText()=="record"){
+        ReplayHome=globalRecordHome;
     }
     else{
-        qDebug()<<"undefine Dataset in replay: "<<Dataset;
-        exit(-1);
+        ReplayHome=globalAnnotationHome;
     }
 
-    QString RecordHome=ui->lineEdit_recordPath->text();
+    QString ReplayFile=ui->comboBox_replayFiles->currentText();
+    int index=ui->comboBox_replayFiles->currentIndex();
+    QString videoFile=globalVideosList[index];
 
-    QDir RecordDir(RecordHome);
-    QDir VideoDir(globalVideoHome);
-    QString videoText=ui->comboBox_video->currentText();
-    if(videoText=="all"){
-        int n=globalVideosList.length();
 
-        for(int i=0;i<n;i++){
-            QString videoFile=globalVideosList.at(i);
-            QString videoFilePath=VideoDir.absoluteFilePath(videoFile);
-            QString recordFile=globalAnnotationList.at(i);
-            QString recordFilePath=RecordDir.absoluteFilePath(recordFile);
+    QString videoFilePath=globalVideoHome+"/"+videoFile;
+    QString replayFilePath=ReplayHome+"/"+ReplayFile;
 
-            QFileInfo info(recordFilePath);
-            if(info.exists()){
-                qDebug()<<i<<" record file path is "<<recordFilePath<<videoFilePath;
-                replay.process(videoFilePath,recordFilePath);
-            }
-            else{
-                qDebug()<<"cannot find file"<<recordFilePath<<"under RecordHome:"<<RecordHome;
-                qDebug()<<"please make sure RecordHome is right";
-                qDebug()<<"and make sure record file have the same base name with video file";
-            }
-        }
+    QFileInfo info(replayFilePath);
+    if(info.exists()){
+        qDebug()<<i<<" record file path is "<<replayFilePath<<videoFilePath;
+        replay.process(videoFilePath,replayFilePath);
     }
     else{
-        QString videoFile=videoText;
-        int i=globalVideosList.indexOf(videoFile);
-        QString videoFilePath=VideoDir.absoluteFilePath(videoFile);
-        QString recordFile=globalAnnotationList.at(i);
-        QString recordFilePath=RecordDir.absoluteFilePath(recordFile);
-
-        QFileInfo info(recordFilePath);
-        if(info.exists()){
-            qDebug()<<i<<" record file path is "<<recordFilePath<<videoFilePath;
-            replay.process(videoFilePath,recordFilePath);
-        }
-        else{
-            qDebug()<<"cannot find file"<<recordFilePath<<"under RecordHome:"<<RecordHome;
-            qDebug()<<"please make sure RecordHome is right";
-            qDebug()<<"and make sure record file have the same base name with video file";
-        }
+        qDebug()<<"cannot find file "<<replayFilePath;
+        qDebug()<<"please make sure RecordHome/AnnotationHome is right";
+        qDebug()<<"and make sure record file have the same order with video file";
     }
+
 }
 
 void MainWindow::on_comboBox_dataset_currentIndexChanged(const QString &arg1)
@@ -410,7 +398,7 @@ void MainWindow::on_pushButton_detect_clicked()
 {
     QString model=ui->comboBox_detection->currentText();
     dlib::object_detector<image_scanner_type> detector;
-//    deserialize("face_detector.svm") >> detector2;
+    //    deserialize("face_detector.svm") >> detector2;
     dlib::deserialize(model.toStdString()) >>detector;
     dlib::array<dlib::array2d<unsigned char> > images_test;
 
