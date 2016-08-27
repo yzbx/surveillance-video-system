@@ -16,15 +16,20 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     feature->radius=of.radius;
     feature->rect = of.rect;
     feature->size=of.size;
+
     status=NEW_STATUS;
+
+    skipped_frames=0;
+    catch_frames=1;
+    rects.push_back(of.rect);
 }
 
 track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
 {
     Point_t dif=prediction-of.pos;
     track_t distP=sqrtf(dif.x * dif.x + dif.y * dif.y);
-    cv::Rect lastRect=this->feature->rect;
-    cv::Rect r=of.rect;
+    Rect_t lastRect=this->feature->rect;
+    Rect_t r=of.rect;
 
     std::array<track_t, 4> diff;
     diff[0] = prediction.x - lastRect.width / 2 - r.x;
@@ -78,9 +83,17 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
         feature->size=of.size;
         feature->pos=of.pos;
         status=NORMAL_STATUS;
+
+        rects.push_back(of.rect);
+        catch_frames++;
     }
     else{
         status=MISSING_STATUS;
+        Rect_t lastRect=rects.back();
+        Point_t rectCenter(lastRect.x+lastRect.width/2,lastRect.y+lastRect.height/2);
+        Point_t diff=prediction-rectCenter;
+        //BUG may out of image range!
+        rects.push_back(Rect_t(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height));
     }
 
     if (trace.size() > max_trace_length)

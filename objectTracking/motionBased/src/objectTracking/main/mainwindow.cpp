@@ -148,15 +148,15 @@ void MainWindow::loadIni(QString filepath)
         RecordHome=absoluteFilePath(filepath,RecordHome);
         RecordTxt=absoluteFilePath(filepath,RecordTxt);
 
-        file.setFileName(AnnotationTxt);
+        file.setFileName(RecordTxt);
         if (!file.open(QFile::ReadOnly | QFile::Text)) {
-            qDebug()<<"cannot open file "<<AnnotationTxt;
+            qDebug()<<"cannot open file "<<RecordTxt;
             exit(-1);
         } else {
             QTextStream in(&file);
             filedata=in.readAll();
             globalRecordList=filedata.split("\n",QString::SkipEmptyParts);
-            globalRecordHome=AnnotationHome;
+            globalRecordHome=RecordHome;
             file.close();
         }
     }
@@ -303,7 +303,7 @@ void MainWindow::on_pushButton_recordReplay_clicked()
 
     QFileInfo info(replayFilePath);
     if(info.exists()){
-        qDebug()<<i<<" record file path is "<<replayFilePath<<videoFilePath;
+        qDebug()<<" record file path is "<<replayFilePath<<videoFilePath;
         replay.process(videoFilePath,replayFilePath);
     }
     else{
@@ -327,13 +327,13 @@ void MainWindow::on_comboBox_dataset_currentIndexChanged(const QString &arg1)
 void MainWindow::on_comboBox_replay_currentIndexChanged(const QString &arg1)
 {
     if(globalInited){
-        qDebug()<<"replay type: "<<arg1;
-        if(ui->comboBox_replay->currentText()=="record"){
-            QString RecordHome=QString::fromStdString(globalPt.get<std::string>("General.RecordHome"));
-            ui->lineEdit_recordPath->setText(RecordHome);
+        if(arg1=="record"){
+            ui->comboBox_replayFiles->clear();
+            ui->comboBox_replayFiles->addItems(globalRecordList);
         }
         else{
-            ui->lineEdit_recordPath->setText(globalAnnotationHome);
+            ui->comboBox_replayFiles->clear();
+            ui->comboBox_replayFiles->addItems(globalAnnotationList);
         }
     }
 }
@@ -555,5 +555,33 @@ void MainWindow::on_pushButton_pureTrackingStop_clicked()
     }
     else{
         pureTrackingOne(globalPureTrackingVideoFile);
+    }
+}
+
+void MainWindow::on_pushButton_test_clicked()
+{
+    qDebug()<<"test";
+    QString video=ui->comboBox_video->currentText();
+    video=globalVideoHome+"/"+video;
+    qDebug()<<"test video "<<video;
+
+    cv::Mat img_input;
+    int img_channel=3;
+    while(1){
+        frameInput.getNextFrame(video,img_input);
+
+        if(img_input.empty()){
+            break;
+        }
+
+        if(img_channel!=img_input.channels()){
+            img_channel=img_input.channels();
+            qDebug()<<"channel changed to "<<img_channel;
+        }
+
+        imshow("img_input",img_input);
+        Rect_t rect(10,100,1000,2000);
+        cv::rectangle(img_input,rect,Scalar(0,0,255),3);
+        cv::waitKey(30);
     }
 }

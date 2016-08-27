@@ -7,7 +7,11 @@ FrameInput::FrameInput()
 
 void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
 {
-    nextFrame.release();
+//    nextFrame.release();
+    if(!nextFrame.empty()){
+        nextFrame.release();
+    }
+    assert(nextFrame.empty());
 //    qDebug()<<"get Next Frame "<<this->frameNum<<"from "<<videoFile;
 
     if(videoFile==this->videoFilePath){
@@ -41,7 +45,9 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
             nextFrame=cv::imread(imagestr.toStdString());
         }
         else{
-            videoCap.release();
+            if(videoCap.isOpened()){
+                videoCap.release();
+            }
             if(!videoCap.open(videoFile.toStdString())){
                 qDebug()<<"cannot open video file "<<videoFile;
                 exit(-1);

@@ -35,7 +35,7 @@ void HungarianBasedTracking::showing(const cv::Mat &img_input,const cv::Mat &img
             }
         }
 
-        cv::Rect r=tracks[i]->feature->rect;
+        Rect_t r=tracks[i]->feature->rect;
         cv::rectangle(img_tracking,r,Colors[tracks[i]->track_id % 9]);
         std::string text;
         if(tracks[i]->status==NEW_STATUS)   text="new";
@@ -113,6 +113,9 @@ void HungarianBasedTracking::hungarianTracking(vector<trackingObjectFeature> &fv
         {
             if (tracks[i]->skipped_frames > (int)maximum_allowed_skipped_frames)
             {
+                if(tracks[i]->catch_frames>10){
+                    output(i);
+                }
                 tracks.erase(tracks.begin() + i);
                 assignment.erase(assignment.begin() + i);
                 i--;

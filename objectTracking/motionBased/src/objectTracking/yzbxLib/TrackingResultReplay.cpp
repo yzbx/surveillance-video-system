@@ -31,14 +31,14 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
     std::set<int> idSet={};
     while (!in.atEnd()) {
         QString line = in.readLine();
-        QStringList strlist=line.split(" ",QString::SkipEmptyParts);
+        QStringList strlist=line.split(",",QString::SkipEmptyParts);
         float numbers[6];
         for(int i=0;i<strlist.size();i++){
             QString numstr=strlist.at(i);
             bool okay;
             numbers[i]=numstr.toFloat(&okay);
             if(!okay){
-                qDebug()<<"error convert to int";
+                qDebug()<<"error convert to float "<<numstr;
                 exit(-1);
             }
         }
@@ -48,14 +48,17 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
             frameInput.getNextFrame(videoFilePath,img_input);
             frameNum++;
         }
-
-        cv::Rect r(numbers[3],numbers[4],numbers[5],numbers[6]);
+        //NOTE must show here, otherwise there will have some error!
+        cv::imshow("img_input",img_input);
+//        cv::waitKey(30);
+        Rect_t r(numbers[2],numbers[3],numbers[4],numbers[5]);
 
         //NOTE objectID should be continuously
         int readToObjectID=boost::lexical_cast<int>(numbers[1]);
-        if(idSet.find(readToObjectID)!=idSet.end()){
+        if(idSet.find(readToObjectID)==idSet.end()){
             object ob(readToFrameNum,r,readToObjectID);
             objects.push_back(ob);
+            idSet.insert(readToObjectID);
         }
         else{
             for(int i=0;i<objects.size();i++){
@@ -77,24 +80,47 @@ void TrackingResultReplay::removeOldObjects(std::vector<object> &objects,int rea
         if(readToFrameNum>objects[i].frameNum+MaxSkipFrame){
             idSet.erase(objects[i].ID);
             objects.erase(objects.begin()+i);
-
         }
     }
 }
 
-void TrackingResultReplay::replay(cv::Mat &img_input,std::vector<object> &objects,int readToFrameNum){
-    cv::Mat img_show=img_input.clone();
+void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &objects,int readToFrameNum){
+    cv::Scalar Colors[] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 255), cv::Scalar(255, 127, 255), cv::Scalar(127, 0, 255), cv::Scalar(127, 0, 127) };
+
+    cv::Mat img_show;
+
+    if(img_input.channels()==1){
+        cvtColor(img_input,img_show,CV_GRAY2BGR);
+    }
+    else{
+        img_show=img_input.clone();
+    }
+    if(img_input.channels()!=globalChannel){
+//        cv::destroyAllWindows();
+        globalChannel=img_input.channels();
+    }
+
     for(int i=0;i<objects.size();i++){
         if(readToFrameNum==objects[i].frameNum){
             //void rectangle(Mat& img, Rect rec, const Scalar& color, int thickness=1, int lineType=LINE_8, int shift=0 )
-            cv::rectangle(img_show,objects[i].trace.back(),cv::Scalar(0,0,255),3);
+            Rect_t r=objects[i].trace.back();
+//            std::cout<<"r=["<<r.x<<","<<r.y<<","<<r.width<<","<<r.height<<"]"<<std::endl;
+            cv::rectangle(img_show,r,cv::Scalar(0,0,255),3);
             string text=boost::lexical_cast<std::string>(objects[i].ID);
-            cv::Rect r=objects[i].trace.back();
-            cv::putText(img_show, text, r.tl(), cv::FONT_HERSHEY_COMPLEX, 0.5,
+            cv::putText(img_show, text, r.tl(), cv::FONT_HERSHEY_COMPLEX, 1.0,
                         cv::Scalar(0,0,255), 2, 8);
+        }
+
+        for (uint j = 0; j < objects[i].trace.size() - 1; j++)
+        {
+            Rect_t r1=objects[i].trace[j],r2=objects[i].trace[j+1];
+            cv::Point c1(r1.x+r1.width/2,r1.y+r1.height/2),c2(r2.x+r2.width/2,r2.y+r2.height/2);
+            cv::line(img_show, c1,c2, Colors[objects[i].ID % 9], 2, CV_AA);
         }
     }
 
+
+    cv::imshow("img_new_input",img_input);
     cv::imshow(winname,img_show);
     cv::waitKey(30);
 }

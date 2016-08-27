@@ -5,6 +5,7 @@
 #include <iostream>
 #include "frameinput.h"
 #include <boost/lexical_cast.hpp>
+#include "yzbx_config.h"
 
 using namespace std;
 class TrackingResultReplay
@@ -12,18 +13,18 @@ class TrackingResultReplay
 public:
     class object{
     public:
-        object(int a,cv::Rect r,int id){
+        object(int a,Rect_t r,int id){
             frameNum=a;
             trace.push_back(r);
             ID=id;
         }
-        void add(int a,cv::Rect r){
+        void add(int a,Rect_t r){
             frameNum=a;
             trace.push_back(r);
         }
 
         int frameNum;
-        std::vector<cv::Rect> trace;
+        std::vector<Rect_t> trace;
         int ID;
     };
 public:
@@ -32,9 +33,10 @@ public:
 
     const string winname="replay";
     int MaxSkipFrame=20;
-    void replay(cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum);
+    void replay(const cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum);
 public slots:
     void removeOldObjects(vector<object> &objects, int readToFrameNum, std::set<int> &idSet);
+    int globalChannel=1;
 };
 
 #endif // TRACKINGRESULTREPLAY_H

@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>634</width>
-    <height>408</height>
+    <width>641</width>
+    <height>405</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,9 +17,9 @@
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>50</x>
+      <x>10</x>
       <y>10</y>
-      <width>553</width>
+      <width>612</width>
       <height>281</height>
      </rect>
     </property>
@@ -238,14 +238,7 @@
         </widget>
        </item>
        <item>
-        <widget class="QLineEdit" name="lineEdit_recordPath">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-        </widget>
+        <widget class="QComboBox" name="comboBox_replayFiles"/>
        </item>
        <item>
         <widget class="QPushButton" name="pushButton_recordReplay">
@@ -271,13 +264,26 @@
      <string>global stop</string>
     </property>
    </widget>
+   <widget class="QPushButton" name="pushButton_test">
+    <property name="geometry">
+     <rect>
+      <x>80</x>
+      <y>310</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>test</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>634</width>
+     <width>641</width>
      <height>22</height>
     </rect>
    </property>

@@ -9,7 +9,7 @@ class trackingObjectFeature
 public:
     trackingObjectFeature();
     Point_t pos;
-    cv::Rect rect;
+    Rect_t rect;
 
     //size is area, and range from [minArea,+Inf]
     track_t size;

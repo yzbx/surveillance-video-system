@@ -5,6 +5,7 @@
 //for tracking library
 typedef float track_t;
 typedef cv::Point_<track_t> Point_t;
+typedef cv::Rect_<track_t> Rect_t;
 #define Mat_t CV_32FC
 
 //separate FG strategy

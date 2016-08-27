@@ -27,6 +27,7 @@ public:
         max_trace_length=100;
 
         globalFirstDump=true;
+        globalFirstOutput=true;
         frameNum=0;
         outputFileName="out.txt";
     }
@@ -34,6 +35,7 @@ public:
     void init(QString dumpFileName){
         outputFileName=dumpFileName;
         globalFirstDump=true;
+        globalFirstOutput=true;
         frameNum=0;
     }
 
@@ -79,6 +81,46 @@ private:
         globalFirstDump=false;
     }
 
+    void output(int index){
+        QFileInfo info(outputFileName);
+        QString suffix=QString(".")+info.suffix();
+        QString filterName=outputFileName;
+        filterName.replace(suffix,QString("_filtered")+suffix);
+        QFile data(filterName);
+        if(globalFirstOutput){
+            if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
+                qDebug()<<"cannot open file "<<filterName;
+                exit(-1);
+            }
+        }
+        else{
+            if (!data.open(QFile::ReadWrite|QFile::Append)) {
+                qDebug()<<"cannot open file "<<filterName;
+                exit(-1);
+            }
+        }
+
+        QTextStream out(&data);
+        if(globalFirstOutput){
+            QStringList formatList;
+            formatList<<"frameNum"<<"track_id"
+                     <<"rect.x"<<"rect.y"<<"rect.width"<<"rect.height";
+            out<<formatList.join(",")<<"\n";
+        }
+        int n=tracks[index]->rects.size();
+        for(uint i;i<n;i++){
+            QStringList dumpList;
+            dumpList<<QString::number(tracks[index]->rects[i].x)<<QString::number(tracks[index]->rects[i].y)<<
+                             QString::number(tracks[index]->rects[i].width)<<QString::number(tracks[index]->rects[i].height);
+            QString dumpstr=QString::number(frameNum-n+i)+","+QString::number(tracks[index]->track_id)+ \
+                    ","+dumpList.join(",")+"\n";
+//            qDebug()<<"dumpstr="<<dumpstr;
+            out<<dumpstr;
+        }
+        data.close();
+        globalFirstOutput=false;
+    }
+
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;
 
     int NextTrackID;
@@ -94,6 +136,7 @@ private:
     int frameNum;
     QString outputFileName;
     bool globalFirstDump;
+    bool globalFirstOutput;
 };
 
 #endif // HUNGARIANBASEDTRACKING_H

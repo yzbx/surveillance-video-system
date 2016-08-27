@@ -60,6 +60,8 @@ private slots:
 
     void on_pushButton_pureTrackingStop_clicked();
 
+    void on_pushButton_test_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);
@@ -71,7 +73,7 @@ private:
     QStringList globalAnnotationList;
     QStringList globalDetectionModelList;
     QStringList globalRecordList;
-    QStringList globalRecordHome;
+    QString globalRecordHome;
     bool globalInited=false;
     bool globalDatasetChanged=false;
     TrackingStatus globalTrackingStatus;

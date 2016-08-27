@@ -21,7 +21,7 @@ public:
     void Tracking(vector<trackingObjectFeature> &fv);
 
     int NextTrackID=0;
-    cv::Rect m_minObjectSize;
+    Rect_t m_minObjectSize;
     track_t dist_thres = 60;
     size_t maximum_allowed_skipped_frames = 10;
     size_t max_trace_length = 10;

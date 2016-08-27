@@ -62,8 +62,8 @@ vector<trackingObjectFeature> MultiObjectTracking::getObjects(const cv::Mat &img
     {
         for (size_t i = 0; i < contours.size(); i++)
         {
-            cv::Rect r = cv::boundingRect(contours[i]);
-//            cv::Rect r = cv::minAreaRect(contours[i]);
+            Rect_t r = cv::boundingRect(contours[i]);
+//            Rect_t r = cv::minAreaRect(contours[i]);
 
 
             if (r.width >= m_minObjectSize.width &&

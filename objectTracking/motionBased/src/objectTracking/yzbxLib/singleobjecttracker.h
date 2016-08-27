@@ -13,7 +13,9 @@ public:
     TKalmanFilter KF;
     int track_id;
     std::vector<Point_t> trace;
+    std::vector<Rect_t> rects;
     int skipped_frames;
+    int catch_frames;
     Point_t prediction;
     trackingObjectFeature *feature;
     STATUS status;
