@@ -23,7 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     //    globalDatasetList<<"Multi-CameraTracking"<<"MOT2D2015-Train"<<"MOT2D2015-Test"
     //                    <<"VisualTrackerBenchmark"<<"UserDefine"<<"UrbanTrackerDataset";
 
-    globalDatasetList<<"Multi-CameraTracking"<<"UrbanTrackerDataset";
+    globalDatasetList<<"Multi-CameraTracking"<<"UrbanTrackerDataset"<<"UserDefine";
 
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
@@ -98,6 +98,26 @@ void MainWindow::loadIni(QString filepath)
         Dataset=ui->comboBox_dataset->currentText();
         globalPt.put("General.Dataset",Dataset.toStdString());
         boost::property_tree::ini_parser::write_ini(filepath.toStdString(),globalPt);
+    }
+    else{
+        QString DatasetTxt=QString::fromStdString(globalPt.get<std::string>("General.DatasetTxt"));
+        if(!DatasetTxt.isEmpty()){
+            QString filedata;
+            QFile file;
+            file.setFileName(DatasetTxt);
+            if (!file.open(QFile::ReadOnly | QFile::Text)) {
+                qDebug()<<"cannot open file "<<DatasetTxt;
+                exit(-1);
+            } else {
+                QTextStream in(&file);
+                filedata=in.readAll();
+                globalDatasetList=filedata.split("\n",QString::SkipEmptyParts);
+
+                ui->comboBox_dataset->clear();
+                ui->comboBox_dataset->addItems(globalDatasetList);
+                file.close();
+            }
+        }
     }
 
     assert(Dataset=="Multi-CameraTracking"||Dataset=="UrbanTrackerDataset");
@@ -183,6 +203,11 @@ void MainWindow::loadIni(QString filepath)
         ui->comboBox_video->clear();
         ui->comboBox_video->addItems(globalVideosList);
         ui->comboBox_video->addItem("all");
+    }
+
+    if(!globalInited){
+        QString bgsType=QString::fromStdString(globalPt.get<std::string>("General.BGSType"));
+        ui->comboBox_bgsType->setCurrentText(bgsType);
     }
 
     if(ui->comboBox_replay->currentText()=="record"){
