@@ -66,6 +66,10 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
     if(binaryImage0.channels()==3){
         cv::cvtColor(binaryImage0,binaryImage,CV_BGR2GRAY);
     }
+    else{
+        binaryImage=binaryImage0.clone();
+    }
+
     int morph_size = 2;
     Mat element =cv::getStructuringElement( MORPH_RECT, Size( 2*morph_size + 1, 2*morph_size+1 ),
                                          Point( morph_size, morph_size ) );
