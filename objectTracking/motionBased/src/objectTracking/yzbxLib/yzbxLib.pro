@@ -37,7 +37,9 @@ SOURCES += qyzbxlib.cpp \
     BlobDetector.cpp \
     TrackingResultReplay.cpp \
     HungarianBasedTracking.cpp \
-    GraphBasedTracker.cpp
+    GraphBasedTracker.cpp \
+    BasicGraphClass.cpp \
+    ObjectLocalFeatureMatch.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -65,7 +67,9 @@ HEADERS += qyzbxlib.h\
     BlobDetector.h \
     TrackingResultReplay.h \
     HungarianBasedTracking.h \
-    GraphBasedTracker.h
+    GraphBasedTracker.h \
+    BasicGraphClass.h \
+    ObjectLocalFeatureMatch.h
 
 unix {
     target.path = /usr/lib

@@ -493,6 +493,9 @@ void MainWindow::pureTrackingInit(QString videoFile){
     if(pureTrackingType=="HungarianBasedTracking"){
         pureTracker=new HungarianBasedTracking;
     }
+    else if(pureTrackingType=="GraphBasedTracker"){
+        pureTracker=new GraphBasedTracker;
+    }
     else{
         assert(false);
     }
@@ -561,6 +564,9 @@ void MainWindow::pureTrackingOne(QString videoFile){
         if(!img_fg.empty()){
             pureTracker->tracking(img_input,img_fg);
         }
+        else{
+//            frameNum;
+        }
 
         //3. process event of stop
         QApplication::processEvents();
@@ -586,27 +592,79 @@ void MainWindow::on_pushButton_pureTrackingStop_clicked()
 void MainWindow::on_pushButton_test_clicked()
 {
     qDebug()<<"test";
-    QString video=ui->comboBox_video->currentText();
-    video=globalVideoHome+"/"+video;
-    qDebug()<<"test video "<<video;
+    QString ReplayHome;
+    if(ui->comboBox_replay->currentText()=="record"){
+        ReplayHome=globalRecordHome;
+    }
+    else{
+        ReplayHome=globalAnnotationHome;
+    }
 
-    cv::Mat img_input;
-    int img_channel=3;
-    while(1){
-        frameInput.getNextFrame(video,img_input);
+    QString ReplayFile=ui->comboBox_replayFiles->currentText();
+    int index=ui->comboBox_replayFiles->currentIndex();
+    QString videoFile=globalVideosList[index];
 
-        if(img_input.empty()){
+
+    QString videoFilePath=globalVideoHome+"/"+videoFile;
+    QString replayFilePath=ReplayHome+"/"+ReplayFile;
+
+    VideoCapture cap(videoFilePath.toStdString());
+    assert(cap.isOpened());
+    Mat img_input;
+    cap>>img_input;
+    assert(!img_input.empty());
+    cv::Scalar Colors[] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 255), cv::Scalar(255, 127, 255), cv::Scalar(127, 0, 255), cv::Scalar(127, 0, 127) };
+
+    QFile file(replayFilePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+        return;
+
+    QTextStream in(&file);
+    //object id set
+    std::set<int> idSet;
+    //lastObjectPosVector
+    vector<pair<int,Point_t>> posVector;
+
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        QStringList numstrList=line.split(",",QString::SkipEmptyParts);
+        if(numstrList.size()<6){
+            qDebug()<<"maybe end of file";
             break;
         }
+        int frameNum=numstrList[0].toInt();
+        int objectId=numstrList[1].toInt();
+        Rect_t rect(numstrList[2].toFloat(),numstrList[3].toFloat(),
+                numstrList[4].toFloat(),numstrList[5].toFloat());
+        Point_t pos=(rect.br()+rect.tl());
+        pos.x=pos.x/2.0;
+        pos.y=pos.y/2.0;
 
-        if(img_channel!=img_input.channels()){
-            img_channel=img_input.channels();
-            qDebug()<<"channel changed to "<<img_channel;
+        auto it=idSet.find(objectId);
+        if(it==idSet.end()){
+            idSet.insert(objectId);
+            posVector.push_back(make_pair(objectId,pos));
+        }
+        else{
+            for(auto p=posVector.begin();p!=posVector.end();p++){
+                if(p->first==objectId){
+                    cv::Scalar color=Colors[objectId % 9];
+                    int thickness=1;
+                    cv::line(img_input,p->second,pos,color,thickness);
+
+                    //update pos
+                    p->second=pos;
+                    break;
+                }
+            }
         }
 
-        imshow("img_input",img_input);
-        Rect_t rect(10,100,1000,2000);
-        cv::rectangle(img_input,rect,Scalar(0,0,255),3);
-        cv::waitKey(30);
+        (void)frameNum;
     }
+
+    imshow("trajectory",img_input);
+    cv::waitKey(0);
+
+    cap.release();
+    cv::destroyAllWindows();
 }

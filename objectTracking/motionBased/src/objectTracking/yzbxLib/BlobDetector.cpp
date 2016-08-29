@@ -171,6 +171,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         else{
             of.onBoundary=false;
         }
+
         features.push_back(of);
     }
 }

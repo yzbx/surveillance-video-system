@@ -40,7 +40,7 @@ public:
     }
 
     void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
-private:
+protected:
 
     void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
     void hungarianTracking(vector<trackingObjectFeature> &fv);

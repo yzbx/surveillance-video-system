@@ -10,7 +10,7 @@
 using namespace std;
 class TrackingResultReplay
 {
-public:
+protected:
     class object{
     public:
         object(int a,Rect_t r,int id){

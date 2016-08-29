@@ -46,7 +46,7 @@ void TrackingObjectAssociation::adjecentObjectAssociation(FFIter it, FFIter next
 
 vector<bool> TrackingObjectAssociation::weightFilter(vector<float> weights){
     //1. min~1.2min
-    vector<float> sortedWeights;
+    vector<float> sortedWeights(weights.size());
     std::copy(weights.begin(),weights.end(),sortedWeights.begin());
     std::sort(weights.begin(),weights.end());
 

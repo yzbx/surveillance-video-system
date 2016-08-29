@@ -197,6 +197,11 @@
            <string>HungarianBasedTracking</string>
           </property>
          </item>
+         <item>
+          <property name="text">
+           <string>GraphBasedTracker</string>
+          </property>
+         </item>
         </widget>
        </item>
        <item>
