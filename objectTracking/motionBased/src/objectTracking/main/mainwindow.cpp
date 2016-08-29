@@ -666,15 +666,18 @@ void MainWindow::on_pushButton_test_clicked()
             }
         }
 
-        if(frameNum%10==0){
+        if(frameNum%100==0){
             qDebug()<<"frameNum="<<frameNum<<",objectId="<<objectId;
         }
-        imshow("trajectory",img_input);
-        cv::waitKey(30);
+//        imshow("trajectory",img_input);
+//        cv::waitKey(30);
     }
 
-    imshow("trajectory",img_input);
-    cv::waitKey(0);
+    imshow(ReplayFile.toStdString(),img_input);
+    QString saveFile=ReplayFile;
+    saveFile.replace(".csv",".jpg");
+    imwrite(saveFile.toStdString(),img_input);
+    cv::waitKey(1000);
 
     cap.release();
     cv::destroyAllWindows();
