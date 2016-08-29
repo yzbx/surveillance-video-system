@@ -120,7 +120,7 @@ void MainWindow::loadIni(QString filepath)
         }
     }
 
-    assert(Dataset=="Multi-CameraTracking"||Dataset=="UrbanTrackerDataset");
+    assert(Dataset=="Multi-CameraTracking"||Dataset=="UrbanTrackerDataset"||Dataset=="UserDefine");
 
 
     QString VideoHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoHome"));
@@ -540,6 +540,7 @@ void MainWindow::pureTrackingOne(QString videoFile){
     videoFile=globalVideoHome+"/"+videoFile;
 
     cv::Mat img_before;
+    int FirstFG_frameNum=0;
     while(1){
         //1. get input frame
         cv::Mat img_fg,img_input,img_bg;
@@ -565,7 +566,9 @@ void MainWindow::pureTrackingOne(QString videoFile){
             pureTracker->tracking(img_input,img_fg);
         }
         else{
-//            frameNum;
+            //BUG, we need record the frameNum for the first img_fg!!!
+            FirstFG_frameNum++;
+            pureTracker->FirstFG_frameNum=FirstFG_frameNum;
         }
 
         //3. process event of stop
@@ -609,6 +612,8 @@ void MainWindow::on_pushButton_test_clicked()
     QString replayFilePath=ReplayHome+"/"+ReplayFile;
 
     VideoCapture cap(videoFilePath.toStdString());
+    qDebug()<<"videoFile: "<<videoFilePath;
+    qDebug()<<"ReplayFile: "<<replayFilePath;
     assert(cap.isOpened());
     Mat img_input;
     cap>>img_input;
@@ -616,8 +621,10 @@ void MainWindow::on_pushButton_test_clicked()
     cv::Scalar Colors[] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 255), cv::Scalar(255, 127, 255), cv::Scalar(127, 0, 255), cv::Scalar(127, 0, 127) };
 
     QFile file(replayFilePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text))
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)){
+        qDebug()<<"fail to open file "<<replayFilePath;
         return;
+    }
 
     QTextStream in(&file);
     //object id set
@@ -659,7 +666,11 @@ void MainWindow::on_pushButton_test_clicked()
             }
         }
 
-        (void)frameNum;
+        if(frameNum%10==0){
+            qDebug()<<"frameNum="<<frameNum<<",objectId="<<objectId;
+        }
+        imshow("trajectory",img_input);
+        cv::waitKey(30);
     }
 
     imshow("trajectory",img_input);

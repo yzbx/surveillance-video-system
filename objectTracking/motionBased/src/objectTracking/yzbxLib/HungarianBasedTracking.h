@@ -40,6 +40,7 @@ public:
     }
 
     void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
+    int FirstFG_frameNum=0;
 protected:
 
     void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
@@ -67,14 +68,14 @@ protected:
             QStringList formatList;
             formatList<<"frameNum"<<"track_id"<<"status"
                      <<"predict.x"<<"predict.y"<<"skipped_frames"
-                     <<"pox.x"<<"pos.y"
-                     <<"rect.x"<<"rect.y"<<"rect.width"<<"rect.height"
-                     <<"size"<<"radius"<<"Convexity"<<"Circularity"<<"Inertia";
+                    <<"pox.x"<<"pos.y"
+                   <<"rect.x"<<"rect.y"<<"rect.width"<<"rect.height"
+                  <<"size"<<"radius"<<"Convexity"<<"Circularity"<<"Inertia";
             out<<formatList.join("\t")<<"\n";
         }
         for(uint i;i<tracks.size();i++){
             QString dumpstr=QString::number(frameNum-1)+"\t"+tracks[i]->dump()+"\n";
-//            qDebug()<<"dumpstr="<<dumpstr;
+            //            qDebug()<<"dumpstr="<<dumpstr;
             out<<dumpstr;
         }
         data.close();
@@ -111,10 +112,10 @@ protected:
         for(uint i;i<n;i++){
             QStringList dumpList;
             dumpList<<QString::number(tracks[index]->rects[i].x)<<QString::number(tracks[index]->rects[i].y)<<
-                             QString::number(tracks[index]->rects[i].width)<<QString::number(tracks[index]->rects[i].height);
+                      QString::number(tracks[index]->rects[i].width)<<QString::number(tracks[index]->rects[i].height);
             QString dumpstr=QString::number(frameNum-n+i)+","+QString::number(tracks[index]->track_id)+ \
                     ","+dumpList.join(",")+"\n";
-//            qDebug()<<"dumpstr="<<dumpstr;
+            //            qDebug()<<"dumpstr="<<dumpstr;
             out<<dumpstr;
         }
         data.close();
