@@ -3,6 +3,22 @@
 RectFloatTracker::RectFloatTracker()
 {
     globalChannel=3;
+    maxListLength=2;
+    NextTrackID=0;
+    dt=0.2f;
+    Accel_noise_mag=0.1f;
+
+    //if (Cost[i + assignment[i] * N] > dist_thres)
+    dist_thres = 100;
+
+    maximum_allowed_skipped_frames = 100;
+    max_trace_length=100;
+
+    globalFirstDump=true;
+    globalFirstOutput=true;
+    frameNum=0;
+    outputFileName="out.txt";
+    FirstFG_frameNum=0;
 }
 
 void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
@@ -27,6 +43,10 @@ void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
     }
 
     frameNum++;
+    imageList.push_back(std::make_pair(img_input,img_fg));
+    if(imageList.size()>maxListLength){
+        imageList.pop_front();
+    }
     //start()
     runInSingleThread();
 }
@@ -36,7 +56,14 @@ void RectFloatTracker::runInSingleThread()
     std::vector<trackingObjectFeature> featureVector;
     blobDetector.getBlobFeature(img_input,img_fg,featureVector);
     assignments_t assignment=getHungarainAssignment(featureVector);
-    doAssignment(assignment,featureVector);
+    featureVectorList.push_back(featureVector);
+    if(featureVectorList.size()>maxListLength){
+        featureVectorList.pop_front();
+    }
+    cv::Mat assignmentMat;
+    getLocalFeatureAssignment(assignmentMat);
+    doAssignment(assignment,featureVector,assignmentMat);
+    showing(img_input,img_fg,featureVector);
 }
 
 void RectFloatTracker::run()
@@ -106,9 +133,10 @@ assignments_t RectFloatTracker::getHungarainAssignment(vector<trackingObjectFeat
     return assignment;
 }
 
-void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv){
+void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat assignmentMat){
     assert(assignment.size()==tracks.size());
 
+    std::set<int> oldObjectId;
     // -----------------------------------
     // clean assignment from pairs with large distance
     // -----------------------------------
@@ -117,6 +145,21 @@ void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObje
         if (assignment[i] == -1)
         {
             // If track have no assigned detect, then increment skipped frames counter.
+            if(!assignmentMat.empty()){
+                for(int col=0;col<assignmentMat.cols;col++){
+                    if(assignmentMat.at<uchar>(i,col)>=3){
+                        assignment[i]=-1;
+                        tracks[i]->skipped_frames = 0;
+                        trackingObjectFeature of;
+                        tracks[i]->predict(of);
+                        tracks[i]->Update(of, true, max_trace_length);
+                        //let long merge disppear
+//                        tracks[i]->skipped_frames=0;
+                        oldObjectId.insert(col);
+                        break;
+                    }
+                }
+            }
             tracks[i]->skipped_frames++;
         }
     }
@@ -142,7 +185,12 @@ void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObje
     {
         if (find(assignment.begin(), assignment.end(), i) == assignment.end())
         {
-            tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
+            //not match with the old objects.
+            if(oldObjectId.find(i)==oldObjectId.end()){
+                tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
+            }
+
+            //not in the split of old objects 1->2
         }
     }
 
@@ -170,5 +218,112 @@ void RectFloatTracker::outputAndRemove(uint index){
     //TODO remode node in MergeAndSplitTree
     if(tracks[index]->catch_frames>10){
 
+    }
+}
+
+bool RectFloatTracker::isRectAInRectB(Rect_t A,Rect_t B){
+    Point_t at=A.tl(),ab=A.br();
+    Point_t bt=B.tl(),bb=B.br();
+
+    Point_t dt=at-bt,db=ab-bb;
+    int floatThreshold=10;
+    int T=floatThreshold;
+    if(dt.x>=-T&&db.x<=T&&dt.y>=-T&&db.y<=T){
+        return true;
+    }
+    else{
+        false;
+    }
+}
+
+void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,std::vector<trackingObjectFeature> featureVector){
+    (void)img_fg;
+    cv::Scalar Colors[] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 255), cv::Scalar(255, 127, 255), cv::Scalar(127, 0, 255), cv::Scalar(127, 0, 127) };
+
+    cv::Mat img_tracking=img_input.clone();
+    for (uint i=0;i<featureVector.size();i++)
+    {
+        cv::circle(img_tracking, featureVector[i].pos, 3, cv::Scalar(0, 255, 0), 1, CV_AA);
+    }
+
+    for (uint i = 0; i < tracks.size(); i++)
+    {
+        if (tracks[i]->trace.size() > 1)
+        {
+            for (uint j = 0; j < tracks[i]->trace.size() - 1; j++)
+            {
+                cv::line(img_tracking, tracks[i]->trace[j], tracks[i]->trace[j + 1], Colors[tracks[i]->track_id % 9], 2, CV_AA);
+            }
+        }
+
+        Rect_t r=tracks[i]->feature->rect;
+        cv::rectangle(img_tracking,r,Colors[tracks[i]->track_id % 9]);
+        std::string text;
+        if(tracks[i]->status==NEW_STATUS)   text="new";
+        else if(tracks[i]->status==MISSING_STATUS) text="missing";
+        else if(tracks[i]->status==NORMAL_STATUS) text="normal";
+        else text="error";
+
+        cv::putText(img_tracking, text, r.tl(), FONT_HERSHEY_COMPLEX, 0.5,
+                    cv::Scalar(0,0,255), 2, 8);
+    }
+
+    imshow("img_tracking",img_tracking);
+}
+
+track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1,std::shared_ptr<trackingObjectFeature> of2,ObjectLocalFeatureMatch &matcher){
+    track_t pathWeight=0.0;
+    vector<DMatch> &good_matches=matcher.global_good_matches;
+    for(auto match=good_matches.begin();match!=good_matches.end();match++){
+        assert(match->queryIdx<matcher.global_keypoints_1.size());
+        assert(match->trainIdx<matcher.global_keypoints_2.size());
+        KeyPoint &kp1=matcher.global_keypoints_1[match->queryIdx];
+        KeyPoint &kp2=matcher.global_keypoints_2[match->trainIdx];
+
+        //test KeyPoint's position in trackingObjectFeature's rect
+        if(isPointInRect(kp1.pt,of1->rect)&&isPointInRect(kp2.pt,of2->rect)){
+            pathWeight+=1.0;
+        }
+    }
+    return pathWeight;
+}
+
+void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &assignmentMat){
+    assert(featureVectorList.size()==imageList.size());
+    if(featureVectorList.size()<2){
+        return;
+    }
+
+    int m=featureVectorList.front().size();
+    int n=featureVectorList.back().size();
+    if(m==0||n==0){
+        return;
+    }
+
+    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
+    std::vector<trackingObjectFeature> &fv2=featureVectorList.back();
+    if(!assignmentMat.empty()) assignmentMat.release();
+    assignmentMat.create(m,n,CV_8UC1);
+
+    ObjectLocalFeatureMatch matcher;
+    std::pair<cv::Mat,cv::Mat> &p1=imageList.front();
+    std::pair<cv::Mat,cv::Mat> &p2=imageList.back();
+    matcher.getGoodMatches(p1.first,p1.second,p2.first,p2.second);
+
+    for(int i=0;i<m;i++){
+        for(int j=0;j<n;j++){
+            assignmentMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(fv1[i]),\
+                                                        std::make_shared<trackingObjectFeature>(fv2[j]),matcher);
+        }
+    }
+}
+
+bool RectFloatTracker::isPointInRect(cv::Point2f p, Rect_t rect)
+{
+    if(p.x>rect.x&&p.x>rect.y&&p.x<rect.x+rect.width&&p.y<rect.y+rect.height){
+        return true;
+    }
+    else{
+        return false;
     }
 }

@@ -22,7 +22,7 @@ public:
         assert(img1.channels()==3&&img2.channels()==3);
         assert(mask1.type()==CV_8UC1&&mask2.type()==CV_8UC1);
 
-        Ptr<FeatureDetector> detector=FeatureDetector::create("FAST");
+        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
 //        detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 5000, 10000, 10);
         vector<KeyPoint> keypoints_1,keypoints_2;
 
@@ -32,10 +32,10 @@ public:
             return;
         }
 
-        cv::initModule_contrib();
-        cv::initModule_features2d();
+//        cv::initModule_contrib();
+//        cv::initModule_features2d();
         Mat descriptors_1, descriptors_2;
-        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SURF");
+        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("BRISK");
         assert(!extractor.empty());
 
         Mat gray1,gray2;
@@ -56,7 +56,7 @@ public:
 
         //img1-->img2
         vector< vector<DMatch> > matches;
-        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce");
+        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
         matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
 
         //look whether the match is inside a defined area of the image

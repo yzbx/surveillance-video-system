@@ -103,3 +103,19 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
 
     trace.push_back(prediction);
 }
+
+void singleObjectTracker::predict(trackingObjectFeature &of){
+    of.Circularity=this->feature->Circularity;
+    of.Convexity=this->feature->Convexity;
+    of.Inertia=feature->Inertia;
+    of.onBoundary=feature->onBoundary;
+    of.pos=KF.GetPrediction();
+    Rect_t r=feature->rect;
+    Point_t dif=(2*of.pos-(r.br()+r.tl()));
+    dif.x*=0.5f;
+    dif.y*=0.5f;
+    Point_t tl=r.tl()+dif;
+    of.rect=Rect_t(tl.x,tl.y,r.width,r.height);
+    of.radius=feature->radius;
+    of.size=feature->size;
+}

@@ -34,6 +34,7 @@ public:
               <<feature->dump();
         return dumpstrs.join("\t");
     }
+    void predict(trackingObjectFeature &of);
 };
 
 #endif // SINGLEOBJECTTRACKER_H

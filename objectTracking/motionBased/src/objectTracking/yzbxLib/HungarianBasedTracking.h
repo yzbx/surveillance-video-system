@@ -23,7 +23,7 @@ public:
         //if (Cost[i + assignment[i] * N] > dist_thres)
         dist_thres = 100;
 
-        maximum_allowed_skipped_frames = 10;
+        maximum_allowed_skipped_frames = 100;
         max_trace_length=100;
 
         globalFirstDump=true;

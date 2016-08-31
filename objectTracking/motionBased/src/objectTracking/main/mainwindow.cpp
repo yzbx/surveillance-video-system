@@ -816,7 +816,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
     QString videoFilePath=globalVideoHome+"/"+videoFile;
     QString bgsType=ui->comboBox_vibe->currentText();
 
-    HungarianBasedTracking tracker;
+    RectFloatTracker tracker;
     QFileInfo info(videoFile);
     QString suffix=info.suffix();
     QString dumpFileName=videoFile;
@@ -850,7 +850,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
 
             cv::waitKey(30);
             frameNum++;
-            if(frameNum%100==0){
+            if(frameNum%10==0){
                 qDebug()<<"frameNum="<<frameNum;
             }
         }
@@ -876,7 +876,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
             yzbxlib::showImageInWindow("img_fg",img_fg);
             cv::waitKey(30);
             frameNum++;
-            if(frameNum%100==0){
+            if(frameNum%10==0){
                 qDebug()<<"frameNum="<<frameNum;
             }
         }

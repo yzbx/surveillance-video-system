@@ -11,6 +11,7 @@
 #include "TrackingResultReplay.h"
 #include "HungarianBasedTracking.h"
 #include "GraphBasedTracker.h"
+#include "RectFloatTracker.h"
 #include <assert.h>
 #include "../extern/csv.h"
 #include <boost/lexical_cast.hpp>

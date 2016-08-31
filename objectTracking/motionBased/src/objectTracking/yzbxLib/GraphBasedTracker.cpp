@@ -24,8 +24,8 @@ void GraphBasedTracker::tracking(const Mat &img_input, const Mat &img_fg)
     featureGraph.addFeatureVector(featureVector,frameNum);
     featureGraph.maintainGraphSize(maxlistLength);
 
-    qDebug()<<"imageList.size()="<<imageList.size();
-    qDebug()<<"featureGraph.size()="<<featureGraph.size();
+//    qDebug()<<"imageList.size()="<<imageList.size();
+//    qDebug()<<"featureGraph.size()="<<featureGraph.size();
     assert(imageList.size()==featureGraph.size());
     assert(featureGraph.size()==featureGraph.graph.size());
     //if img_input donot contain foreground, empty featureVector need be allowed
@@ -220,7 +220,7 @@ vector<vector<std::shared_ptr<BasicGraphNode>>> GraphBasedTracker::findMaximumWe
     return maxWeightPaths;
 }
 
-inline bool isPointInRect(cv::Point2f p, Rect_t rect)
+bool GraphBasedTracker::isPointInRect(cv::Point2f p, Rect_t rect)
 {
     if(p.x>rect.x&&p.x>rect.y&&p.x<rect.x+rect.width&&p.y<rect.y+rect.height){
         return true;
