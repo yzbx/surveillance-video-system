@@ -595,6 +595,66 @@ void MainWindow::on_pushButton_pureTrackingStop_clicked()
 void MainWindow::on_pushButton_test_clicked()
 {
     qDebug()<<"test";
+    QString videoFile=globalVideoHome+"/"+ui->comboBox_video->currentText();
+    VideoCapture cap(videoFile.toStdString());
+    assert(cap.isOpened());
+    Mat img_pre;
+    while(1){
+        Mat img_input;
+        cap>>img_input;
+        if(img_input.empty()){
+            break;
+        }
+
+        if(img_pre.empty()){
+            img_pre=img_input;
+            continue;
+        }
+        Mat img1=img_pre;
+        Mat img2=img_input;
+
+        //        Ptr<FeatureDetector> detector=FeatureDetector::create("FAST");
+        int minFeatureNum=50;
+        int maxFeatureNum=1000;
+        int maxIters=10;
+        Ptr<FeatureDetector> detector=new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), minFeatureNum, maxFeatureNum, maxIters);
+        //        detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 5000, 10000, 10);
+        vector<KeyPoint> keypoints_1,keypoints_2;
+
+        detector->detect(img1, keypoints_1);
+        detector->detect(img2, keypoints_2);
+        if(keypoints_1.empty()||keypoints_2.empty()){
+            return;
+        }
+
+        //        cv::initModule_contrib();
+        //        cv::initModule_features2d();
+        Mat descriptors_1, descriptors_2;
+        Ptr<DescriptorExtractor> extractor = new SurfDescriptorExtractor;
+        //        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SURF");
+        assert(!extractor.empty());
+
+        Mat gray1,gray2;
+        if(img1.channels()==3){
+            cvtColor(img1,gray1,CV_BGR2GRAY);
+            cvtColor(img2,gray2,CV_BGR2GRAY);
+        }
+        else{
+            gray1=img1;
+            gray2=img2;
+        }
+        imshow("gray1",gray1);
+        imshow("gray2",gray2);
+        qDebug()<<"keypoints_1: "<<keypoints_1.size();
+        qDebug()<<"keypoints_2: "<<keypoints_2.size();
+        extractor->compute( gray1, keypoints_1, descriptors_1 );
+        extractor->compute( gray2, keypoints_2, descriptors_2 );
+
+        waitKey(30);
+    }
+}
+
+void MainWindow::convertCsvToImage(){
     QString ReplayHome;
     if(ui->comboBox_replay->currentText()=="record"){
         ReplayHome=globalRecordHome;
@@ -669,8 +729,8 @@ void MainWindow::on_pushButton_test_clicked()
         if(frameNum%100==0){
             qDebug()<<"frameNum="<<frameNum<<",objectId="<<objectId;
         }
-//        imshow("trajectory",img_input);
-//        cv::waitKey(30);
+        //        imshow("trajectory",img_input);
+        //        cv::waitKey(30);
     }
 
     imshow(ReplayFile.toStdString(),img_input);
@@ -681,4 +741,147 @@ void MainWindow::on_pushButton_test_clicked()
 
     cap.release();
     cv::destroyAllWindows();
+}
+
+void MainWindow::on_pushButton_vibe_clicked()
+{
+    QString videoFile=ui->comboBox_video->currentText();
+    QString videoFilePath=globalVideoHome+"/"+videoFile;
+    QString bgsType=ui->comboBox_vibe->currentText();
+    if(bgsType=="VIBE"){
+        vibe::VIBE bgs(3);
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            if(frameNum==0){
+                bgs.init(img_input);
+            }
+            else{
+                bgs.update(img_input);
+                img_fg=bgs.getMask();
+                cv::medianBlur(img_fg, img_fg, 5);
+                yzbxlib::showImageInWindow("img_input",img_input);
+                yzbxlib::showImageInWindow("img_fg",img_fg);
+            }
+
+            cv::waitKey(30);
+            frameNum++;
+            if(frameNum%100==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
+    else if(bgsType=="PBAS"){
+        PBAS bgs;
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            bgs.process(&img_input, &img_fg);
+            cv::medianBlur(img_fg, img_fg, 5);
+            yzbxlib::showImageInWindow("img_input",img_input);
+            yzbxlib::showImageInWindow("img_fg",img_fg);
+            cv::waitKey(30);
+            frameNum++;
+            if(frameNum%100==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
+    else{
+        assert(false);
+    }
+}
+
+void MainWindow::on_pushButton_vibeBasedTracking_clicked()
+{
+    QString videoFile=ui->comboBox_video->currentText();
+    QString videoFilePath=globalVideoHome+"/"+videoFile;
+    QString bgsType=ui->comboBox_vibe->currentText();
+
+    HungarianBasedTracking tracker;
+    QFileInfo info(videoFile);
+    QString suffix=info.suffix();
+    QString dumpFileName=videoFile;
+    dumpFileName.replace(suffix,"txt");
+    tracker.init(dumpFileName);
+    if(bgsType=="VIBE"){
+        vibe::VIBE bgs(3);
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            if(frameNum==0){
+                bgs.init(img_input);
+            }
+            else{
+                bgs.update(img_input);
+                img_fg=bgs.getMask();
+                cv::medianBlur(img_fg, img_fg, 5);
+                yzbxlib::showImageInWindow("img_input",img_input);
+                yzbxlib::showImageInWindow("img_fg",img_fg);
+                tracker.tracking(img_input,img_fg);
+            }
+
+            cv::waitKey(30);
+            frameNum++;
+            if(frameNum%100==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
+    else if(bgsType=="PBAS"){
+        PBAS bgs;
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            bgs.process(&img_input, &img_fg);
+            cv::medianBlur(img_fg, img_fg, 5);
+            tracker.tracking(img_input,img_fg);
+            yzbxlib::showImageInWindow("img_input",img_input);
+            yzbxlib::showImageInWindow("img_fg",img_fg);
+            cv::waitKey(30);
+            frameNum++;
+            if(frameNum%100==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
+    else{
+        assert(false);
+    }
 }

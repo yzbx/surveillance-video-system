@@ -30,6 +30,7 @@ public:
         globalFirstOutput=true;
         frameNum=0;
         outputFileName="out.txt";
+        FirstFG_frameNum=0;
     }
 
     void init(QString dumpFileName){
@@ -39,15 +40,11 @@ public:
         frameNum=0;
     }
 
-    void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
-    int FirstFG_frameNum=0;
-protected:
+    virtual void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
+    int FirstFG_frameNum;
 
-    void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
+private:
     void hungarianTracking(vector<trackingObjectFeature> &fv);
-    void run();
-
-    BlobDetector blobDetector;
     void dump(){
         QFile data(outputFileName);
         if(globalFirstDump){
@@ -121,6 +118,11 @@ protected:
         data.close();
         globalFirstOutput=false;
     }
+protected:
+    void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
+    void run();
+
+    BlobDetector blobDetector;
 
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;
 

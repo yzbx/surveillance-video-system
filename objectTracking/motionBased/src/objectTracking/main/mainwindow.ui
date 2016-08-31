@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>641</width>
-    <height>405</height>
+    <width>627</width>
+    <height>428</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -259,8 +259,8 @@
    <widget class="QPushButton" name="pushButton_globalStop">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>300</y>
+      <x>450</x>
+      <y>310</y>
       <width>161</width>
       <height>41</height>
      </rect>
@@ -272,8 +272,8 @@
    <widget class="QPushButton" name="pushButton_test">
     <property name="geometry">
      <rect>
-      <x>80</x>
-      <y>310</y>
+      <x>330</x>
+      <y>320</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -282,13 +282,60 @@
      <string>test</string>
     </property>
    </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>320</y>
+      <width>289</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_8">
+     <item>
+      <widget class="QLabel" name="label_8">
+       <property name="text">
+        <string>VIBE</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBox_vibe">
+       <item>
+        <property name="text">
+         <string>PBAS</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>VIBE</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_vibe">
+       <property name="text">
+        <string>run bgs</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="pushButton_vibeBasedTracking">
+       <property name="text">
+        <string>run tracking</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>641</width>
+     <width>627</width>
      <height>22</height>
     </rect>
    </property>

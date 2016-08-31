@@ -7,7 +7,7 @@ CONFIG +=c++14
 QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3"
 QMAKE_LFLAGS +="-lgcov --coverage"
 
-QT       += widgets sql
+QT       += widgets sql svg
 
 TARGET = yzbxLib
 TEMPLATE = lib
@@ -39,7 +39,10 @@ SOURCES += qyzbxlib.cpp \
     HungarianBasedTracking.cpp \
     GraphBasedTracker.cpp \
     BasicGraphClass.cpp \
-    ObjectLocalFeatureMatch.cpp
+    ObjectLocalFeatureMatch.cpp \
+    RectFloatTracker.cpp \
+    ../extern/vibe/vibe.cpp \
+    ../extern/vibe/PBAS.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -69,7 +72,10 @@ HEADERS += qyzbxlib.h\
     HungarianBasedTracking.h \
     GraphBasedTracker.h \
     BasicGraphClass.h \
-    ObjectLocalFeatureMatch.h
+    ObjectLocalFeatureMatch.h \
+    RectFloatTracker.h \
+    ../extern/vibe/vibe.hpp \
+    ../extern/vibe/PBAS.h
 
 unix {
     target.path = /usr/lib

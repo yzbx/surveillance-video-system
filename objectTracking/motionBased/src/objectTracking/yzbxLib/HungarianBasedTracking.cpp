@@ -2,7 +2,7 @@
 
 void HungarianBasedTracking::run(){
     std::vector<trackingObjectFeature> featureVector;
-    blobDetector.getBlobFeature(img_fg,img_fg,featureVector);
+    blobDetector.getBlobFeature(img_input,img_fg,featureVector);
     hungarianTracking(featureVector);
     dump();
     showing(img_input,img_fg,featureVector);

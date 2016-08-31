@@ -14,11 +14,17 @@
 #include <assert.h>
 #include "../extern/csv.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/any.hpp>
+#include <opencv2/nonfree/features2d.hpp>
+#include <opencv2/nonfree/nonfree.hpp>
+#include "../extern/vibe/vibe.hpp"
+#include "../extern/vibe/PBAS.h"
 
 namespace yzbxlib
 {
 QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
 bool isSameImage(const cv::Mat &A_8U,const cv::Mat &B_8U);
+void showImageInWindow(string windowName,const cv::Mat &img);
 }
 
 class YZBXLIBSHARED_EXPORT QYzbxLib

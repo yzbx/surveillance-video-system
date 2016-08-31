@@ -53,4 +53,10 @@ bool isSameImage(const Mat &A_8U, const Mat &B_8U)
     return false;
 }
 
+void showImageInWindow(string windowName, const Mat &img)
+{
+    cv::namedWindow(windowName,WINDOW_NORMAL);
+    cv::imshow(windowName,img);
+}
+
 }

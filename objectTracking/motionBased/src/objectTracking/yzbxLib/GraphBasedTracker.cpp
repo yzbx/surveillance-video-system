@@ -4,24 +4,30 @@ void GraphBasedTracker::tracking(const Mat &img_input, const Mat &img_fg)
 {
     assert(!img_input.empty());
     assert(!img_fg.empty());
+    this->img_input=img_input.clone();
+    if(img_fg.channels()==3){
+        cvtColor(img_fg,this->img_fg,CV_BGR2GRAY);
+    }
+    else{
+        this->img_fg=img_fg.clone();
+    }
+
+//    start();
+    //run in the same thread
     imageList.push_back(std::make_pair(img_input,img_fg));
     if(imageList.size()>maxlistLength){
-        imageList.pop_front();
+        imageList.erase(imageList.begin());
     }
-    this->img_input=img_input;
-    this->img_fg=img_fg;
-    frameNum++;
-    start();
-}
 
-void GraphBasedTracker::run()
-{
     std::vector<trackingObjectFeature> featureVector;
     blobDetector.getBlobFeature(img_fg,img_fg,featureVector);
     featureGraph.addFeatureVector(featureVector,frameNum);
     featureGraph.maintainGraphSize(maxlistLength);
 
+    qDebug()<<"imageList.size()="<<imageList.size();
+    qDebug()<<"featureGraph.size()="<<featureGraph.size();
     assert(imageList.size()==featureGraph.size());
+    assert(featureGraph.size()==featureGraph.graph.size());
     //if img_input donot contain foreground, empty featureVector need be allowed
     //deal with the miss/disappear
     if(featureGraph.size()>=2){
@@ -29,8 +35,43 @@ void GraphBasedTracker::run()
         showing(img_input,img_fg,featureVector);
     }
     else{
+        qDebug()<<"frameNum="<<frameNum;
         assert(frameNum==0);
     }
+
+    featureGraph.showTrackingDiagram();
+    frameNum++;
+}
+
+void GraphBasedTracker::run()
+{
+    imageList.push_back(std::make_pair(img_input,img_fg));
+    if(imageList.size()>maxlistLength){
+        imageList.erase(imageList.begin());
+    }
+
+    std::vector<trackingObjectFeature> featureVector;
+    blobDetector.getBlobFeature(img_fg,img_fg,featureVector);
+    featureGraph.addFeatureVector(featureVector,frameNum);
+    featureGraph.maintainGraphSize(maxlistLength);
+
+    qDebug()<<"imageList.size()="<<imageList.size();
+    qDebug()<<"featureGraph.size()="<<featureGraph.size();
+    assert(imageList.size()==featureGraph.size());
+    assert(featureGraph.size()==featureGraph.graph.size());
+    //if img_input donot contain foreground, empty featureVector need be allowed
+    //deal with the miss/disappear
+    if(featureGraph.size()>=2){
+        GraphBasedTracking();
+        showing(img_input,img_fg,featureVector);
+    }
+    else{
+        qDebug()<<"frameNum="<<frameNum;
+        assert(frameNum==0);
+    }
+
+    featureGraph.showTrackingDiagram();
+    frameNum++;
 }
 
 void GraphBasedTracker::GraphBasedTracking(){
@@ -61,7 +102,7 @@ void GraphBasedTracker::updateGraphAssociation(){
         }
 
         if(weights.size()<2){
-            if(weights[0]<dist_thres){
+            if(weights.size()==1&&weights[0]<dist_thres){
                 //std::vector<std::pair<BasicGraphPos,track_t>> edges;
                 auto edge=std::make_pair(posVector[0],weights[0]);
                 node2->edges.push_back(edge);
@@ -100,7 +141,10 @@ vector<vector<std::shared_ptr<BasicGraphNode>>> GraphBasedTracker::findMaximumWe
     //generate paths
     PathsForAllNodes paths;
     featureGraph.getPaths(paths);
-
+    if(paths.empty()){
+        vector<Path> a;
+        return a;
+    }
     //dump paths
     QString filterName="paths.txt";
     QFile data(filterName);
@@ -166,9 +210,11 @@ vector<vector<std::shared_ptr<BasicGraphNode>>> GraphBasedTracker::findMaximumWe
             }
             pathWeights.push_back(weight);
         }
-        auto maxIt=std::max_element(pathWeights.begin(),pathWeights.end());
-        maxWeightPaths.push_back((*nodePaths)[maxIt-pathWeights.begin()]);
-        assert(maxWeightPaths.back().size()==(*nodePaths)[maxIt-pathWeights.begin()].size());
+        if(!pathWeights.empty()){
+            auto maxIt=std::max_element(pathWeights.begin(),pathWeights.end());
+            maxWeightPaths.push_back((*nodePaths)[maxIt-pathWeights.begin()]);
+            assert(maxWeightPaths.back().size()==(*nodePaths)[maxIt-pathWeights.begin()].size());
+        }
     }
 
     return maxWeightPaths;

@@ -5,6 +5,7 @@
 #include "trackingobjectfeature.h"
 #include <iostream>
 #include <memory>
+#include <QtSvg/QtSvg>
 using namespace  std;
 class BasicGraphPos{
 public:
@@ -34,6 +35,7 @@ public:
     typedef vector<std::shared_ptr<BasicGraphNode>> Path;
     typedef vector<Path> PathsForOneNode;
     typedef vector<PathsForOneNode> PathsForAllNodes;
+    typedef vector<BasicGraphNode> NodeInOneFrame;
     BasicGraphClass();
     std::list<std::vector<BasicGraphNode>> graph;
     int NextTrackId=0;
@@ -150,6 +152,71 @@ public:
         }
     }
 
+    void showTrackingDiagram(){
+        QString outFile="out.dot";
+        QFile file(outFile);
+        if(!file.open(QIODevice::WriteOnly|QIODevice::Truncate|QIODevice::Text)){
+            assert(false);
+        }
+        QTextStream in(&file);
+        in<<"digraph main{\n";
+
+        int index=0;
+        QStringList edgeStrList;
+        QString rankSame="{rank=same;";
+        for(auto nodeInOneFrame=graph.begin();nodeInOneFrame!=graph.end();nodeInOneFrame++){
+            in<<"subgraph cluster_"<<QString::number(index)<<"{\n";
+            in<<"edge[dir=none]\n";
+            int blob_id=0;
+            for(auto node=nodeInOneFrame->begin();node!=nodeInOneFrame->end();node++){
+                QString node1="Node"+QString::number(index)+"_Blob"+QString::number(node->graph_pos.blob_id);
+                assert(blob_id==node->graph_pos.blob_id);
+
+                if(!node->edges.empty()){
+                    for(auto edge=node->edges.begin();edge!=node->edges.end();edge++){
+                        QString node2="Node"+QString::number(index+1)+"_Blob"+QString::number(edge->first.blob_id);
+                        edgeStrList<<node1<<"->"<<node2<<"[label="<<QString::number(edge->second)<<"]\n";
+                    }
+                }
+
+                auto nextNode=std::next(node,1);
+                if(nextNode!=nodeInOneFrame->end()){
+                    QString node2="Node"+QString::number(index)+"_Blob"+QString::number(nextNode->graph_pos.blob_id);
+                    assert(blob_id+1==nextNode->graph_pos.blob_id);
+                    in<<node1<<"->"<<node2<<"\n";
+                }
+
+                if(node==nodeInOneFrame->begin()){
+                    rankSame+=node1;
+                    auto nodeInNextFrame=std::next(nodeInOneFrame,1);
+                    if(nodeInNextFrame!=graph.end()){
+                        rankSame+=",";
+                    }
+                    else{
+                        rankSame+="}";
+                    }
+                }
+                blob_id++;
+            }
+            in<<"}\n";
+            index++;
+        }
+
+        for(int i=0;i<edgeStrList.size();i++){
+            in<<edgeStrList[i];
+        }
+
+        in<<rankSame<<"\n";
+        in<<"}\n";
+
+        file.close();
+
+        system("dot -Tsvg out.dot -oout.svg");
+        QString svgFile="out.svg";
+        svgwidget.load(svgFile);
+        svgwidget.show();
+    }
+    QSvgWidget svgwidget;
 };
 
 #endif // BASICGRAPHCLASS_H

@@ -19,6 +19,8 @@ public:
     Point_t prediction;
     trackingObjectFeature *feature;
     STATUS status;
+    Point_t bornPos;
+    int bornFrameNum;
 
     track_t CalcDist(trackingObjectFeature &of);
     void Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length);

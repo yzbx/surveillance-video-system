@@ -31,6 +31,7 @@ public:
 
     void pureTrackingInit(QString videoFile);
     void pureTrackingOne(QString videoFile);
+    void convertCsvToImage();
 private slots:
     void on_pushButton_inputPath_clicked();
 
@@ -61,6 +62,10 @@ private slots:
     void on_pushButton_pureTrackingStop_clicked();
 
     void on_pushButton_test_clicked();
+
+    void on_pushButton_vibe_clicked();
+
+    void on_pushButton_vibeBasedTracking_clicked();
 
 private:
     Ui::MainWindow *ui;

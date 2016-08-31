@@ -101,7 +101,7 @@ void yzbx_lbp(const Mat &input, Mat &output,int lbp_operator){
     Mat lbpMat;
     switch(lbp_operator) {
     case LBP8UC1:
-        //TODO
+        //TODO other LBP
         radius=1;
         neighbors=8;
         lbp::OLBP(dst, lbpMat); // use the original operator

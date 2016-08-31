@@ -33,6 +33,7 @@ public:
         globalFirstOutput=true;
         frameNum=0;
         outputFileName="out.txt";
+        FirstFG_frameNum=0;
     }
 
     void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
