@@ -9,8 +9,16 @@
 #include <QString>
 #include <QStringList>
 #include <fstream>
-#include <QDebug>
-#include <QSettings>
+#include <QtCore>
+
+namespace yzbxlib
+{
+QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
+bool isSameImage(const cv::Mat &A_8U,const cv::Mat &B_8U);
+void showImageInWindow(string windowName,const cv::Mat &img);
+void moveWindows(std::vector<std::string> &windowNames, int colNum=4);
+}
+
 //set qt sync with file.
 
 #define yzbx_match_BF 0

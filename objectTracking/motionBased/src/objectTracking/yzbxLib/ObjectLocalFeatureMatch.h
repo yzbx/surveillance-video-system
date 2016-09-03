@@ -4,6 +4,7 @@
 //that's to see, the pathWeights for GraphBasedTracker
 
 #include "yzbx_config.h"
+#include "yzbx_utility.h"
 #include <opencv2/opencv.hpp>
 #include <opencv2/features2d/features2d.hpp>
 #include <QtCore>
@@ -19,6 +20,8 @@ public:
     }
 
     void getGoodMatches(const cv::Mat &img1,const cv::Mat &mask1,const cv::Mat &img2,const cv::Mat &mask2){
+        std::cout<<"image type: "<<getImgType(mask1.type())<<std::endl;
+        std::cout<<"image type: "<<getImgType(mask2.type())<<std::endl;
         assert(img1.channels()==3&&img2.channels()==3);
         assert(mask1.type()==CV_8UC1&&mask2.type()==CV_8UC1);
 

@@ -805,6 +805,32 @@ void MainWindow::on_pushButton_vibe_clicked()
             }
         }
     }
+    else if(bgsType=="SJN_MultiCueBGS"){
+        bgsFactory_yzbx fac;
+        IBGS *ibgs=fac.getBgsAlgorithm(bgsType);
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            ibgs->process(img_input, img_fg,img_bg);
+            cv::medianBlur(img_fg, img_fg, 5);
+            yzbxlib::showImageInWindow("img_input",img_input);
+            yzbxlib::showImageInWindow("img_fg",img_fg);
+            cv::waitKey(30);
+            frameNum++;
+            if(frameNum%100==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
     else{
         assert(false);
     }
@@ -877,6 +903,42 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
             cv::waitKey(30);
             frameNum++;
             if(frameNum%10==0){
+                qDebug()<<"frameNum="<<frameNum;
+            }
+        }
+    }
+    else if(bgsType=="SJN_MultiCueBGS"){
+        cv::namedWindow("MultiCueBGS FG",WINDOW_NORMAL);
+        vector<string> strs;
+        strs.push_back("MultiCue BGS FG");
+        strs.push_back("img_tracking");
+        strs.push_back("img_input");
+        strs.push_back("img_fg");
+        strs.push_back("binaryImage");
+        yzbxlib::moveWindows(strs);
+
+        bgsFactory_yzbx fac;
+        IBGS *bgs=fac.getBgsAlgorithm(bgsType);
+        VideoCapture cap(videoFilePath.toStdString());
+        assert(cap.isOpened());
+        cv::Mat img_input,img_fg,img_bg;
+        int frameNum=0;
+        while(1){
+            cap>>img_input;
+            if(img_input.empty()){
+                break;
+            }
+
+            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
+
+            bgs->process(img_input, img_fg,img_bg);
+            cv::medianBlur(img_fg, img_fg, 5);
+            tracker.tracking(img_input,img_fg);
+            yzbxlib::showImageInWindow("img_input",img_input);
+            yzbxlib::showImageInWindow("img_fg",img_fg);
+            cv::waitKey(0);
+            frameNum++;
+            if(frameNum%1==0){
                 qDebug()<<"frameNum="<<frameNum;
             }
         }

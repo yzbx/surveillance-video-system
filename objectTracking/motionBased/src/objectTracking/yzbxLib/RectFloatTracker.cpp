@@ -43,7 +43,7 @@ void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
     }
 
     frameNum++;
-    imageList.push_back(std::make_pair(img_input,img_fg));
+    imageList.push_back(std::make_pair(this->img_input,this->img_fg));
     if(imageList.size()>maxListLength){
         imageList.pop_front();
     }
@@ -232,7 +232,7 @@ bool RectFloatTracker::isRectAInRectB(Rect_t A,Rect_t B){
         return true;
     }
     else{
-        false;
+        return false;
     }
 }
 
@@ -248,6 +248,8 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
 
     for (uint i = 0; i < tracks.size(); i++)
     {
+        // void polylines(InputOutputArray img, InputArrayOfArrays pts, bool isClosed, const Scalar& color, int thickness=1, int lineType=8, int shift=0 )
+//        cv::polylines(img_tracking,tracks[i]->trace,false,Colors[tracks[i]->track_id %9],2,CV_AA);
         if (tracks[i]->trace.size() > 1)
         {
             for (uint j = 0; j < tracks[i]->trace.size() - 1; j++)
@@ -264,11 +266,16 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
         else if(tracks[i]->status==NORMAL_STATUS) text="normal";
         else text="error";
 
+        std::string numstr=boost::lexical_cast<string>(tracks[i]->track_id);
+        text=numstr+" : "+text;
+
+
         cv::putText(img_tracking, text, r.tl(), FONT_HERSHEY_COMPLEX, 0.5,
                     cv::Scalar(0,0,255), 2, 8);
     }
 
-    imshow("img_tracking",img_tracking);
+    cv::namedWindow("img_tracking",WINDOW_NORMAL);
+    cv::imshow("img_tracking",img_tracking);
 }
 
 track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1,std::shared_ptr<trackingObjectFeature> of2,ObjectLocalFeatureMatch &matcher){

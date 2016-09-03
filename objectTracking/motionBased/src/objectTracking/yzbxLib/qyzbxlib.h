@@ -21,12 +21,6 @@
 #include "../extern/vibe/vibe.hpp"
 #include "../extern/vibe/PBAS.h"
 
-namespace yzbxlib
-{
-QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
-bool isSameImage(const cv::Mat &A_8U,const cv::Mat &B_8U);
-void showImageInWindow(string windowName,const cv::Mat &img);
-}
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

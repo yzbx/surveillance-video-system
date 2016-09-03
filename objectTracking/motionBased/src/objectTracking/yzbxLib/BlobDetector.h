@@ -3,6 +3,8 @@
 #include <opencv2/opencv.hpp>
 #include "trackingobjectfeature.h"
 #include "yzbx_utility.h"
+//#include "qyzbxlib.h"
+
 using namespace cv;
 class BlobDetector
 {

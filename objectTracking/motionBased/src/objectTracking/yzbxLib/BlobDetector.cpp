@@ -76,7 +76,8 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
     yzbx_imfill(binaryImage);
 
     cv::morphologyEx(binaryImage, binaryImage, MORPH_OPEN, element);
-    imshow("binaryImage",binaryImage);
+    cv::namedWindow("binaryImage",WINDOW_NORMAL);
+    cv::imshow("binaryImage",binaryImage);
 
     std::vector < std::vector<Point> > contours;
     Mat tmpBinaryImage = binaryImage.clone();

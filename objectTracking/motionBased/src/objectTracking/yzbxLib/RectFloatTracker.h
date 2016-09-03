@@ -2,6 +2,7 @@
 #define RECTFLOATTRACKER_H
 #include "HungarianBasedTracking.h"
 #include "ObjectLocalFeatureMatch.h"
+#include <boost/lexical_cast.hpp>
 
 class RectFloatTracker : public HungarianBasedTracking
 {
