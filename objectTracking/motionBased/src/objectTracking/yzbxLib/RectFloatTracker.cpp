@@ -21,6 +21,120 @@ RectFloatTracker::RectFloatTracker()
     FirstFG_frameNum=0;
 }
 
+void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<trackingObjectFeature> &fv)
+{
+    imageList.push_back(std::make_pair(img_input,img_fg));
+    if(imageList.size()>maxListLength){
+        imageList.pop_front();
+    }
+    featureVectorList.push_back(fv);
+    if(featureVectorList.size()>maxListLength){
+        featureVectorList.pop_front();
+    }
+
+    assignments_t assignment;
+    getHungarainAssignment(assignment);
+    showAssignment(assignment,fv);
+
+    std::cout<<"assignment= ";
+    for(auto it=assignment.begin();it!=assignment.end();it++){
+        std::cout<<*it<<" ,";
+    }
+    std::cout<<std::endl;
+
+    cv::Mat assignmentMat;
+    getLocalFeatureAssignment(assignmentMat);
+    std::cout << "assignmentMat = "<< std::endl << " "  << assignmentMat << std::endl << std::endl;
+
+    doAssignment(assignment,fv,assignmentMat);
+    showing(img_input,img_fg,fv);
+}
+
+void RectFloatTracker::getHungarainAssignment(assignments_t &assignment){
+    bool emptyBlobs;
+
+    if(featureVectorList.empty()){
+        emptyBlobs=true;
+    }
+    else
+    {
+        vector<trackingObjectFeature> &fv=featureVectorList.back();
+        if(fv.empty()){
+            emptyBlobs=true;
+        }
+        else{
+            emptyBlobs=false;
+        }
+    }
+
+    bool emptyObjects;
+    if(tracks.empty()){
+        emptyObjects=true;
+    }
+    else{
+        emptyObjects=false;
+    }
+
+    if(!assignment.empty()){
+        assignment.clear();
+    }
+
+    if(emptyBlobs&&emptyObjects){
+        qDebug()<<"empyt blobs and objects";
+    }
+    else if(emptyBlobs){
+        //update missed objects
+
+        for(size_t i=0;i<tracks.size();i++){
+            assignment.push_back(-1);
+        }
+    }
+    else if(emptyObjects){
+        //init objects
+        vector<trackingObjectFeature> &fv=featureVectorList.back();
+        for (size_t i = 0; i < fv.size(); ++i)
+        {
+            tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
+            assignment.push_back(i);
+        }
+    }
+    else{
+        vector<trackingObjectFeature> &fv=featureVectorList.back();
+        size_t N = tracks.size();
+        size_t M = fv.size();
+
+        distMatrix_t Cost(N * M);
+
+        for (size_t i = 0; i < tracks.size(); i++)
+        {
+            for (size_t j = 0; j < fv.size(); j++)
+            {
+                Cost[i + j * N] = tracks[i]->CalcDist(fv[j]);
+            }
+        }
+
+        qDebug()<<"Cost =";
+        yzbxlib::dumpVector(Cost);
+        qDebug()<<"dist_thres="<<dist_thres;
+
+        // -----------------------------------
+        // Solving assignment problem (tracks and predictions of Kalman filter)
+        // -----------------------------------
+        AssignmentProblemSolver APS;
+        APS.Solve(Cost, N, M, assignment, AssignmentProblemSolver::optimal);
+        for (size_t i = 0; i < assignment.size(); i++)
+        {
+            if (assignment[i] != -1)
+            {
+                if (Cost[i + assignment[i] * N] > dist_thres)
+                {
+                    assignment[i] = -1;
+                }
+            }
+        }
+    }
+}
+
 void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
 {
     assert(!img_input.empty());
@@ -56,12 +170,22 @@ void RectFloatTracker::runInSingleThread()
     std::vector<trackingObjectFeature> featureVector;
     blobDetector.getBlobFeature(img_input,img_fg,featureVector);
     assignments_t assignment=getHungarainAssignment(featureVector);
+    showAssignment(assignment,featureVector);
+
+    std::cout<<"assignment= ";
+    for(auto it=assignment.begin();it!=assignment.end();it++){
+        std::cout<<*it<<" ,";
+    }
+    std::cout<<std::endl;
+
     featureVectorList.push_back(featureVector);
     if(featureVectorList.size()>maxListLength){
         featureVectorList.pop_front();
     }
     cv::Mat assignmentMat;
     getLocalFeatureAssignment(assignmentMat);
+    std::cout << "assignmentMat = "<< std::endl << " "  << assignmentMat << std::endl << std::endl;
+
     doAssignment(assignment,featureVector,assignmentMat);
     showing(img_input,img_fg,featureVector);
 }
@@ -104,6 +228,10 @@ assignments_t RectFloatTracker::getHungarainAssignment(vector<trackingObjectFeat
             }
         }
 
+        qDebug()<<"Cost =";
+        yzbxlib::dumpVector(Cost);
+        qDebug()<<"dist_thres="<<dist_thres;
+
         // -----------------------------------
         // Solving assignment problem (tracks and predictions of Kalman filter)
         // -----------------------------------
@@ -135,7 +263,7 @@ assignments_t RectFloatTracker::getHungarainAssignment(vector<trackingObjectFeat
 
 void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat assignmentMat){
     assert(assignment.size()==tracks.size());
-
+    assert(assignmentMat.empty()||assignment.size()==assignmentMat.rows);
     std::set<int> oldObjectId;
     // -----------------------------------
     // clean assignment from pairs with large distance
@@ -148,14 +276,18 @@ void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObje
             if(!assignmentMat.empty()){
                 for(int col=0;col<assignmentMat.cols;col++){
                     if(assignmentMat.at<uchar>(i,col)>=3){
-                        assignment[i]=-1;
-                        tracks[i]->skipped_frames = 0;
-                        trackingObjectFeature of;
-                        tracks[i]->predict(of);
-                        tracks[i]->Update(of, true, max_trace_length);
-                        //let long merge disppear
-//                        tracks[i]->skipped_frames=0;
-                        oldObjectId.insert(col);
+                        //the object is under other object, so we update ourself!
+                        //BUG, the assignment is -1 for only one object!
+                        //                        assignment[i]=-1;
+                        //                        tracks[i]->skipped_frames = 0;
+                        //                        trackingObjectFeature of;
+                        //                        tracks[i]->predict(of);
+                        //                        tracks[i]->Update(of, true, max_trace_length);
+                        //                        //let long merge disppear
+                        ////                        tracks[i]->skipped_frames=0;
+                        //                        oldObjectId.insert(col);
+
+                        assignment[i]=col;
                         break;
                     }
                 }
@@ -249,7 +381,7 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
     for (uint i = 0; i < tracks.size(); i++)
     {
         // void polylines(InputOutputArray img, InputArrayOfArrays pts, bool isClosed, const Scalar& color, int thickness=1, int lineType=8, int shift=0 )
-//        cv::polylines(img_tracking,tracks[i]->trace,false,Colors[tracks[i]->track_id %9],2,CV_AA);
+        //        cv::polylines(img_tracking,tracks[i]->trace,false,Colors[tracks[i]->track_id %9],2,CV_AA);
         if (tracks[i]->trace.size() > 1)
         {
             for (uint j = 0; j < tracks[i]->trace.size() - 1; j++)
@@ -295,32 +427,50 @@ track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> 
     return pathWeight;
 }
 
+track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2){
+
+    if(of1->LIFMat.empty()){
+        qDebug()<<"empty LIFMat in of1";
+        return 0.0f;
+    }
+    if(of2->LIFMat.empty()){
+        qDebug()<<"empty LIFMat in of2";
+        return 0.0f;
+    }
+    ObjectLocalFeatureMatch matcher;
+    vector<DMatch> good_matchers;
+    matcher.getGoodMatches(of1->LIFMat,of2->LIFMat,good_matchers);
+
+    return good_matchers.size();
+}
+
 void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &assignmentMat){
     assert(featureVectorList.size()==imageList.size());
     if(featureVectorList.size()<2){
         return;
     }
-
-    int m=featureVectorList.front().size();
+    //featureVectorList.size()==2
+    //    int m=featureVectorList.front().size();
+    int m=tracks.size();
     int n=featureVectorList.back().size();
     if(m==0||n==0){
         return;
     }
 
-    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
+    //    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
     std::vector<trackingObjectFeature> &fv2=featureVectorList.back();
     if(!assignmentMat.empty()) assignmentMat.release();
     assignmentMat.create(m,n,CV_8UC1);
 
-    ObjectLocalFeatureMatch matcher;
-    std::pair<cv::Mat,cv::Mat> &p1=imageList.front();
-    std::pair<cv::Mat,cv::Mat> &p2=imageList.back();
-    matcher.getGoodMatches(p1.first,p1.second,p2.first,p2.second);
+    //    ObjectLocalFeatureMatch matcher;
+    //    std::pair<cv::Mat,cv::Mat> &p1=imageList.front();
+    //    std::pair<cv::Mat,cv::Mat> &p2=imageList.back();
+    //    matcher.getGoodMatches(p1.first,p1.second,p2.first,p2.second);
 
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){
-            assignmentMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(fv1[i]),\
-                                                        std::make_shared<trackingObjectFeature>(fv2[j]),matcher);
+            assignmentMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
+                                                        std::make_shared<trackingObjectFeature>(fv2[j]));
         }
     }
 }
@@ -333,4 +483,42 @@ bool RectFloatTracker::isPointInRect(cv::Point2f p, Rect_t rect)
     else{
         return false;
     }
+}
+
+void RectFloatTracker::showAssignment(assignments_t &assignments,std::vector<trackingObjectFeature> &fv){
+    cv::Mat img_objects=img_input.clone();
+    cv::Mat img_blobs=img_input.clone();
+    assert(assignments.size()==tracks.size());
+
+    for(int i=0;i<tracks.size();i++){
+        Point_t p1=tracks[i]->prediction;
+        Point_t p2=tracks[i]->feature->pos;
+        cv::circle(img_blobs,p1,5,Scalar(0,0,255),3);
+        cv::circle(img_blobs,p2,5,Scalar(0,0,255),CV_FILLED);
+        cv::line(img_objects,p2,p1,Scalar(255,0,0),3);
+    }
+
+    for(int i=0;i<fv.size();i++){
+        trackingObjectFeature &of=fv[i];
+        Point_t p=of.pos;
+        cv::circle(img_blobs,p,5,Scalar(0,0,255),CV_FILLED);
+    }
+
+    Mat img_assign;
+    cv::hconcat(img_objects,img_blobs,img_assign);
+    for(int i=0;i<assignments.size();i++){
+        if(assignments[i]!=-1){
+            assert(assignments[i]<fv.size());
+            trackingObjectFeature &of=fv[assignments[i]];
+
+            Point_t p1=tracks[i]->prediction;
+            Point_t p2=of.pos;
+            p2.x+=img_input.cols;
+
+            cv::line(img_assign,p1,p2,Scalar(255,0,0),3);
+        }
+    }
+
+    namedWindow("img_assign",WINDOW_NORMAL);
+    imshow("img_assign",img_assign);
 }

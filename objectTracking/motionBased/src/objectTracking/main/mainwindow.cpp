@@ -910,7 +910,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
     else if(bgsType=="SJN_MultiCueBGS"){
         cv::namedWindow("MultiCueBGS FG",WINDOW_NORMAL);
         vector<string> strs;
-        strs.push_back("MultiCue BGS FG");
+        strs.push_back("MultiCueBGS FG");
         strs.push_back("img_tracking");
         strs.push_back("img_input");
         strs.push_back("img_fg");
@@ -946,4 +946,11 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
     else{
         assert(false);
     }
+}
+
+void MainWindow::on_pushButton_pipeLineTracking_clicked()
+{
+    QString inputData=globalVideoHome+"/"+ui->comboBox_video->currentText();
+    PipeLineTracking tracker;
+    tracker.process(inputData);
 }

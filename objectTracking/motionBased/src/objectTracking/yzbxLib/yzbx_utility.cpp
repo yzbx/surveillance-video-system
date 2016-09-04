@@ -795,4 +795,22 @@ void moveWindows(std::vector<string> &windowNames, int colNum)
     }
 }
 
+void dumpVector(std::vector<int> &v)
+{
+    for(auto it=v.begin();it!=v.end();it++){
+//        string numstr=boost::lexical_cast<std::string>(*it);
+        std::cout<<*it<<", ";
+    }
+    std::cout<<std::endl;
+}
+
+void dumpVector(std::vector<float> &v)
+{
+    for(auto it=v.begin();it!=v.end();it++){
+//        string numstr=boost::lexical_cast<std::string>(*it);
+        std::cout<<*it<<", ";
+    }
+    std::cout<<std::endl;
+}
+
 }

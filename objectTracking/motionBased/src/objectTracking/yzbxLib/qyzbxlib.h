@@ -20,6 +20,7 @@
 #include <opencv2/nonfree/nonfree.hpp>
 #include "../extern/vibe/vibe.hpp"
 #include "../extern/vibe/PBAS.h"
+#include "PipeLineTracking.h"
 
 
 class YZBXLIBSHARED_EXPORT QYzbxLib

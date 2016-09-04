@@ -8,6 +8,7 @@ class FrameInput
 {
 public:
     FrameInput();
+    void process(QString videoFile,cv::Mat &nextFrame);
 
     QString videoFilePath;
     //from video

@@ -6,6 +6,7 @@
 #include "frameinput.h"
 #include <boost/lexical_cast.hpp>
 #include "yzbx_config.h"
+#include "../lib/bgsfactory_yzbx.h"
 
 using namespace std;
 class TrackingResultReplay
@@ -29,14 +30,18 @@ protected:
     };
 public:
     TrackingResultReplay();
-    void process(QString videoFilePath,QString recordFilePath);
+    void process(QString videoFilePath,QString recordFilePath,QString bgsType="");
 
     const string winname="replay";
     int MaxSkipFrame=20;
     void replay(const cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum);
 public slots:
     void removeOldObjects(vector<object> &objects, int readToFrameNum, std::set<int> &idSet);
+
+private:
     int globalChannel=1;
+    IBGS *ibgs=NULL;
+    cv::Mat global_img_fg;
 };
 
 #endif // TRACKINGRESULTREPLAY_H

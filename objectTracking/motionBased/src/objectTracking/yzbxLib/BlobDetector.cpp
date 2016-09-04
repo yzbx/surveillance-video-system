@@ -48,10 +48,15 @@ BlobDetector::~BlobDetector()
 
 }
 
+void BlobDetector::process(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features)
+{
+    getBlobFeature(_image,_binaryImage,features);
+}
+
 void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features)
 {
+
     Mat image = _image.getMat(), binaryImage0 = _binaryImage.getMat();
-    (void)image;
 
     //check and init blobDetector
     if(rows!=binaryImage0.rows||cols!=binaryImage0.cols){
@@ -171,6 +176,16 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         }
         else{
             of.onBoundary=false;
+        }
+
+        cv::Mat mask_i(image.size(),CV_8UC1);
+        cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
+        ObjectLocalFeatureMatch match;
+//        namedWindow("mask_i",WINDOW_NORMAL);
+        imshow("mask_i",mask_i);
+        match.getLIFMat(of.LIFMat,image,mask_i);
+        if(of.LIFMat.empty()){
+            qDebug()<<"empty";
         }
 
         features.push_back(of);

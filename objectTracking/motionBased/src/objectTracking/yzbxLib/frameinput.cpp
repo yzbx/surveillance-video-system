@@ -5,6 +5,11 @@ FrameInput::FrameInput()
     pictureFormatList<<"*.jpg"<<"*.png"<<"*.jpeg";
 }
 
+void FrameInput::process(QString videoFile, cv::Mat &nextFrame)
+{
+    getNextFrame(videoFile,nextFrame);
+}
+
 void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
 {
 //    nextFrame.release();

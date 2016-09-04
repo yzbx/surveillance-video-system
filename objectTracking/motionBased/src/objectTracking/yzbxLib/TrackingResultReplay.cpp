@@ -6,9 +6,12 @@ TrackingResultReplay::TrackingResultReplay()
 }
 
 
-void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath)
+void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath, QString bgsType)
 {
-
+    if(!bgsType.isEmpty()){
+        bgsFactory_yzbx fac;
+        ibgs=fac.getBgsAlgorithm(bgsType);
+    }
     std::vector<object> objects;
 
     //     For example, the line “0 0 92 12 22 53 ” means:
@@ -47,10 +50,20 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
         while(readToFrameNum>=frameNum){
             frameInput.getNextFrame(videoFilePath,img_input);
             frameNum++;
+            if(img_input.empty()){
+                break;
+            }
+            if(ibgs!=NULL){
+                cv::Mat img_bg;
+                ibgs->process(img_input,global_img_fg,img_bg);
+            }
+        }
+        if(img_input.empty()){
+            break;
         }
         //NOTE must show here, otherwise there will have some error!
         cv::imshow("img_input",img_input);
-//        cv::waitKey(30);
+
         Rect_t r(numbers[2],numbers[3],numbers[4],numbers[5]);
 
         //NOTE objectID should be continuously
@@ -100,6 +113,17 @@ void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &
         globalChannel=img_input.channels();
     }
 
+    cv::Mat img_fg;
+    if(ibgs!=NULL){
+        assert(!global_img_fg.empty());
+
+        if(global_img_fg.channels()==1){
+            cvtColor(global_img_fg,img_fg,CV_GRAY2BGR);
+        }
+        else{
+            img_fg=global_img_fg.clone();
+        }
+    }
     for(int i=0;i<objects.size();i++){
         if(readToFrameNum==objects[i].frameNum){
             //void rectangle(Mat& img, Rect rec, const Scalar& color, int thickness=1, int lineType=LINE_8, int shift=0 )
@@ -109,6 +133,11 @@ void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &
             string text=boost::lexical_cast<std::string>(objects[i].ID);
             cv::putText(img_show, text, r.tl(), cv::FONT_HERSHEY_COMPLEX, 1.0,
                         cv::Scalar(0,0,255), 2, 8);
+
+            if(!img_fg.empty()){
+                cv::rectangle(img_fg,r,cv::Scalar(0,0,255),3);
+                cv::putText(img_fg,text,r.tl(),cv::FONT_HERSHEY_COMPLEX,1.0,cv::Scalar(0,0,255),2,8);
+            }
         }
 
         for (uint j = 0; j < objects[i].trace.size() - 1; j++)
@@ -116,11 +145,18 @@ void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &
             Rect_t r1=objects[i].trace[j],r2=objects[i].trace[j+1];
             cv::Point c1(r1.x+r1.width/2,r1.y+r1.height/2),c2(r2.x+r2.width/2,r2.y+r2.height/2);
             cv::line(img_show, c1,c2, Colors[objects[i].ID % 9], 2, CV_AA);
+
+            if(!img_fg.empty()){
+                cv::line(img_fg,c1,c2,Colors[objects[i].ID % 9],2,CV_AA);
+            }
         }
     }
 
 
     cv::imshow("img_new_input",img_input);
+    if(!img_fg.empty())
+        cv::imshow("img_fg_ann",img_fg);
+
     cv::imshow(winname,img_show);
     cv::waitKey(30);
 }

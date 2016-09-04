@@ -22,6 +22,7 @@ public:
 
     QString dump();
     void fromString(QString str);
+    cv::Mat LIFMat;
 };
 
 #endif // TRACKINGOBJECTFEATURE_H

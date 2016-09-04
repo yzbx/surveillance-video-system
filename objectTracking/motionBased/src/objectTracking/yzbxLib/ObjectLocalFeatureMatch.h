@@ -122,6 +122,55 @@ public:
         std::swap(global_good_matches,good_matches);
     }
 
+    void getLIFMat(cv::Mat &LIFMat,const cv::Mat &img1,const cv::Mat &mask1){
+        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
+        vector<KeyPoint> keypoints_1;
+
+        detector->detect(img1, keypoints_1,mask1);
+        if(keypoints_1.empty()){
+            return;
+        }
+
+        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("BRISK");
+        assert(!extractor.empty());
+
+        Mat gray1;
+        if(img1.channels()==3){
+            cvtColor(img1,gray1,CV_BGR2GRAY);
+        }
+        else{
+            gray1=img1;
+        }
+        extractor->compute( gray1, keypoints_1, LIFMat);
+        if(LIFMat.empty()){
+            qDebug()<<"empty";
+        }
+        Mat outImage;
+        cv::drawKeypoints(gray1,keypoints_1,outImage);
+        cv::namedWindow("featurePoint",WINDOW_NORMAL);
+        imshow("featurePoint",outImage);
+    }
+
+    void getGoodMatches(cv::Mat &descriptors_1,cv::Mat &descriptors_2,vector<DMatch> &good_matches){
+        vector< vector<DMatch> > matches;
+        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
+
+        for(size_t i = 0; i < matches.size(); i++) {
+            DMatch first = matches[i][0];
+            if(matches[i].size()>1){
+                float dist1 = matches[i][0].distance;
+                float dist2 = matches[i][1].distance;
+                if(dist1 < global_match_ratio * dist2) {
+                    good_matches.push_back(first);
+                }
+            }
+            else{
+                good_matches.push_back(first);
+            }
+        }
+    }
+
     double global_match_ratio=0.8;
     vector<KeyPoint> global_keypoints_1,global_keypoints_2;
     vector<DMatch> global_good_matches;

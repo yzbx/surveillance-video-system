@@ -67,6 +67,8 @@ private slots:
 
     void on_pushButton_vibeBasedTracking_clicked();
 
+    void on_pushButton_pipeLineTracking_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);

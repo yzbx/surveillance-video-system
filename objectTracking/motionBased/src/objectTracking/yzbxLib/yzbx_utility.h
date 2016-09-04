@@ -6,6 +6,7 @@
 #include "lbp/histogram.hpp"
 //#include "lib/LBP1/LBP1.hpp"
 #include "yzbx_config.h"
+#include <boost/lexical_cast.hpp>
 #include <QString>
 #include <QStringList>
 #include <fstream>
@@ -17,6 +18,8 @@ QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
 bool isSameImage(const cv::Mat &A_8U,const cv::Mat &B_8U);
 void showImageInWindow(string windowName,const cv::Mat &img);
 void moveWindows(std::vector<std::string> &windowNames, int colNum=4);
+void dumpVector(std::vector<int> &v);
+void dumpVector(std::vector<float> &v);
 }
 
 //set qt sync with file.
