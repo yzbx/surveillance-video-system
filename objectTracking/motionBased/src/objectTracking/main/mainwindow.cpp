@@ -908,7 +908,6 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
         }
     }
     else if(bgsType=="SJN_MultiCueBGS"){
-        cv::namedWindow("MultiCueBGS FG",WINDOW_NORMAL);
         vector<string> strs;
         strs.push_back("MultiCueBGS FG");
         strs.push_back("img_tracking");

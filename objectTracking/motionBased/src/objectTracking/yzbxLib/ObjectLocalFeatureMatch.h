@@ -112,7 +112,6 @@ public:
         drawMatches( img1, keypoints_1, img2, keypoints_2,
                      good_matches, img_matches);
         //-- Show detected matches
-        cv::namedWindow("Good Matches",WINDOW_NORMAL);
         imshow( "Good Matches", img_matches);
 
 
@@ -147,7 +146,6 @@ public:
         }
         Mat outImage;
         cv::drawKeypoints(gray1,keypoints_1,outImage);
-        cv::namedWindow("featurePoint",WINDOW_NORMAL);
         imshow("featurePoint",outImage);
     }
 

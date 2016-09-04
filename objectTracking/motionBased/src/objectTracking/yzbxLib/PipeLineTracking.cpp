@@ -14,7 +14,14 @@ void PipeLineTracking::process(QString sourceData)
     BlobDetector bd;
     RectFloatTracker tracker;
     TrackingBlobsMatchAnnotation matcher;
-
+    std::vector<string> wins;
+    wins.push_back("img_input");
+    wins.push_back("img_fg");
+    wins.push_back("mask_i");
+    wins.push_back("MultiCueBGS FG");
+    wins.push_back("featurePoint");
+    wins.push_back("binaryImage");
+    yzbxlib::moveWindows(wins,3);
     int frameNum=0;
     QString annTxt="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
     while(1){
@@ -29,6 +36,9 @@ void PipeLineTracking::process(QString sourceData)
         else{
             std::vector<trackingObjectFeature> fv;
             bd.process(img_input,img_fg,fv);
+            cv::imshow("img_input",img_input);
+            cv::imshow("img_fg",img_fg);
+            cv::waitKey(30);
 //            tracker.process(img_input,img_fg,fv);
             vector<int> ids;
             matcher.process(frameNum,dist_thres,fv,annTxt,ids);

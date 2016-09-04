@@ -406,7 +406,6 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
                     cv::Scalar(0,0,255), 2, 8);
     }
 
-    cv::namedWindow("img_tracking",WINDOW_NORMAL);
     cv::imshow("img_tracking",img_tracking);
 }
 
@@ -519,6 +518,5 @@ void RectFloatTracker::showAssignment(assignments_t &assignments,std::vector<tra
         }
     }
 
-    namedWindow("img_assign",WINDOW_NORMAL);
     imshow("img_assign",img_assign);
 }
