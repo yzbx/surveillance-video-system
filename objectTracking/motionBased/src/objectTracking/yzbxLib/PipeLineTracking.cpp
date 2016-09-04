@@ -16,7 +16,7 @@ void PipeLineTracking::process(QString sourceData)
     TrackingBlobsMatchAnnotation matcher;
 
     int frameNum=0;
-    QString annTxt="PipeLineDump.txt";
+    QString annTxt="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
     while(1){
         fin.process(sourceData,img_input);
         if(img_input.empty()){
@@ -31,7 +31,6 @@ void PipeLineTracking::process(QString sourceData)
             bd.process(img_input,img_fg,fv);
 //            tracker.process(img_input,img_fg,fv);
             vector<int> ids;
-            QString annTxt="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
             matcher.process(frameNum,dist_thres,fv,annTxt,ids);
             PipeLine_DumpFV(frameNum,ids,fv);
         }
