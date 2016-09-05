@@ -34,6 +34,7 @@ private:
     void showAssignment(assignments_t &assignments, std::vector<trackingObjectFeature> &fv);
     track_t calcPathWeight(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2);
     void getHungarainAssignment(assignments_t &assignment, int costType=RectDist);
+    track_t calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2, int costType);
 };
 
 #endif // RECTFLOATTRACKER_H
