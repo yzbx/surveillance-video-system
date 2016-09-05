@@ -42,15 +42,15 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     }
     std::cout<<std::endl;
 
-    cv::Mat assignmentMat;
-    getLocalFeatureAssignment(assignmentMat);
-    std::cout << "assignmentMat = "<< std::endl << " "  << assignmentMat << std::endl << std::endl;
+    cv::Mat costMat;
+    getLocalFeatureAssignment(costMat);
+    std::cout << "costMat = "<< std::endl << " "  << costMat << std::endl << std::endl;
 
-    doAssignment(assignment,fv,assignmentMat);
+    doAssignment(assignment,fv,costMat);
     showing(img_input,img_fg,fv);
 }
 
-void RectFloatTracker::getHungarainAssignment(assignments_t &assignment){
+void RectFloatTracker::getHungarainAssignment(assignments_t &assignment,int costType){
     bool emptyBlobs;
 
     if(featureVectorList.empty()){
@@ -109,7 +109,9 @@ void RectFloatTracker::getHungarainAssignment(assignments_t &assignment){
         {
             for (size_t j = 0; j < fv.size(); j++)
             {
-                Cost[i + j * N] = tracks[i]->CalcDist(fv[j]);
+//                Cost[i + j * N] = tracks[i]->CalcDist(fv[j]);
+                Cost[i+j*N]=calcCost(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),
+                                     std::make_shared<trackingObjectFeature>(fv[j]),costType);
             }
         }
 
@@ -182,11 +184,11 @@ void RectFloatTracker::runInSingleThread()
     if(featureVectorList.size()>maxListLength){
         featureVectorList.pop_front();
     }
-    cv::Mat assignmentMat;
-    getLocalFeatureAssignment(assignmentMat);
-    std::cout << "assignmentMat = "<< std::endl << " "  << assignmentMat << std::endl << std::endl;
+    cv::Mat costMat;
+    getLocalFeatureAssignment(costMat);
+    std::cout << "costMat = "<< std::endl << " "  << costMat << std::endl << std::endl;
 
-    doAssignment(assignment,featureVector,assignmentMat);
+    doAssignment(assignment,featureVector,costMat);
     showing(img_input,img_fg,featureVector);
 }
 
@@ -261,9 +263,9 @@ assignments_t RectFloatTracker::getHungarainAssignment(vector<trackingObjectFeat
     return assignment;
 }
 
-void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat assignmentMat){
+void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat costMat){
     assert(assignment.size()==tracks.size());
-    assert(assignmentMat.empty()||assignment.size()==assignmentMat.rows);
+    assert(costMat.empty()||assignment.size()==costMat.rows);
     std::set<int> oldObjectId;
     // -----------------------------------
     // clean assignment from pairs with large distance
@@ -273,9 +275,9 @@ void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObje
         if (assignment[i] == -1)
         {
             // If track have no assigned detect, then increment skipped frames counter.
-            if(!assignmentMat.empty()){
-                for(int col=0;col<assignmentMat.cols;col++){
-                    if(assignmentMat.at<uchar>(i,col)>=3){
+            if(!costMat.empty()){
+                for(int col=0;col<costMat.cols;col++){
+                    if(costMat.at<uchar>(i,col)>=3){
                         //the object is under other object, so we update ourself!
                         //BUG, the assignment is -1 for only one object!
                         //                        assignment[i]=-1;
@@ -443,13 +445,34 @@ track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> 
     return good_matchers.size();
 }
 
-void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &assignmentMat){
-    assert(featureVectorList.size()==imageList.size());
-    if(featureVectorList.size()<2){
-        return;
+track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2,int costType){
+    if(costType==LIFDist){
+        track_t maxMatchedLIF=10.0f;
+        track_t m=calcPathWeight(of1,of2);
+        if(m>=maxMatchedLIF){
+            return 0.0f;
+        }
+        else{
+            return maxMatchedLIF-m;
+        }
     }
-    //featureVectorList.size()==2
-    //    int m=featureVectorList.front().size();
+    else if(costType==RectDist){
+        Rect_t &r1=of1->rect;
+        Rect_t &r2=of2->rect;
+        Point_t p1=0.5f*(r1.tl()+r1.br());
+        Point_t p2=0.5f*(r2.tl()+r2.br());
+        track_t dist=fabs(r1.width-r2.width)+fabs(r1.height-r2.height)+cv::norm(p1-p2);
+
+        return dist;
+    }
+    else{
+        assert(false);
+        return -1.0f;
+    }
+}
+
+void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &costMat){
+    assert(featureVectorList.size()==imageList.size());
     int m=tracks.size();
     int n=featureVectorList.back().size();
     if(m==0||n==0){
@@ -458,17 +481,13 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &assignmentMat){
 
     //    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
     std::vector<trackingObjectFeature> &fv2=featureVectorList.back();
-    if(!assignmentMat.empty()) assignmentMat.release();
-    assignmentMat.create(m,n,CV_8UC1);
 
-    //    ObjectLocalFeatureMatch matcher;
-    //    std::pair<cv::Mat,cv::Mat> &p1=imageList.front();
-    //    std::pair<cv::Mat,cv::Mat> &p2=imageList.back();
-    //    matcher.getGoodMatches(p1.first,p1.second,p2.first,p2.second);
+    if(!costMat.empty()) costMat.release();
+    costMat.create(m,n,CV_8UC1);
 
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){
-            assignmentMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
+            costMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
                                                         std::make_shared<trackingObjectFeature>(fv2[j]));
         }
     }

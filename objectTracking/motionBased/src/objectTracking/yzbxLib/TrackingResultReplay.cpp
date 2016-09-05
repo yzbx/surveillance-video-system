@@ -6,7 +6,7 @@ TrackingResultReplay::TrackingResultReplay()
 }
 
 
-void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath, QString bgsType)
+void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath, QString bgsType,bool saveVideo)
 {
     if(!bgsType.isEmpty()){
         bgsFactory_yzbx fac;
@@ -57,6 +57,13 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
                 cv::Mat img_bg;
                 ibgs->process(img_input,global_img_fg,img_bg);
             }
+            if(saveVideo){
+                cv::Size s=img_input.size();
+                if(ibgs!=NULL){
+                    s.width=s.width*2;
+                }
+                assert(videoWriter.open("replay.avi",-1,50,s,true));
+            }
         }
         if(img_input.empty()){
             break;
@@ -83,7 +90,7 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
         }
 
         removeOldObjects(objects,readToFrameNum,idSet);
-        replay(img_input,objects,readToFrameNum);
+        replay(img_input,objects,readToFrameNum,saveVideo);
     }
 
 }
@@ -97,7 +104,7 @@ void TrackingResultReplay::removeOldObjects(std::vector<object> &objects,int rea
     }
 }
 
-void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &objects,int readToFrameNum){
+void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &objects,int readToFrameNum,bool saveVideo){
     cv::Scalar Colors[] = { cv::Scalar(255, 0, 0), cv::Scalar(0, 255, 0), cv::Scalar(0, 0, 255), cv::Scalar(255, 255, 0), cv::Scalar(0, 255, 255), cv::Scalar(255, 0, 255), cv::Scalar(255, 127, 255), cv::Scalar(127, 0, 255), cv::Scalar(127, 0, 127) };
 
     cv::Mat img_show;
@@ -154,9 +161,24 @@ void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &
 
 
     cv::imshow("img_new_input",img_input);
-    if(!img_fg.empty())
-        cv::imshow("img_fg_ann",img_fg);
 
+    if(!img_fg.empty()){
+        cv::imshow("img_fg_ann",img_fg);
+    }
+    if(saveVideo){
+        cv::Mat saveFrame;
+        if(ibgs==NULL){
+            saveFrame=img_input;
+        }
+        else{
+            if(img_fg.empty()){
+                img_fg=Mat::zeros(img_input.size(),CV_8UC3);
+            }
+            hconcat(img_input,img_fg,saveFrame);
+            assert(videoWriter.isOpened());
+            videoWriter<<saveFrame;
+        }
+    }
     cv::imshow(winname,img_show);
     cv::waitKey(30);
 }

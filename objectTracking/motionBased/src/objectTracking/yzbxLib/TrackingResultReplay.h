@@ -30,11 +30,11 @@ protected:
     };
 public:
     TrackingResultReplay();
-    void process(QString videoFilePath,QString recordFilePath,QString bgsType="");
+    void process(QString videoFilePath, QString recordFilePath, QString bgsType="", bool saveVideo=true);
 
     const string winname="replay";
     int MaxSkipFrame=20;
-    void replay(const cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum);
+    void replay(const cv::Mat &img_input, std::vector<object> &objects, int readToFrameNum, bool saveVideo=true);
 public slots:
     void removeOldObjects(vector<object> &objects, int readToFrameNum, std::set<int> &idSet);
 
@@ -42,6 +42,7 @@ private:
     int globalChannel=1;
     IBGS *ibgs=NULL;
     cv::Mat global_img_fg;
+    cv::VideoWriter videoWriter;
 };
 
 #endif // TRACKINGRESULTREPLAY_H

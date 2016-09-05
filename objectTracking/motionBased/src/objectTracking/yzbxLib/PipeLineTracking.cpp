@@ -5,15 +5,10 @@ PipeLineTracking::PipeLineTracking()
 
 }
 
-void PipeLineTracking::process(QString sourceData)
+void PipeLineTracking::process(QString sourceData,QString annTxt)
 {
-    FrameInput fin;
-    cv::Mat img_input,img_fg,img_bg;
-    bgsFactory_yzbx fac;
-    IBGS *ibgs=fac.getBgsAlgorithm(bgsType);
-    BlobDetector bd;
-    RectFloatTracker tracker;
-    TrackingBlobsMatchAnnotation matcher;
+    ibgs=fac.getBgsAlgorithm(bgsType);
+
     std::vector<string> wins;
     wins.push_back("img_input");
     wins.push_back("img_fg");
@@ -23,19 +18,22 @@ void PipeLineTracking::process(QString sourceData)
     wins.push_back("binaryImage");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
-    QString annTxt="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
+    if(annTxt==""){
+        annTxt="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
+    }
+
     while(1){
-        fin.process(sourceData,img_input);
+        PipeLine_Input(sourceData);
         if(img_input.empty()){
             break;
         }
-        ibgs->process(img_input,img_fg,img_bg);
+        PipeLine_Bgs();
         if(img_fg.empty()){
             qWarning()<<"empty img_fg for frameNum="<<frameNum;
         }
         else{
             std::vector<trackingObjectFeature> fv;
-            bd.process(img_input,img_fg,fv);
+            PipeLine_Features(fv);
             cv::imshow("img_input",img_input);
             cv::imshow("img_fg",img_fg);
             cv::waitKey(30);
@@ -48,6 +46,21 @@ void PipeLineTracking::process(QString sourceData)
     }
 
     PipeLine_Replay(sourceData,annTxt);
+}
+
+void PipeLineTracking::PipeLine_Bgs()
+{
+    ibgs->process(img_input,img_fg,img_bg);
+}
+
+void PipeLineTracking::PipeLine_Features(std::vector<trackingObjectFeature> &fv)
+{
+    bd.process(img_input,img_fg,fv);
+}
+
+void PipeLineTracking::PipeLine_Input(QString sourceData)
+{
+    fin.process(sourceData,img_input);
 }
 
 void PipeLineTracking::PipeLine_DumpFV(int frameNum,const vector<int> &ids,vector<trackingObjectFeature> &fv)
@@ -86,7 +99,10 @@ void PipeLineTracking::PipeLine_DumpFV(int frameNum,const vector<int> &ids,vecto
     file.close();
 }
 
-void PipeLineTracking::PipeLine_Replay(QString dataSource,QString replaySource){
+void PipeLineTracking::PipeLine_Replay(QString dataSource, QString replaySource, bool saveVideo){
     TrackingResultReplay replay;
-    replay.process(dataSource,replaySource,bgsType);
+    if(replaySource==""){
+        replaySource="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
+    }
+    replay.process(dataSource,replaySource,bgsType,saveVideo);
 }

@@ -12,18 +12,25 @@ class PipeLineTracking
 {
 public:
     PipeLineTracking();
-    void process(QString sourceData);
-//    void PipeLine_Input();
-//    void PipeLine_Bgs();
-//    void PipeLine_Features();
+    void process(QString sourceData, QString annTxt="");
+    void PipeLine_Input(QString sourceData);
+    void PipeLine_Bgs();
+    void PipeLine_Features(std::vector<trackingObjectFeature> &fv);
 //    void PipeLine_Tracking();
     void PipeLine_DumpFV(int frameNum, const vector<int> &ids, vector<trackingObjectFeature> &fv);
-
+    void PipeLine_Replay(QString dataSource, QString replaySource="",bool saveVideo=true);
 private:
     bool firstDump=true;
     track_t dist_thres=200;
-    void PipeLine_Replay(QString dataSource, QString replaySource);
+
     QString bgsType="SJN_MultiCueBGS";
+    FrameInput fin;
+    cv::Mat img_input,img_fg,img_bg;
+    bgsFactory_yzbx fac;
+    IBGS *ibgs=NULL;
+    BlobDetector bd;
+    RectFloatTracker tracker;
+    TrackingBlobsMatchAnnotation matcher;
 };
 
 #endif // PIPELINETRACKING_H

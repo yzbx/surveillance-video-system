@@ -1,6 +1,7 @@
 #ifndef YZBX_CONFIG
 #define YZBX_CONFIG
 #include <opencv2/opencv.hpp>
+#include <cmath>
 
 //for tracking library
 typedef float track_t;
