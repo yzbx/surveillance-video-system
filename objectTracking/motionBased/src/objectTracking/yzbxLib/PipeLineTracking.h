@@ -31,6 +31,7 @@ private:
     BlobDetector bd;
     RectFloatTracker tracker;
     TrackingBlobsMatchAnnotation matcher;
+
 };
 
 #endif // PIPELINETRACKING_H

@@ -62,7 +62,7 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
                 if(ibgs!=NULL){
                     s.width=s.width*2;
                 }
-                assert(videoWriter.open("replay.avi",-1,50,s,true));
+                assert(videoWriter.open("replay.avi",CV_FOURCC('D', 'I', 'V', 'X'),50,s,true));
             }
         }
         if(img_input.empty()){
