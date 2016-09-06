@@ -12,13 +12,18 @@ class PipeLineTracking
 {
 public:
     PipeLineTracking();
-    void process(QString sourceData, QString annTxt="");
+    void process(QString sourceData, QString annTxt);
+    void process(QString sourceData);
     void PipeLine_Input(QString sourceData);
     void PipeLine_Bgs();
     void PipeLine_Features(std::vector<trackingObjectFeature> &fv);
 //    void PipeLine_Tracking();
     void PipeLine_DumpFV(int frameNum, const vector<int> &ids, vector<trackingObjectFeature> &fv);
     void PipeLine_Replay(QString dataSource, QString replaySource="",bool saveVideo=true);
+    void setBgsType(QString bgsType){
+        this->bgsType=bgsType;
+    }
+
 private:
     bool firstDump=true;
     track_t dist_thres=200;

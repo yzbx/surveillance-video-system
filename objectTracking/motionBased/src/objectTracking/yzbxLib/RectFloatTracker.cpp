@@ -256,6 +256,7 @@ void RectFloatTracker::getHungarainAssignment(assignments_t &assignment,int cost
 
 void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
 {
+    qWarning("old function, stop update!!!");
     assert(!img_input.empty());
     assert(!img_fg.empty());
 
