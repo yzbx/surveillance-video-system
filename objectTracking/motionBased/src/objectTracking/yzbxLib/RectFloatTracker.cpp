@@ -377,7 +377,9 @@ void RectFloatTracker::handleOneToNObjects(){
         Index_t trackIdx=it->first;
         std::set<Index_t> &newBlobSet=it->second;
         for(auto newIt=newBlobSet.begin();newIt!=newBlobSet.end();newIt++){
-            mOneToNMap[trackIdx].erase(newIt);
+            std::set<Index_t> &nset=mOneToNMap[trackIdx];
+            auto rmIt=nset.find(*newIt);
+            nset.erase(rmIt);
         }
         if(mOneToNMap[trackIdx].empty()){
             mOneToNMap.erase(trackIdx);
