@@ -39,7 +39,7 @@ public:
     void tracking(const cv::Mat &img_input, const cv::Mat &img_fg);
 
     track_t GetDistance(shared_ptr<trackingObjectFeature> of1, shared_ptr<trackingObjectFeature> of2);
-    track_t calcPathWeight(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2, ObjectLocalFeatureMatch &matcher);
+    track_t calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2, ObjectLocalFeatureMatch &matcher);
     bool splitOrNewTrackId(pNode nextHeadNode);
     void dumpSplitInformation(pNode headNode, pNode nextNode);
 protected:

@@ -45,7 +45,8 @@ SOURCES += qyzbxlib.cpp \
     ../extern/vibe/PBAS.cpp \
     ObjectTrajectoryProcessing.cpp \
     PipeLineTracking.cpp \
-    TrackingBlobsMatchAnnotation.cpp
+    TrackingBlobsMatchAnnotation.cpp \
+    TrackingAlgorithmParamter.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -81,7 +82,8 @@ HEADERS += qyzbxlib.h\
     ../extern/vibe/PBAS.h \
     ObjectTrajectoryProcessing.h \
     PipeLineTracking.h \
-    TrackingBlobsMatchAnnotation.h
+    TrackingBlobsMatchAnnotation.h \
+    TrackingAlgorithmParamter.h
 
 unix {
     target.path = /usr/lib

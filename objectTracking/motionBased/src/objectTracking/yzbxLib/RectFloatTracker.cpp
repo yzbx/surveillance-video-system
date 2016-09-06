@@ -2,23 +2,16 @@
 
 RectFloatTracker::RectFloatTracker()
 {
-    globalChannel=3;
     maxListLength=2;
-    NextTrackID=0;
-    dt=0.2f;
-    Accel_noise_mag=0.1f;
+    param.NextTrackID=0;
+    param.dt=0.2f;
+    param.Accel_noise_mag=0.1f;
 
     //if (Cost[i + assignment[i] * N] > dist_thres)
-    dist_thres = 100;
+    param.dist_thres = 100;
 
-    maximum_allowed_skipped_frames = 100;
-    max_trace_length=100;
-
-    globalFirstDump=true;
-    globalFirstOutput=true;
-    frameNum=0;
-    outputFileName="out.txt";
-    FirstFG_frameNum=0;
+    param.maximum_allowed_skipped_frames = 100;
+    param.max_trace_length=100;
 }
 
 void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<trackingObjectFeature> &fv)
@@ -32,105 +25,87 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
         featureVectorList.pop_front();
     }
 
-    ///Hungarain->LIF, without split/merge support
-    //    assignments_t assignment;
-    //    getHungarainAssignment(assignment);
-    //    showAssignment(assignment,fv);
-
-    //    std::cout<<"assignment= ";
-    //    for(auto it=assignment.begin();it!=assignment.end();it++){
-    //        std::cout<<*it<<" ,";
-    //    }
-    //    std::cout<<std::endl;
-    //    cv::Mat matchMat;
-    //    getLocalFeatureAssignment(matchMat);
-    //    doAssignment(assignment,fv,matchMat);
-
     ///LIF->Hungarian, with split/merge support
+    /// LIF get stable tracking for 1-N,N-1,1-1,0-1,1-0
+    /// Hungarian only convert 0-1 and 1-0 to 1-1
+
     cv::Mat matchMat;
+    ///matchMat may be empty for empty tracks or empty fv
     getLocalFeatureAssignment(matchMat);
+
+
+    ///the feature have keypoints+descriptor
+    /// LIF get stable tracking when matched feture > StableFeatureNumber(default=3)
+    /// use hungarian to tracking featureless objects or small objects
+    /// update mObjectToBlobMap, mBlobToObjectMap, mMatchedBlobSet, mMatchedObjectSet
     getUnmatchedHungarainAssignment(matchMat);
+
+    ///handle merge(N-1),split(1-N),normal(1-1),missing(1-0),new(0-1)
+    /// update mNToOneMap, mOneToNMap, mOneToOneMap, mOneToZeroSet, mZeroToOneSet
     doAssignment();
     showing(img_input,img_fg,fv);
 }
 
 void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
-    bool emptyBlobs;
 
-    if(featureVectorList.empty()){
-        emptyBlobs=true;
-    }
-    else
-    {
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        if(fv.empty()){
-            emptyBlobs=true;
-        }
-        else{
-            emptyBlobs=false;
-        }
-    }
+    assert(!featureVectorList.empty());
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
 
-    bool emptyObjects;
-    if(tracks.empty()){
-        emptyObjects=true;
-    }
-    else{
-        emptyObjects=false;
-    }
+    bool emptyBlobs=fv.empty();
+    bool emptyObjects=tracks.empty();
 
-    if(!matchedBlob.empty())matchedBlob.clear();
-    if(!matchedObject.empty())matchedObject.clear();
-    if(!ObjectToBlob.empty())ObjectToBlob.clear();
-    if(!BlobToObject.empty())BlobToObject.clear();
+    if(!mObjectToBlobMap.empty())mObjectToBlobMap.clear();
+    if(!mBlobToObjectMap.empty())mBlobToObjectMap.clear();
+    if(!mMatchedBlobSet.empty())mMatchedBlobSet.clear();
+    if(!mMatchedObjectSet.empty())mMatchedObjectSet.clear();
 
     if(emptyBlobs||emptyObjects){
-        qDebug()<<"empyt blobs or objects";
+//        qDebug()<<"empyt blobs or objects";
     }
     else{
         int m=matchMat.rows;
         int n=matchMat.cols;
         assert(tracks.size()==m);
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
         assert(fv.size()==n);
 
         for(int i=0;i<m;i++){
             for(int j=0;j<n;j++){
                 uchar featureNum=matchMat.at<uchar>(i,j);
                 //local feature point for stable match!
-                if(featureNum>3){
-                    ObjectToBlob[i].insert(j);
-                    BlobToObject[j].insert(i);
-                    matchedBlob.insert(j);
-                    matchedObject.insert(i);
+                if(featureNum>StableFeatureNumber){
+                    mObjectToBlobMap[i].insert(j);
+                    mBlobToObjectMap[j].insert(i);
+                    mMatchedBlobSet.insert(j);
+                    mMatchedObjectSet.insert(i);
                 }
             }
         }
 
         //hungarian for unstable match
-        int unMatchedObjectNum=m-matchedObject.size();
-        int unMatchedBlobNum=n-matchedBlob.size();
+        int unMatchedObjectNum=m-mMatchedObjectSet.size();
+        int unMatchedBlobNum=n-mMatchedBlobSet.size();
         if(unMatchedBlobNum==0||unMatchedObjectNum==0){
-            qDebug()<<"nothing for unmatched hungarain";
+//            qDebug()<<"nothing for unmatched hungarain";
         }
         else{
             //vector<trackIdx>
-            vector<int> unMatchedObjects;
+            vector<Index_t> unMatchedObjects;
             //vector<featureVectorIdx>
-            vector<int> unMatchedBlobs;
+            vector<Index_t> unMatchedBlobs;
             for(int i=0;i<m;i++){
-                if(matchedObject.find(i)==matchedObject.end()){
+                if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
                     unMatchedObjects.push_back(i);
                 }
             }
             for(int j=0;j<n;j++){
-                if(matchedBlob.find(j)==matchedBlob.end()){
+                if(mMatchedBlobSet.find(j)==mMatchedBlobSet.end()){
                     unMatchedBlobs.push_back(j);
                 }
             }
 
             size_t N = unMatchedObjects.size();
             size_t M = unMatchedBlobs.size();
+            assert(N>0&&M>0);
 
             distMatrix_t Cost(N * M);
             for(int i=0;i<unMatchedObjects.size();i++){
@@ -147,17 +122,17 @@ void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
             {
                 if (unMatchedAssignment[i] != -1)
                 {
-                    if (Cost[i + unMatchedAssignment[i] * N] > dist_thres)
+                    if (Cost[i + unMatchedAssignment[i] * N] > param.dist_thres)
                     {
                         unMatchedAssignment[i] = -1;
                     }
                     else{
-                        int trackIdx=unMatchedObjects[i];
-                        int featureVectorIdx=unMatchedBlobs[unMatchedAssignment[i]];
-                        ObjectToBlob[trackIdx].insert(featureVectorIdx);
-                        BlobToObject[featureVectorIdx].insert(trackIdx);
-                        matchedBlob.insert(featureVectorIdx);
-                        matchedObject.insert(trackIdx);
+                        Index_t trackIdx=unMatchedObjects[i];
+                        Index_t featureVectorIdx=unMatchedBlobs[unMatchedAssignment[i]];
+                        mObjectToBlobMap[trackIdx].insert(featureVectorIdx);
+                        mBlobToObjectMap[featureVectorIdx].insert(trackIdx);
+                        mMatchedBlobSet.insert(featureVectorIdx);
+                        mMatchedObjectSet.insert(trackIdx);
                     }
                 }
             }
@@ -167,145 +142,9 @@ void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
 
 }
 
-void RectFloatTracker::getHungarainAssignment(assignments_t &assignment,int costType){
-    bool emptyBlobs;
-
-    if(featureVectorList.empty()){
-        emptyBlobs=true;
-    }
-    else
-    {
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        if(fv.empty()){
-            emptyBlobs=true;
-        }
-        else{
-            emptyBlobs=false;
-        }
-    }
-
-    bool emptyObjects;
-    if(tracks.empty()){
-        emptyObjects=true;
-    }
-    else{
-        emptyObjects=false;
-    }
-
-    if(!assignment.empty()){
-        assignment.clear();
-    }
-
-    if(emptyBlobs&&emptyObjects){
-        qDebug()<<"empyt blobs and objects";
-    }
-    else if(emptyBlobs){
-        //update missed objects
-
-        for(size_t i=0;i<tracks.size();i++){
-            assignment.push_back(-1);
-        }
-    }
-    else if(emptyObjects){
-        //init objects
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        for (size_t i = 0; i < fv.size(); ++i)
-        {
-            tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
-            assignment.push_back(i);
-        }
-    }
-    else{
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        size_t N = tracks.size();
-        size_t M = fv.size();
-
-        distMatrix_t Cost(N * M);
-
-        for (size_t i = 0; i < tracks.size(); i++)
-        {
-            for (size_t j = 0; j < fv.size(); j++)
-            {
-                //                Cost[i + j * N] = tracks[i]->CalcDist(fv[j]);
-                Cost[i+j*N]=calcCost(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),
-                                     std::make_shared<trackingObjectFeature>(fv[j]),costType);
-            }
-        }
-
-        qDebug()<<"Cost =";
-        yzbxlib::dumpVector(Cost);
-        qDebug()<<"dist_thres="<<dist_thres;
-
-        // -----------------------------------
-        // Solving assignment problem (tracks and predictions of Kalman filter)
-        // -----------------------------------
-        AssignmentProblemSolver APS;
-        APS.Solve(Cost, N, M, assignment, AssignmentProblemSolver::optimal);
-        for (size_t i = 0; i < assignment.size(); i++)
-        {
-            if (assignment[i] != -1)
-            {
-                if (Cost[i + assignment[i] * N] > dist_thres)
-                {
-                    assignment[i] = -1;
-                }
-            }
-        }
-    }
-}
-
-void RectFloatTracker::tracking(const cv::Mat &img_input, const cv::Mat &img_fg)
-{
-    qWarning("old function, stop update!!!");
-    assert(!img_input.empty());
-    assert(!img_fg.empty());
-
-    //NOTE clone for save history! but this may not necessary for Mat
-    this->img_input=img_input.clone();
-    //the channel of img_input cannot change!
-    if(img_input.channels()!=globalChannel){
-        assert(frameNum==0);
-        globalChannel=img_input.channels();
-    }
-
-    //convert img_fg to CV_8UC1 if necessary
-    if(img_fg.channels()==3){
-        cvtColor(img_fg,this->img_fg,CV_BGR2GRAY);
-    }
-    else{
-        this->img_fg=img_fg.clone();
-    }
-
-    frameNum++;
-    imageList.push_back(std::make_pair(this->img_input,this->img_fg));
-    if(imageList.size()>maxListLength){
-        imageList.pop_front();
-    }
-    //start()
-    runInSingleThread();
-}
-
 void RectFloatTracker::runInSingleThread()
 {
-    std::vector<trackingObjectFeature> featureVector;
-    blobDetector.getBlobFeature(img_input,img_fg,featureVector);
-    cv::Mat costMat;
-    getLocalFeatureAssignment(costMat);
-    std::cout << "costMat = "<< std::endl << " "  << costMat << std::endl << std::endl;
-
-    assignments_t assignment=getHungarainAssignment(featureVector);
-    showAssignment(assignment,featureVector);
-
-    std::cout<<"assignment= ";
-    for(auto it=assignment.begin();it!=assignment.end();it++){
-        std::cout<<*it<<" ,";
-    }
-    std::cout<<std::endl;
-
-
-
-    doAssignment(assignment,featureVector,costMat);
-    showing(img_input,img_fg,featureVector);
+    qWarning()<<"wait to implement!";
 }
 
 void RectFloatTracker::run()
@@ -313,256 +152,184 @@ void RectFloatTracker::run()
     runInSingleThread();
 }
 
-assignments_t RectFloatTracker::getHungarainAssignment(vector<trackingObjectFeature> &fv){
-    if(fv.empty()){
-
-    }
-    // -----------------------------------
-    // If there is no tracks yet, then every cv::Point begins its own track.
-    // -----------------------------------
-    if (tracks.size() == 0)
-    {
-        // If no tracks yet
-        for (size_t i = 0; i < fv.size(); ++i)
-        {
-            tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
-        }
-    }
-
-    size_t N = tracks.size();
-    size_t M = fv.size();
-
-    assignments_t assignment;
-
-    if (!tracks.empty()&&!fv.empty())
-    {
-        distMatrix_t Cost(N * M);
-
-        for (size_t i = 0; i < tracks.size(); i++)
-        {
-            for (size_t j = 0; j < fv.size(); j++)
-            {
-                Cost[i + j * N] = tracks[i]->CalcDist(fv[j]);
-            }
-        }
-
-        qDebug()<<"Cost =";
-        yzbxlib::dumpVector(Cost);
-        qDebug()<<"dist_thres="<<dist_thres;
-
-        // -----------------------------------
-        // Solving assignment problem (tracks and predictions of Kalman filter)
-        // -----------------------------------
-        AssignmentProblemSolver APS;
-        APS.Solve(Cost, N, M, assignment, AssignmentProblemSolver::optimal);
-        for (size_t i = 0; i < assignment.size(); i++)
-        {
-            if (assignment[i] != -1)
-            {
-                if (Cost[i + assignment[i] * N] > dist_thres)
-                {
-                    assignment[i] = -1;
-                    //                tracks[i]->skipped_frames = 1;
-                    //                tracks[i]->skipped_frames++;
-                }
-            }
-        }
-    }
-    else{
-        assert(fv.empty());
-        //the object in tracks all missing
-        for(int i=0;i<tracks.size();i++){
-            assignment.push_back(-1);
-        }
-    }
-
-    return assignment;
-}
-
 void RectFloatTracker::doAssignment(){
-    bool emptyBlobs;
+    assert(!featureVectorList.empty());
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
 
-    if(featureVectorList.empty()){
-        emptyBlobs=true;
-    }
-    else
-    {
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        if(fv.empty()){
-            emptyBlobs=true;
-        }
-        else{
-            emptyBlobs=false;
-        }
-    }
+    bool emptyBlobs=fv.empty();
+    bool emptyObjects=tracks.empty();
 
-    bool emptyObjects;
-    if(tracks.empty()){
-        emptyObjects=true;
-    }
-    else{
-        emptyObjects=false;
-    }
+    if(!mOneToZeroSet.empty())mOneToZeroSet.clear();
+    if(!mZeroToOneSet.empty())mZeroToOneSet.clear();
+    if(!mOneToNMap.empty())mOneToNMap.clear();
+    if(!mOneToOneMap.empty())mOneToOneMap.clear();
+    if(!mNToOneMap.empty())mNToOneMap.clear();
 
     if(emptyBlobs&&emptyObjects){
-        qDebug()<<"empty Blobs and empty objects";
+//        qDebug()<<"empty Blobs and empty objects";
     }
     else if(emptyBlobs){
         //handle missed object
         for(int i=0;i<tracks.size();i++){
-            mUnmatchObjects.insert(i);
+            mOneToZeroSet.insert(i);
         }
         handleMissedObjects();
     }
     else if(emptyObjects){
         //handle new object
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
         for(int i=0;i<fv.size();i++){
-            mNewBlobs.insert(i);
+            mZeroToOneSet.insert(i);
         }
         handleNewObjects();
     }
     else{
-        for(auto ia=ObjectToBlob.begin();ia!=ObjectToBlob.end();ia++){
+        ///update mOneToOneMap mNToOneMap mOneToNMap
+        for(auto ia=mObjectToBlobMap.begin();ia!=mObjectToBlobMap.end();ia++){
             //tracksIdx
-            int trackIdx=ia->first;
+            Index_t trackIdx=ia->first;
             if(ia->second.size()==1){
-                int fvIdx=*(ia->second.begin());
-                if(BlobToObject[fvIdx].size()==1){
-                    mOneToOne.insert(std::make_pair(trackIdx,fvIdx));
+                Index_t fvIdx=*(ia->second.begin());
+                if(mBlobToObjectMap[fvIdx].size()==1){
+                    mOneToOneMap[trackIdx]=fvIdx;
                 }
                 else{
-                    mNToOne.insert(std::make_pair(BlobToObject[fvIdx],fvIdx));
+                    mNToOneMap[fvIdx]=mBlobToObjectMap[fvIdx];
                 }
             }
             else{
-                mOneToN.insert(std::make_pair(trackIdx,ia->second));
+                mOneToNMap[trackIdx]=ia->second;
             }
         }
 
-        vector<trackingObjectFeature> &fv=featureVectorList.back();
-        //handle new object
-        for(int i=0;i<fv.size();i++){
-            if(matchedBlob.find(i)==matchedBlob.end()){
-                mNewBlobs.insert(i);
-            }
-        }
-        handleNewObjects();
-        //handle missed object
+        ///handle missed object, not change tracks.size()
         for(int i=0;i<tracks.size();i++){
-            if(matchedObject.find(i)==matchedObject.end()){
-                mUnmatchObjects.insert(i);
+            if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
+                mOneToZeroSet.insert(i);
             }
         }
         handleMissedObjects();
+
+        //handle new object, will change tracks.size()
+        for(int i=0;i<fv.size();i++){
+            if(mMatchedBlobSet.find(i)==mMatchedBlobSet.end()){
+                mZeroToOneSet.insert(i);
+            }
+        }
+        handleNewObjects();
+
+
         //handle one to one object
         handleOneToOneObjects();
-        //handle merged object
-        handleNToOneObjects();
         //handle split object
         handleOneToNObjects();
+        //handle merged object
+        handleNToOneObjects();
 
-        //remove objects which need delete!!!
+        ///remove objects which need delete later!!!
+        for(auto it=tracks.begin();it!=tracks.end();it++){
+            Id_t id=(*it)->track_id;
+            if(deleteLaterObjectSet.find(id)!=deleteLaterObjectSet.end()){
+                auto pre=prev(it,1);
+                tracks.erase(it);
+                it=pre;
 
-        for(int i=0;i<tracks.size();i++){
-            int id=tracks[i]->track_id;
-            auto it=deleteLaterObjects.find(id);
-            if(it!=deleteLaterObjects.end()){
-                tracks.erase(tracks.begin()+i);
-                i--;
-
-                //for split
-                objectSplitProvocation.erase(id);
-                //for merge
-                for(auto mergeIt=objectMergeProvocation.begin();mergeIt!=objectMergeProvocation.end();mergeIt++){
-                    int friendId=mergeIt->first;
-                    std::map<int,int> &friendMap=mergeIt->second;
+                ///splitProvocationMap keep the weight and displacemnt for each id.
+                splitProvocationMap.erase(id);
+                ///mergeProvocationMap keep the id to be merged with and the weight
+                mergeProvocationMap.erase(id);
+                for(auto mergeIt=mergeProvocationMap.begin();mergeIt!=mergeProvocationMap.end();mergeIt++){
+                    std::map<Id_t,uint> &friendMap=mergeIt->second;
                     friendMap.erase(id);
 
                     if(friendMap.size()==0){
                         auto pre=std::prev(mergeIt,1);
-                        objectMergeProvocation.erase(mergeIt);
+                        mergeProvocationMap.erase(mergeIt);
                         mergeIt=pre;
                     }
                 }
-                objectMergeProvocation.erase(id);
             }
         }
 
-        deleteLaterObjects.clear();
     }
 }
 
 void RectFloatTracker::handleOneToNObjects(){
     vector<trackingObjectFeature> &fv=featureVectorList.back();
 
-    //1. the blob is away from other blobs
-    //2. split for many times when moving!
-    for(auto it=mOneToN.begin();it!=mOneToN.end();it++){
-        int trackId=it->first;
-        const std::set<int> &nblobs=(it->second);
-        //1. the distance is big enough!
-        set<int> splitToNew;
-        for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
+    ///1. the blob is away from other blobs
+    ///2. the blob is go from faraway to nearby, size from small to big!
+    ///3. the blob split for many times when moving!
+
+    std::map<Index_t,std::set<Index_t>> splitToNewMap;
+    ///1. the blob is away from other blobs, the distance is big enough!
+    for(auto it=mOneToNMap.begin();it!=mOneToNMap.end();it++){
+        Index_t trackIdx=it->first;
+        std::set<Index_t> &splitBlobSet=(it->second);
+        /// empty set will be remove, size()==1 is error status!
+        assert(splitBlobSet.size()>1);
+
+        for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
             track_t minRectGap=std::numeric_limits<track_t>::max();
-            for(auto ib=nblobs.begin();ib!=nblobs.end();ib++){
+            for(auto ib=splitBlobSet.begin();ib!=splitBlobSet.end();ib++){
                 if(*ia==*ib){
                     continue;
                 }
 
                 Rect_t &ra=fv[*ia].rect;
                 Rect_t &rb=fv[*ib].rect;
-                minRectGap=std::min(minRectGap,getRectGap(ra,rb));
+                minRectGap=std::min(minRectGap,yzbxlib::getRectGap(ra,rb));
             }
+            ///the minimal distance for *ia to other blobs association to object trackIdx.
             if(minRectGap>MinSplitGap){
                 //new object
-                tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], dt, Accel_noise_mag, NextTrackID++));
-
-                splitToNew.insert(*ia);
+                tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++));
+                splitToNewMap[trackIdx].insert(*ia);
             }
         }
-        if(nblobs.size()-splitToNew.size()==0){
-            deleteLaterObjects.insert(tracks[trackId]->track_id);
-            break;
+    }
+    for(auto it=splitToNewMap.begin();it!=splitToNewMap.end();it++){
+        Index_t trackIdx=it->first;
+        std::set<Index_t> &newBlobSet=it->second;
+        for(auto newIt=newBlobSet.begin();newIt!=newBlobSet.end();newIt++){
+            mOneToNMap[trackIdx].erase(*newIt);
         }
-        assert(nblobs.size()-splitToNew.size()>1);
+        if(mOneToNMap[trackIdx].empty()){
+            mOneToNMap.erase(trackIdx);
+            deleteLaterObjectSet.insert(tracks[trackIdx]->track_id);
+        }
+    }
+    splitToNewMap.clear();
+    ///2. the blob is go from faraway to nearby, size from small to big!
+    /// use a small MinSplitGap will work for this one, but not work for false negative in foreground mask.
+    //    for(auto it=mOneToNMap.begin();it!=mOneToNMap.end();it++){
+    //        Index_t trackIdx=it->first;
+    //        std::set<Index_t> &splitBlobSet=(it->second);
+    //        /// empty set will be remove, size()==1 is error status!
+    //        assert(splitBlobSet.size()>1);
+    //    }
 
-        //mOneToN is set, we cannot modify std::set's element directly.
-        //so we create newNblobs, erase and then insert!
-        std::set<int> newNblobs;
-        if(splitToNew.empty()){
-            newNblobs=nblobs;
+    ///3. split for a lot of times when moving; eg: two friends go together.
+    for(auto it=mOneToNMap.begin();it!=mOneToNMap.end();it++){
+        Index_t trackIdx=it->first;
+        std::set<Index_t> &splitBlobSet=(it->second);
+        /// empty set will be remove, size()==1 is error status!
+        assert(splitBlobSet.size()>1);
+
+        int objectId=tracks[trackIdx]->track_id;
+        auto osp=splitProvocationMap.find(objectId);
+        ///the first time to split
+        if(osp==splitProvocationMap.end()){
+            splitProvocationMap[objectId]=std::make_pair(1,Point_t(0,0));
         }
         else{
-            for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
-                if(splitToNew.find(*ia)==splitToNew.end()){
-                    newNblobs.insert(*ia);
-                }
-            }
-            ///FIXME how to modify set!
-//            it->second=newNblobs;
-        }
-//        for(auto ia=splitToNew.begin();ia!=splitToNew.end();ia++){
-//            auto ib=nblobs.find(*ia);
-//            assert(ib!=nblobs.end());
-//            nblobs.erase(ib);
-//        }
-
-
-        //2. the patience is out for provocation
-        int objectId=tracks[trackId]->track_id;
-        auto osp=objectSplitProvocation.find(objectId);
-        if(osp==objectSplitProvocation.end()){
-            objectSplitProvocation[objectId]=std::make_pair(1,Point_t(0,0));
-        }
-        else{
-            vector<Point_t> &trace=tracks[trackId]->trace;
+            ///split while moving!!!
+            vector<Point_t> &trace=tracks[trackIdx]->trace;
             assert(trace.size()>1);
+
             track_t r[4];
-            cv::Mat unSplitLIF;
-            for(auto ia=newNblobs.begin();ia!=newNblobs.end();ia++){
+            for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
                 Rect_t &rect=fv[*ia].rect;
-                if(ia==newNblobs.begin()){
+                if(ia==splitBlobSet.begin()){
                     r[0]=rect.tl().x;
                     r[1]=rect.tl().y;
                     r[2]=rect.br().x;
@@ -574,104 +341,127 @@ void RectFloatTracker::handleOneToNObjects(){
                     r[2]=std::max(r[2],rect.br().x);
                     r[3]=std::max(r[3],rect.br().y);
                 }
-
-                if(ia==newNblobs.begin()){
-                    unSplitLIF=fv[*ia].LIFMat;
-                }
-                else{
-                    vconcat(unSplitLIF,fv[*ia].LIFMat,unSplitLIF);
-                }
             }
-            Rect_t unSplitRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
             Point_t unSplitCenter(r[0]+r[2],r[1]+r[3]);
-            Point_t displacement=trace.back()-0.5f*unSplitCenter;
-            Point_t history_displacement=objectSplitProvocation[trackId].second;
-            track_t provocation=objectSplitProvocation[trackId].first;
+            Point_t displacement=0.5f*unSplitCenter-trace.back();
+            Point_t history_displacement=splitProvocationMap[trackIdx].second;
+            track_t provocation=splitProvocationMap[trackIdx].first;
             Point_t new_displacement=displacement+history_displacement;
+            //keep moving, like two friends
             if(norm(new_displacement)>norm(history_displacement)+5){
                 provocation+=1.0f;
-            }
+            }//move slow, have not go out of background cluster.
             else if(cv::norm(new_displacement)>cv::norm(history_displacement)){
                 provocation+=0.1f;
-            }
+            }//not move, linger on background cluster.
             else{
                 provocation=0;
             }
 
-            if(provocation>ObjectSplitPatience){
-                qDebug()<<"out of patience";
-                deleteLaterObjects.insert(objectId);
-                for(auto ia=newNblobs.begin();ia!=newNblobs.end();ia++){
-                    tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], dt, Accel_noise_mag, NextTrackID++));
+            if(provocation>MaxProvocationTimesForSplit){
+                qDebug()<<"out of patience, split it!!!";
+                deleteLaterObjectSet.insert(objectId);
+                //split it all!!! for it's not for background cluster.
+                for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
+                    splitToNewMap[trackIdx].insert(*ia);
+                    tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++));
                 }
             }
             else{
-                objectSplitProvocation[trackId]=std::make_pair(provocation,new_displacement);
-                trackingObjectFeature *of=(tracks[trackId]->feature);
-                of->LIFMat=unSplitLIF;
-                of->pos=unSplitCenter;
-                of->rect=unSplitRect;
-                of->size=unSplitRect.area();
-
-                tracks[trackId]->Update(*of, true, max_trace_length);
+                splitProvocationMap[objectId]=std::make_pair(provocation,new_displacement);
             }
         }
     }
-}
 
-track_t RectFloatTracker::getRectGap(Rect_t ra,Rect_t rb){
-    track_t width=(ra.width+rb.width)*0.5f;
-    track_t height=(ra.height+rb.height)*0.5f;
-    Point_t p=(ra.tl()+ra.br()-rb.tl()-rb.br())*0.5f;
-    if(p.x>width&&p.y>height){
-        p.x-=width;
-        p.y-=height;
-        track_t dist=cv::norm(p);
-        return dist;
+    for(auto it=splitToNewMap.begin();it!=splitToNewMap.end();it++){
+        Index_t trackIdx=it->first;
+        std::set<Index_t> &newBlobSet=it->second;
+        for(auto newIt=newBlobSet.begin();newIt!=newBlobSet.end();newIt++){
+            mOneToNMap[trackIdx].erase(newIt);
+        }
+        if(mOneToNMap[trackIdx].empty()){
+            mOneToNMap.erase(trackIdx);
+            deleteLaterObjectSet.insert(tracks[trackIdx]->track_id);
+        }
     }
-    else if(p.x>width){
-        track_t dx=p.x-width;
-        track_t dist=dx*cv::norm(p)/p.x;
-        return dist;
-    }
-    else if(p.y>height){
-        track_t dy=p.y-height;
-        track_t dist=dy*cv::norm(p)/p.y;
-        return dist;
-    }
-    else{
-        return 0.0f;
+    splitToNewMap.clear();
+
+    ///4. merge feature for object which not split!
+    for(auto it=mOneToNMap.begin();it!=mOneToNMap.end();it++){
+        Index_t trackIdx=it->first;
+        std::set<Index_t> &splitBlobSet=(it->second);
+        /// empty set will be remove, size()==1 is error status!
+        assert(splitBlobSet.size()>1);
+
+        ///get merged feature for objectId
+        track_t r[4];
+        cv::Mat unSplitLIF;
+        for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
+            Rect_t &rect=fv[*ia].rect;
+            if(ia==splitBlobSet.begin()){
+                r[0]=rect.tl().x;
+                r[1]=rect.tl().y;
+                r[2]=rect.br().x;
+                r[3]=rect.br().y;
+            }
+            else{
+                r[0]=std::min(r[0],rect.tl().x);
+                r[1]=std::min(r[1],rect.tl().y);
+                r[2]=std::max(r[2],rect.br().x);
+                r[3]=std::max(r[3],rect.br().y);
+            }
+
+            //NOTE need add keypoints here
+            if(ia==splitBlobSet.begin()){
+                unSplitLIF=fv[*ia].LIFMat;
+            }
+            else{
+                vconcat(unSplitLIF,fv[*ia].LIFMat,unSplitLIF);
+            }
+        }
+
+        Rect_t unSplitRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
+        Point_t unSplitCenter((r[0]+r[2])*0.5f,(r[1]+r[3])*0.5f);
+        trackingObjectFeature *of=(tracks[trackIdx]->feature);
+        of->LIFMat=unSplitLIF;
+        of->pos=unSplitCenter;
+        of->rect=unSplitRect;
+        of->size=unSplitRect.area();
+
+        tracks[trackIdx]->Update(*of, true, param.max_trace_length);
     }
 }
 
 void RectFloatTracker::handleNToOneObjects(){
     vector<trackingObjectFeature> &fv=featureVectorList.back();
-
+    //std::map<fvIdx,std::set<objectId>>
     std::map<int,std::set<int>> mergeLater;
-    for(auto git=mNToOne.begin();git!=mNToOne.end();git++){
+    for(auto git=mNToOneMap.begin();git!=mNToOneMap.end();git++){
         //the key of map is const, cannot modify directly
         //the track id set.
-        const std::set<int> &ids=(git->first);
-        int fvIdx=(git->second);
+        std::set<Index_t> &ids=git->second;
+        int fvIdx=git->first;
         for(auto ia=ids.begin();ia!=ids.end();ia++){
             for(auto ib=std::next(ia,1);ib!=ids.end();ib++){
                 vector<Point_t> &traceA=tracks[*ia]->trace;
                 vector<Point_t> &traceB=tracks[*ib]->trace;
 
-                bool flag=isMergedTrace(traceA,traceB);
+                bool flag=isTraceMergable(traceA,traceB);
                 if(flag){
                     int objectIdA=tracks[*ia]->track_id;
                     int objectIdB=tracks[*ib]->track_id;
                     int smallId=std::min(objectIdA,objectIdB);
                     int bigId=std::max(objectIdA,objectIdB);
-                    auto mit=objectMergeProvocation.find(smallId);
-                    if(mit==objectMergeProvocation.end()){
-                        std::map<int,int> mergeMap;
-                        mergeMap[bigId]=1;
-                        objectMergeProvocation[smallId]=mergeMap;
+                    auto mit=mergeProvocationMap.find(smallId);
+                    if(mit==mergeProvocationMap.end()){
+//                        std::map<int,int> mergeMap;
+//                        mergeMap[bigId]=1;
+//                        mergeProvocationMap[smallId]=mergeMap;
+                        mergeProvocationMap[smallId][bigId]=1;
+//                        mergeChanceMap[smallId][bigId]=InitMergeChance;
                     }
                     else{
-                        std::map<int,int> &mergeMap=objectMergeProvocation[smallId];
+                        std::map<Id_t,uint> &mergeMap=mergeProvocationMap[smallId];
 
                         auto msetIt=mergeMap.find(bigId);
                         if(msetIt==mergeMap.end()){
@@ -682,7 +472,7 @@ void RectFloatTracker::handleNToOneObjects(){
                             ///FIXME how to modify read-only object!!!
                             /// change set<pair<>> to map!
                             msetIt->second=mergeTimes;
-                            if(mergeTimes>objectMergePatience){
+                            if(mergeTimes>MaxProvocationTimesForMerge){
                                 qDebug()<<"merge them later";
                                 auto mergeLaterId=mergeLater.find(fvIdx);
                                 if(mergeLaterId!=mergeLater.end()){
@@ -710,16 +500,18 @@ void RectFloatTracker::handleNToOneObjects(){
         int fvIdx=git->first;
         std::set<int> &mergeSet=git->second;
 
-        tracks.push_back(std::make_unique<singleObjectTracker>(fv[fvIdx], dt, Accel_noise_mag, NextTrackID++));
+        tracks.push_back(std::make_unique<singleObjectTracker>(fv[fvIdx], param.dt, param.Accel_noise_mag, param.NextTrackID++));
 
         for(auto it=mergeSet.begin();it!=mergeSet.end();it++){
             int objectId=*it;
-            deleteLaterObjects.insert(objectId);
+            deleteLaterObjectSet.insert(objectId);
         }
     }
+
+    //TODO update for other objects and pos.
 }
 
-bool RectFloatTracker::isMergedTrace(vector<Point_t> &traceA,vector<Point_t> &traceB){
+bool RectFloatTracker::isTraceMergable(vector<Point_t> &traceA,vector<Point_t> &traceB){
     int currentDist;
     for(auto ia=traceA.end(),ib=traceB.end();ia!=traceA.begin()&&ib!=traceB.end();ia--,ib--){
         auto ita=std::prev(ia,1);
@@ -740,134 +532,27 @@ bool RectFloatTracker::isMergedTrace(vector<Point_t> &traceA,vector<Point_t> &tr
 
 void RectFloatTracker::handleNewObjects(){
     vector<trackingObjectFeature> &fv=featureVectorList.back();
-    for(auto newit=mNewBlobs.begin();newit!=mNewBlobs.end();newit++){
-        tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit], dt, Accel_noise_mag, NextTrackID++));
+    for(auto newit=mZeroToOneSet.begin();newit!=mZeroToOneSet.end();newit++){
+        tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit], param.dt, param.Accel_noise_mag, param.NextTrackID++));
     }
 }
 
 void RectFloatTracker::handleMissedObjects(){
-    for(auto missit=mUnmatchObjects.begin();missit!=mUnmatchObjects.end();missit++){
+    for(auto missit=mOneToZeroSet.begin();missit!=mOneToZeroSet.end();missit++){
+        assert(*missit<tracks.size());
         tracks[*missit]->skipped_frames +=1;
-        if(tracks[*missit]->skipped_frames>maximum_allowed_skipped_frames){
-            deleteLaterObjects.insert(*missit);
+        if(tracks[*missit]->skipped_frames>param.maximum_allowed_skipped_frames){
+            deleteLaterObjectSet.insert(*missit);
         }
     }
 }
 
 void RectFloatTracker::handleOneToOneObjects(){
     vector<trackingObjectFeature> &fv=featureVectorList.back();
-    for(auto it=mOneToOne.begin();it!=mOneToOne.end();it++){
+    for(auto it=mOneToOneMap.begin();it!=mOneToOneMap.end();it++){
         int trackIdx=it->first;
         int fvIdx=it->second;
-        tracks[trackIdx]->Update(fv[fvIdx], true, max_trace_length);
-    }
-}
-
-void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat costMat){
-
-    assert(assignment.size()==tracks.size());
-    assert(costMat.empty()||assignment.size()==costMat.rows);
-    std::set<int> oldObjectId;
-    // -----------------------------------
-    // clean assignment from pairs with large distance
-    // -----------------------------------
-    for (size_t i = 0; i < assignment.size(); i++)
-    {
-        if (assignment[i] == -1)
-        {
-            // If track have no assigned detect, then increment skipped frames counter.
-            if(!costMat.empty()){
-                for(int col=0;col<costMat.cols;col++){
-                    if(costMat.at<uchar>(i,col)>=3){
-                        //the object is under other object, so we update ourself!
-                        //BUG, the assignment is -1 for only one object!
-                        //                        assignment[i]=-1;
-                        //                        tracks[i]->skipped_frames = 0;
-                        //                        trackingObjectFeature of;
-                        //                        tracks[i]->predict(of);
-                        //                        tracks[i]->Update(of, true, max_trace_length);
-                        //                        //let long merge disppear
-                        ////                        tracks[i]->skipped_frames=0;
-                        //                        oldObjectId.insert(col);
-
-                        assignment[i]=col;
-                        break;
-                    }
-                }
-            }
-            tracks[i]->skipped_frames++;
-        }
-    }
-
-    // -----------------------------------
-    // If track didn't get detects long time, remove it.
-    // -----------------------------------
-    for (uint i = 0; i < tracks.size(); i++)
-    {
-        if (tracks[i]->skipped_frames > (int)maximum_allowed_skipped_frames)
-        {
-            outputAndRemove(i);
-            tracks.erase(tracks.begin() + i);
-            assignment.erase(assignment.begin() + i);
-            i--;
-        }
-    }
-
-    // -----------------------------------
-    // Search for unassigned detects and start new tracks for them.
-    // -----------------------------------
-    for (size_t i = 0; i < fv.size(); ++i)
-    {
-        if (find(assignment.begin(), assignment.end(), i) == assignment.end())
-        {
-            //not match with the old objects.
-            if(oldObjectId.find(i)==oldObjectId.end()){
-                tracks.push_back(std::make_unique<singleObjectTracker>(fv[i], dt, Accel_noise_mag, NextTrackID++));
-            }
-
-            //not in the split of old objects 1->2
-        }
-    }
-
-    // Update Kalman Filters state
-
-    for (size_t i = 0; i<assignment.size(); i++)
-    {
-        // If track updated less than one time, than filter state is not correct.
-
-        if (assignment[i] != -1) // If we have assigned detect, then update using its coordinates,
-        {
-            tracks[i]->skipped_frames = 0;
-            tracks[i]->Update(fv[assignment[i]], true, max_trace_length);
-        }
-        else				     // if not continue using predictions
-        {
-            trackingObjectFeature nullOf;
-            tracks[i]->Update(nullOf, false, max_trace_length);
-        }
-    }
-}
-
-///remove tracks[i] in MergeAndSplitTree
-void RectFloatTracker::outputAndRemove(uint index){
-    //TODO remode node in MergeAndSplitTree
-    if(tracks[index]->catch_frames>10){
-
-    }
-}
-
-bool RectFloatTracker::isRectAInRectB(Rect_t A,Rect_t B){
-    Point_t at=A.tl(),ab=A.br();
-    Point_t bt=B.tl(),bb=B.br();
-
-    Point_t dt=at-bt,db=ab-bb;
-    int floatThreshold=10;
-    int T=floatThreshold;
-    if(dt.x>=-T&&db.x<=T&&dt.y>=-T&&db.y<=T){
-        return true;
-    }
-    else{
-        return false;
+        tracks[trackIdx]->Update(fv[fvIdx], true, param.max_trace_length);
     }
 }
 
@@ -904,39 +589,29 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
         std::string numstr=boost::lexical_cast<string>(tracks[i]->track_id);
         text=numstr+" : "+text;
 
-
-        cv::putText(img_tracking, text, r.tl(), FONT_HERSHEY_COMPLEX, 0.5,
-                    cv::Scalar(0,0,255), 2, 8);
+        if(r.tl().y>20){
+            cv::putText(img_tracking, text, r.tl(), FONT_HERSHEY_COMPLEX, 0.5,
+                        cv::Scalar(0,0,255), 2, 8);
+        }
+        else{
+            Point_t p=r.tl();
+            p.y=r.br().y+10;
+            cv::putText(img_tracking, text, p, FONT_HERSHEY_COMPLEX, 0.5,
+                        cv::Scalar(0,0,255), 2, 8);
+        }
     }
 
     cv::imshow("img_tracking",img_tracking);
 }
 
-track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1,std::shared_ptr<trackingObjectFeature> of2,ObjectLocalFeatureMatch &matcher){
-    track_t pathWeight=0.0;
-    vector<DMatch> &good_matches=matcher.global_good_matches;
-    for(auto match=good_matches.begin();match!=good_matches.end();match++){
-        assert(match->queryIdx<matcher.global_keypoints_1.size());
-        assert(match->trainIdx<matcher.global_keypoints_2.size());
-        KeyPoint &kp1=matcher.global_keypoints_1[match->queryIdx];
-        KeyPoint &kp2=matcher.global_keypoints_2[match->trainIdx];
-
-        //test KeyPoint's position in trackingObjectFeature's rect
-        if(isPointInRect(kp1.pt,of1->rect)&&isPointInRect(kp2.pt,of2->rect)){
-            pathWeight+=1.0;
-        }
-    }
-    return pathWeight;
-}
-
-track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2){
+track_t RectFloatTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2){
 
     if(of1->LIFMat.empty()){
-        qDebug()<<"empty LIFMat in of1";
+//        qDebug()<<"empty LIFMat in of1";
         return 0.0f;
     }
     if(of2->LIFMat.empty()){
-        qDebug()<<"empty LIFMat in of2";
+//        qDebug()<<"empty LIFMat in of2";
         return 0.0f;
     }
     ObjectLocalFeatureMatch matcher;
@@ -949,7 +624,7 @@ track_t RectFloatTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> 
 track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2,int costType){
     if(costType==LIFDist){
         track_t maxMatchedLIF=10.0f;
-        track_t m=calcPathWeight(of1,of2);
+        track_t m=calcMatchedFeatureNum(of1,of2);
         if(m>=maxMatchedLIF){
             return 0.0f;
         }
@@ -974,69 +649,59 @@ track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, s
 
 void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     assert(featureVectorList.size()==imageList.size());
+    assert(!featureVectorList.empty());
+    std::vector<trackingObjectFeature> &fv=featureVectorList.back();
+    if(!matchMat.empty()) matchMat.release();
     int m=tracks.size();
-    int n=featureVectorList.back().size();
+    int n=fv.size();
     if(m==0||n==0){
         return;
     }
 
-    //    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
-    std::vector<trackingObjectFeature> &fv2=featureVectorList.back();
-
-    if(!matchMat.empty()) matchMat.release();
     matchMat.create(m,n,CV_8UC1);
 
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){
-            matchMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
-                                                   std::make_shared<trackingObjectFeature>(fv2[j]));
+            matchMat.at<uchar>(i,j)=calcMatchedFeatureNum(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
+                                                   std::make_shared<trackingObjectFeature>(fv[j]));
         }
     }
 }
 
-bool RectFloatTracker::isPointInRect(cv::Point2f p, Rect_t rect)
-{
-    if(p.x>rect.x&&p.x>rect.y&&p.x<rect.x+rect.width&&p.y<rect.y+rect.height){
-        return true;
-    }
-    else{
-        return false;
-    }
-}
 
-void RectFloatTracker::showAssignment(assignments_t &assignments,std::vector<trackingObjectFeature> &fv){
-    cv::Mat img_objects=img_input.clone();
-    cv::Mat img_blobs=img_input.clone();
-    assert(assignments.size()==tracks.size());
+//void RectFloatTracker::showAssignment(assignments_t &assignments,std::vector<trackingObjectFeature> &fv){
+//    cv::Mat img_objects=img_input.clone();
+//    cv::Mat img_blobs=img_input.clone();
+//    assert(assignments.size()==tracks.size());
 
-    for(int i=0;i<tracks.size();i++){
-        Point_t p1=tracks[i]->prediction;
-        Point_t p2=tracks[i]->feature->pos;
-        cv::circle(img_blobs,p1,5,Scalar(0,0,255),3);
-        cv::circle(img_blobs,p2,5,Scalar(0,0,255),CV_FILLED);
-        cv::line(img_objects,p2,p1,Scalar(255,0,0),3);
-    }
+//    for(int i=0;i<tracks.size();i++){
+//        Point_t p1=tracks[i]->prediction;
+//        Point_t p2=tracks[i]->feature->pos;
+//        cv::circle(img_blobs,p1,5,Scalar(0,0,255),3);
+//        cv::circle(img_blobs,p2,5,Scalar(0,0,255),CV_FILLED);
+//        cv::line(img_objects,p2,p1,Scalar(255,0,0),3);
+//    }
 
-    for(int i=0;i<fv.size();i++){
-        trackingObjectFeature &of=fv[i];
-        Point_t p=of.pos;
-        cv::circle(img_blobs,p,5,Scalar(0,0,255),CV_FILLED);
-    }
+//    for(int i=0;i<fv.size();i++){
+//        trackingObjectFeature &of=fv[i];
+//        Point_t p=of.pos;
+//        cv::circle(img_blobs,p,5,Scalar(0,0,255),CV_FILLED);
+//    }
 
-    Mat img_assign;
-    cv::hconcat(img_objects,img_blobs,img_assign);
-    for(int i=0;i<assignments.size();i++){
-        if(assignments[i]!=-1){
-            assert(assignments[i]<fv.size());
-            trackingObjectFeature &of=fv[assignments[i]];
+//    Mat img_assign;
+//    cv::hconcat(img_objects,img_blobs,img_assign);
+//    for(int i=0;i<assignments.size();i++){
+//        if(assignments[i]!=-1){
+//            assert(assignments[i]<fv.size());
+//            trackingObjectFeature &of=fv[assignments[i]];
 
-            Point_t p1=tracks[i]->prediction;
-            Point_t p2=of.pos;
-            p2.x+=img_input.cols;
+//            Point_t p1=tracks[i]->prediction;
+//            Point_t p2=of.pos;
+//            p2.x+=img_input.cols;
 
-            cv::line(img_assign,p1,p2,Scalar(255,0,0),3);
-        }
-    }
+//            cv::line(img_assign,p1,p2,Scalar(255,0,0),3);
+//        }
+//    }
 
-    imshow("img_assign",img_assign);
-}
+//    imshow("img_assign",img_assign);
+//}

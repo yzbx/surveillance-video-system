@@ -20,6 +20,9 @@ void showImageInWindow(string windowName,const cv::Mat &img);
 void moveWindows(std::vector<std::string> &windowNames, int colNum=4);
 void dumpVector(std::vector<int> &v);
 void dumpVector(std::vector<float> &v);
+bool isRectAInRectB(Rect_t A, Rect_t B);
+bool isPointInRect(cv::Point2f p, Rect_t rect);
+track_t getRectGap(Rect_t ra,Rect_t rb);
 //void insertToSetList(std::list<std::set<int>> &setList,int value);
 }
 

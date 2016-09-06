@@ -186,7 +186,7 @@ vector<vector<std::shared_ptr<BasicGraphNode>>> GraphBasedTracker::findMaximumWe
         for(auto tailNode=next->begin();tailNode!=next->end();tailNode++){
             vector<track_t> pathWeights;
             for(auto headNode=headNodes.begin();headNode!=headNodes.end();headNode++){
-                track_t pathWeight=calcPathWeight((*headNode)->of,tailNode->of,matcher);
+                track_t pathWeight=calcMatchedFeatureNum((*headNode)->of,tailNode->of,matcher);
                 pathWeights.push_back(pathWeight);
             }
             tailNode->pathWeights.clear();
@@ -230,7 +230,7 @@ bool GraphBasedTracker::isPointInRect(cv::Point2f p, Rect_t rect)
     }
 }
 
-track_t GraphBasedTracker::calcPathWeight(std::shared_ptr<trackingObjectFeature> of1,std::shared_ptr<trackingObjectFeature> of2,ObjectLocalFeatureMatch &matcher){
+track_t GraphBasedTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1,std::shared_ptr<trackingObjectFeature> of2,ObjectLocalFeatureMatch &matcher){
     track_t pathWeight=0.0;
     vector<DMatch> &good_matches=matcher.global_good_matches;
     for(auto match=good_matches.begin();match!=good_matches.end();match++){

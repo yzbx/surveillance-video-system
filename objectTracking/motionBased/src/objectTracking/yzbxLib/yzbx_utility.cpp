@@ -728,6 +728,59 @@ void doubleThresholdConnect(const Mat &highThresholdMask,const Mat &lowThreshold
 }
 
 namespace  yzbxlib {
+track_t getRectGap(Rect_t ra,Rect_t rb){
+    track_t width=(ra.width+rb.width)*0.5f;
+    track_t height=(ra.height+rb.height)*0.5f;
+    Point_t p=(ra.tl()+ra.br()-rb.tl()-rb.br())*0.5f;
+    if(p.x<0) p.x=-p.x;
+    if(p.y<0) p.y=-p.y;
+
+    if(p.x>width&&p.y>height){
+        p.x-=width;
+        p.y-=height;
+        track_t dist=cv::norm(p);
+        return dist;
+    }
+    else if(p.x>width){
+        track_t dx=p.x-width;
+        track_t dist=dx*cv::norm(p)/p.x;
+        return dist;
+    }
+    else if(p.y>height){
+        track_t dy=p.y-height;
+        track_t dist=dy*cv::norm(p)/p.y;
+        return dist;
+    }
+    else{
+        return 0.0f;
+    }
+}
+
+bool isPointInRect(cv::Point2f p, Rect_t rect)
+{
+    if(p.x>rect.x&&p.x>rect.y&&p.x<rect.x+rect.width&&p.y<rect.y+rect.height){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
+
+bool isRectAInRectB(Rect_t A,Rect_t B){
+    Point_t at=A.tl(),ab=A.br();
+    Point_t bt=B.tl(),bb=B.br();
+
+    Point_t dt=at-bt,db=ab-bb;
+    int floatThreshold=10;
+    int T=floatThreshold;
+    if(dt.x>=-T&&db.x<=T&&dt.y>=-T&&db.y<=T){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
 
 QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName)
 {
