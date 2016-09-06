@@ -183,9 +183,9 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         ObjectLocalFeatureMatch match;
         imshow("mask_i",mask_i);
         match.getLIFMat(of.LIFMat,image,mask_i);
-        if(of.LIFMat.empty()){
-            qDebug()<<"empty";
-        }
+//        if(of.LIFMat.empty()){
+//            qDebug()<<"empty";
+//        }
 
         features.push_back(of);
     }

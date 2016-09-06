@@ -43,6 +43,7 @@ private:
     IBGS *ibgs=NULL;
     cv::Mat global_img_fg;
     cv::VideoWriter videoWriter;
+    bool firstTimeToOpen=true;
 };
 
 #endif // TRACKINGRESULTREPLAY_H

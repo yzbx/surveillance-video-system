@@ -12,6 +12,7 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
         bgsFactory_yzbx fac;
         ibgs=fac.getBgsAlgorithm(bgsType);
     }
+
     std::vector<object> objects;
 
     //     For example, the line “0 0 92 12 22 53 ” means:
@@ -62,7 +63,10 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
                 if(ibgs!=NULL){
                     s.width=s.width*2;
                 }
-                assert(videoWriter.open("replay.avi",CV_FOURCC('D', 'I', 'V', 'X'),50,s,true));
+                if(firstTimeToOpen){
+                    assert(videoWriter.open("replay.avi",CV_FOURCC('D', 'I', 'V', 'X'),50,s,true));
+                    firstTimeToOpen=false;
+                }
             }
         }
         if(img_input.empty()){
