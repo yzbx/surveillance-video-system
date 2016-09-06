@@ -23,6 +23,8 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     skipped_frames=0;
     catch_frames=1;
     rects.push_back(of.rect);
+
+    trace.push_back(of.pos);
 }
 
 track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
