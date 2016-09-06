@@ -32,21 +32,25 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
         featureVectorList.pop_front();
     }
 
-    assignments_t assignment;
-    getHungarainAssignment(assignment);
-    showAssignment(assignment,fv);
+    ///Hungarain->LIF, without split/merge support
+    //    assignments_t assignment;
+    //    getHungarainAssignment(assignment);
+    //    showAssignment(assignment,fv);
 
-    std::cout<<"assignment= ";
-    for(auto it=assignment.begin();it!=assignment.end();it++){
-        std::cout<<*it<<" ,";
-    }
-    std::cout<<std::endl;
+    //    std::cout<<"assignment= ";
+    //    for(auto it=assignment.begin();it!=assignment.end();it++){
+    //        std::cout<<*it<<" ,";
+    //    }
+    //    std::cout<<std::endl;
+    //    cv::Mat matchMat;
+    //    getLocalFeatureAssignment(matchMat);
+    //    doAssignment(assignment,fv,matchMat);
 
-    cv::Mat costMat;
-    getLocalFeatureAssignment(costMat);
-    std::cout << "costMat = "<< std::endl << " "  << costMat << std::endl << std::endl;
-
-    doAssignment(assignment,fv,costMat);
+    ///LIF->Hungarian, with split/merge support
+    cv::Mat matchMat;
+    getLocalFeatureAssignment(matchMat);
+    getUnmatchedHungarainAssignment(matchMat);
+    doAssignment();
     showing(img_input,img_fg,fv);
 }
 
@@ -132,7 +136,7 @@ void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
             for(int i=0;i<unMatchedObjects.size();i++){
                 for(int j=0;j<unMatchedBlobs.size();j++){
                     Cost[i+j*N]=calcCost(std::make_shared<trackingObjectFeature>(*(tracks[unMatchedObjects[i]]->feature)),
-                                         std::make_shared<trackingObjectFeature>(fv[unMatchedBlobs[j]]),RectDist);
+                            std::make_shared<trackingObjectFeature>(fv[unMatchedBlobs[j]]),RectDist);
                 }
             }
 
@@ -421,17 +425,17 @@ void RectFloatTracker::doAssignment(){
         for(auto ia=ObjectToBlob.begin();ia!=ObjectToBlob.end();ia++){
             //tracksIdx
             int trackIdx=ia->first;
-            if(ia->second->size()==1){
-                int fvIdx=ia->second.front();
+            if(ia->second.size()==1){
+                int fvIdx=*(ia->second.begin());
                 if(BlobToObject[fvIdx].size()==1){
                     mOneToOne.insert(std::make_pair(trackIdx,fvIdx));
                 }
                 else{
-                    mNToOne.insert(BlobToObject[fvIdx],fvIdx);
+                    mNToOne.insert(std::make_pair(BlobToObject[fvIdx],fvIdx));
                 }
             }
             else{
-                mOneToN.insert(trackIdx,*(ia->second));
+                mOneToN.insert(std::make_pair(trackIdx,ia->second));
             }
         }
 
@@ -456,6 +460,35 @@ void RectFloatTracker::doAssignment(){
         handleNToOneObjects();
         //handle split object
         handleOneToNObjects();
+
+        //remove objects which need delete!!!
+
+        for(int i=0;i<tracks.size();i++){
+            int id=tracks[i]->track_id;
+            auto it=deleteLaterObjects.find(id);
+            if(it!=deleteLaterObjects.end()){
+                tracks.erase(tracks.begin()+i);
+                i--;
+
+                //for split
+                objectSplitProvocation.erase(id);
+                //for merge
+                for(auto mergeIt=objectMergeProvocation.begin();mergeIt!=objectMergeProvocation.end();mergeIt++){
+                    int friendId=mergeIt->first;
+                    std::map<int,int> &friendMap=mergeIt->second;
+                    friendMap.erase(id);
+
+                    if(friendMap.size()==0){
+                        auto pre=std::prev(mergeIt,1);
+                        objectMergeProvocation.erase(mergeIt);
+                        mergeIt=pre;
+                    }
+                }
+                objectMergeProvocation.erase(id);
+            }
+        }
+
+        deleteLaterObjects.clear();
     }
 }
 
@@ -466,12 +499,12 @@ void RectFloatTracker::handleOneToNObjects(){
     //2. split for many times when moving!
     for(auto it=mOneToN.begin();it!=mOneToN.end();it++){
         int trackId=it->first;
-        std::set<int> &nblobs=*(it->second);
+        const std::set<int> &nblobs=(it->second);
         //1. the distance is big enough!
         set<int> splitToNew;
         for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
             track_t minRectGap=std::numeric_limits<track_t>::max();
-            for(auto ib=nblobs.begin();ib1=nblobs.end();ib++){
+            for(auto ib=nblobs.begin();ib!=nblobs.end();ib++){
                 if(*ia==*ib){
                     continue;
                 }
@@ -488,16 +521,32 @@ void RectFloatTracker::handleOneToNObjects(){
             }
         }
         if(nblobs.size()-splitToNew.size()==0){
-            deleteLaterObjects.insert(tracks[*ia]->track_id);
+            deleteLaterObjects.insert(tracks[trackId]->track_id);
             break;
         }
         assert(nblobs.size()-splitToNew.size()>1);
 
-        for(auto ia=splitToNew.begin();ia!=splitToNew.end();ia++){
-            auto ib=nblobs.find(*ia);
-            assert(ib!=nblobs.end());
-            nblobs.erase(ib);
+        //mOneToN is set, we cannot modify std::set's element directly.
+        //so we create newNblobs, erase and then insert!
+        std::set<int> newNblobs;
+        if(splitToNew.empty()){
+            newNblobs=nblobs;
         }
+        else{
+            for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
+                if(splitToNew.find(*ia)==splitToNew.end()){
+                    newNblobs.insert(*ia);
+                }
+            }
+            ///FIXME how to modify set!
+//            it->second=newNblobs;
+        }
+//        for(auto ia=splitToNew.begin();ia!=splitToNew.end();ia++){
+//            auto ib=nblobs.find(*ia);
+//            assert(ib!=nblobs.end());
+//            nblobs.erase(ib);
+//        }
+
 
         //2. the patience is out for provocation
         int objectId=tracks[trackId]->track_id;
@@ -510,9 +559,9 @@ void RectFloatTracker::handleOneToNObjects(){
             assert(trace.size()>1);
             track_t r[4];
             cv::Mat unSplitLIF;
-            for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
+            for(auto ia=newNblobs.begin();ia!=newNblobs.end();ia++){
                 Rect_t &rect=fv[*ia].rect;
-                if(ia==nblobs.begin()){
+                if(ia==newNblobs.begin()){
                     r[0]=rect.tl().x;
                     r[1]=rect.tl().y;
                     r[2]=rect.br().x;
@@ -525,7 +574,7 @@ void RectFloatTracker::handleOneToNObjects(){
                     r[3]=std::max(r[3],rect.br().y);
                 }
 
-                if(ia==nblobs.begin()){
+                if(ia==newNblobs.begin()){
                     unSplitLIF=fv[*ia].LIFMat;
                 }
                 else{
@@ -535,13 +584,13 @@ void RectFloatTracker::handleOneToNObjects(){
             Rect_t unSplitRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
             Point_t unSplitCenter(r[0]+r[2],r[1]+r[3]);
             Point_t displacement=trace.back()-0.5f*unSplitCenter;
-            Point_t history_displacement=ObjectSplitPatience[trackId].second;
-            track_t provocation=ObjectSplitPatience[trackId].first;
+            Point_t history_displacement=objectSplitProvocation[trackId].second;
+            track_t provocation=objectSplitProvocation[trackId].first;
             Point_t new_displacement=displacement+history_displacement;
             if(norm(new_displacement)>norm(history_displacement)+5){
                 provocation+=1.0f;
             }
-            else if(norm(new_displacement)>history_displacement){
+            else if(cv::norm(new_displacement)>cv::norm(history_displacement)){
                 provocation+=0.1f;
             }
             else{
@@ -551,12 +600,12 @@ void RectFloatTracker::handleOneToNObjects(){
             if(provocation>ObjectSplitPatience){
                 qDebug()<<"out of patience";
                 deleteLaterObjects.insert(objectId);
-                for(auto ia=nblobs.begin();ia!=nblobs.end();ia++){
+                for(auto ia=newNblobs.begin();ia!=newNblobs.end();ia++){
                     tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], dt, Accel_noise_mag, NextTrackID++));
                 }
             }
             else{
-                ObjectSplitPatience[trackId]=std::make_pair(provocation,new_displacement);
+                objectSplitProvocation[trackId]=std::make_pair(provocation,new_displacement);
                 trackingObjectFeature *of=(tracks[trackId]->feature);
                 of->LIFMat=unSplitLIF;
                 of->pos=unSplitCenter;
@@ -594,24 +643,123 @@ track_t RectFloatTracker::getRectGap(Rect_t ra,Rect_t rb){
     }
 }
 
-void RectFloatTracker::handleNtoOneObjects(){
-    for(auto git=mNToOne.begin();git!=mNToOne.end();git++){
-        std::set<int> &ids=(git->first);
-        int fvIdx=(git->second);
+void RectFloatTracker::handleNToOneObjects(){
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
 
+    std::map<int,std::set<int>> mergeLater;
+    for(auto git=mNToOne.begin();git!=mNToOne.end();git++){
+        //the key of map is const, cannot modify directly
+        //the track id set.
+        const std::set<int> &ids=(git->first);
+        int fvIdx=(git->second);
+        for(auto ia=ids.begin();ia!=ids.end();ia++){
+            for(auto ib=std::next(ia,1);ib!=ids.end();ib++){
+                vector<Point_t> &traceA=tracks[*ia]->trace;
+                vector<Point_t> &traceB=tracks[*ib]->trace;
+
+                bool flag=isMergedTrace(traceA,traceB);
+                if(flag){
+                    int objectIdA=tracks[*ia]->track_id;
+                    int objectIdB=tracks[*ib]->track_id;
+                    int smallId=std::min(objectIdA,objectIdB);
+                    int bigId=std::max(objectIdA,objectIdB);
+                    auto mit=objectMergeProvocation.find(smallId);
+                    if(mit==objectMergeProvocation.end()){
+                        std::map<int,int> mergeMap;
+                        mergeMap[bigId]=1;
+                        objectMergeProvocation[smallId]=mergeMap;
+                    }
+                    else{
+                        std::map<int,int> &mergeMap=objectMergeProvocation[smallId];
+
+                        auto msetIt=mergeMap.find(bigId);
+                        if(msetIt==mergeMap.end()){
+                            mergeMap[bigId]=1;
+                        }
+                        else{
+                            int mergeTimes=msetIt->second+1;
+                            ///FIXME how to modify read-only object!!!
+                            /// change set<pair<>> to map!
+                            msetIt->second=mergeTimes;
+                            if(mergeTimes>objectMergePatience){
+                                qDebug()<<"merge them later";
+                                auto mergeLaterId=mergeLater.find(fvIdx);
+                                if(mergeLaterId!=mergeLater.end()){
+                                    mergeLaterId->second.insert(objectIdA);
+                                    mergeLaterId->second.insert(objectIdB);
+                                }
+                                else{
+                                    std::set<int> mergeLaterSet;
+                                    mergeLaterSet.insert(objectIdA);
+                                    mergeLaterSet.insert(objectIdB);
+                                    mergeLater[fvIdx]=mergeLaterSet;
+                                }
+                            }
+                        }
+                    }
+                }
+                else{
+                    //TODO do nothing or remove objectMergePovocation
+                }
+            }
+        }
+    }
+
+    for(auto git=mergeLater.begin();git!=mergeLater.end();git++){
+        int fvIdx=git->first;
+        std::set<int> &mergeSet=git->second;
+
+        tracks.push_back(std::make_unique<singleObjectTracker>(fv[fvIdx], dt, Accel_noise_mag, NextTrackID++));
+
+        for(auto it=mergeSet.begin();it!=mergeSet.end();it++){
+            int objectId=*it;
+            deleteLaterObjects.insert(objectId);
+        }
     }
 }
 
-void RectFloatTracker::handleNewObjects(){
+bool RectFloatTracker::isMergedTrace(vector<Point_t> &traceA,vector<Point_t> &traceB){
+    int currentDist;
+    for(auto ia=traceA.end(),ib=traceB.end();ia!=traceA.begin()&&ib!=traceB.end();ia--,ib--){
+        auto ita=std::prev(ia,1);
+        auto itb=std::prev(ib,1);
+        if(ia==traceA.end()){
+            currentDist=cv::norm(*ita-*itb);
+        }
+        else{
+            track_t d=cv::norm(*ita-*itb);
+            if(abs(d-currentDist)>MaxDistForMergingTrace){
+                return false;
+            }
+        }
+    }
 
+    return true;
+}
+
+void RectFloatTracker::handleNewObjects(){
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
+    for(auto newit=mNewBlobs.begin();newit!=mNewBlobs.end();newit++){
+        tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit], dt, Accel_noise_mag, NextTrackID++));
+    }
 }
 
 void RectFloatTracker::handleMissedObjects(){
-
+    for(auto missit=mUnmatchObjects.begin();missit!=mUnmatchObjects.end();missit++){
+        tracks[*missit]->skipped_frames +=1;
+        if(tracks[*missit]->skipped_frames>maximum_allowed_skipped_frames){
+            deleteLaterObjects.insert(*missit);
+        }
+    }
 }
 
 void RectFloatTracker::handleOneToOneObjects(){
-
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
+    for(auto it=mOneToOne.begin();it!=mOneToOne.end();it++){
+        int trackIdx=it->first;
+        int fvIdx=it->second;
+        tracks[trackIdx]->Update(fv[fvIdx], true, max_trace_length);
+    }
 }
 
 void RectFloatTracker::doAssignment(assignments_t assignment,vector<trackingObjectFeature> &fv,cv::Mat costMat){
@@ -834,13 +982,13 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     //    std::vector<trackingObjectFeature> &fv1=featureVectorList.front();
     std::vector<trackingObjectFeature> &fv2=featureVectorList.back();
 
-    if(!costMat.empty()) costMat.release();
-    costMat.create(m,n,CV_8UC1);
+    if(!matchMat.empty()) matchMat.release();
+    matchMat.create(m,n,CV_8UC1);
 
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){
-            costMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
-                                                  std::make_shared<trackingObjectFeature>(fv2[j]));
+            matchMat.at<uchar>(i,j)=calcPathWeight(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
+                                                   std::make_shared<trackingObjectFeature>(fv2[j]));
         }
     }
 }

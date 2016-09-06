@@ -39,40 +39,48 @@ private:
     track_t calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2, int costType);
 
 
-    //get from UrbanTracker
+    //get from UrbanTracker, temporary status
     //std::map<tracksIdx,std::set<featureVectorIdx>>
     std::map<int, std::set<int>> ObjectToBlob;
     std::map<int, std::set<int>> BlobToObject;
     std::set<int> matchedBlob;
     std::set<int> matchedObject;
-    void getUnmatchedHungarainAssignment(assignments_t &assignment, cv::Mat matchMat);
 
     std::set<int> mNewBlobs;	 // 0-1
     std::set<int> mUnmatchObjects; // 1-0
     std::set<std::pair<int, int>> mOneToOne; //1-1
     std::set<std::pair<int, std::set<int>>> mOneToN; //1-N
+    //std::set<std::pair<std::set<trackIdx>,fvIdx>>
     std::set<std::pair<std::set<int>, int>> mNToOne; //N-1
 
-    //use mNewblobs, mUnmatchedObjects, mOneToOne, ... to do assignment
+    ///use mNewblobs, mUnmatchedObjects, mOneToOne, ... to do assignment
     void doAssignment();
     void handleOneToOneObjects();
-    void handleNtoOneObjects();
+
     void handleNewObjects();
     void handleMissedObjects();
+    //NOTE split first, then merge!!!
     void handleOneToNObjects();
+    //NOTE merge later, split first!!!
+    void handleNToOneObjects();
 
     //split provocation
     const int ObjectSplitPatience=3;
     const int objectMergePatience=10;
     const track_t MinSplitGap=100;
+    const track_t MaxDistForMergingTrace=100.0;
 
+    ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
     //NOTE must use objectId here, because trackId will be invalid when remove some object
     //std::map<objectId,std::pari<provocation,displacement>>
     std::map<int,std::pair<int,Point_t>> objectSplitProvocation;
     //std::set<objectId>
     std::set<int> deleteLaterObjects;
-    //std::map<objectId,std::pari<objectId,mergedTimes>
-    std::map<int,std::pair<int,int>> objectMergeProvocation;
+    //std::map<objectIdA,std::map<objectIdB,mergedTimes>>, objectIdA < objectIdB
+    std::map<int,std::map<int,int>> objectMergeProvocation;
+    bool isMergedTrace(vector<Point_t> &traceA, vector<Point_t> &traceB);
+    void getUnmatchedHungarainAssignment(cv::Mat matchMat);
+    track_t getRectGap(Rect_t ra, Rect_t rb);
 };
 
 #endif // RECTFLOATTRACKER_H

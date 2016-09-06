@@ -20,6 +20,7 @@ void showImageInWindow(string windowName,const cv::Mat &img);
 void moveWindows(std::vector<std::string> &windowNames, int colNum=4);
 void dumpVector(std::vector<int> &v);
 void dumpVector(std::vector<float> &v);
+//void insertToSetList(std::list<std::set<int>> &setList,int value);
 }
 
 //set qt sync with file.
