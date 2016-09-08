@@ -82,7 +82,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
 
     cv::morphologyEx(binaryImage, binaryImage, MORPH_OPEN, element);
 //    cv::namedWindow("binaryImage",WINDOW_NORMAL);
-    cv::imshow("binaryImage",binaryImage);
+//    cv::imshow("binaryImage",binaryImage);
 
     std::vector < std::vector<Point> > contours;
     Mat tmpBinaryImage = binaryImage.clone();
@@ -181,8 +181,8 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         cv::Mat mask_i(image.size(),CV_8UC1);
         cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
         ObjectLocalFeatureMatch match;
-        imshow("mask_i",mask_i);
-        match.getLIFMat(of.LIFMat,image,mask_i);
+//        imshow("mask_i",mask_i);
+        match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
 //        if(of.LIFMat.empty()){
 //            qDebug()<<"empty";
 //        }

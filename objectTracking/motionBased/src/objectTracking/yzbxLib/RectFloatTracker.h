@@ -83,6 +83,7 @@ private:
     bool isTraceMergable(vector<Point_t> &traceA, vector<Point_t> &traceB);
     void getUnmatchedHungarainAssignment(cv::Mat matchMat);
     track_t getRectGap(Rect_t ra, Rect_t rb);
+    void showMatchedFeature();
 };
 
 #endif // RECTFLOATTRACKER_H

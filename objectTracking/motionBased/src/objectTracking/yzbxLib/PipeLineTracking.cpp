@@ -15,7 +15,7 @@ void PipeLineTracking::process(QString sourceData,QString annTxt)
     wins.push_back("mask_i");
     wins.push_back("MultiCueBGS FG");
     wins.push_back("featurePoint");
-    wins.push_back("binaryImage");
+//    wins.push_back("binaryImage");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
     if(annTxt==""){
@@ -54,10 +54,11 @@ void PipeLineTracking::process(QString sourceData){
     std::vector<string> wins;
     wins.push_back("img_input");
     wins.push_back("img_fg");
-    wins.push_back("mask_i");
+//    wins.push_back("mask_i");
     wins.push_back("MultiCueBGS FG");
-    wins.push_back("featurePoint");
-    wins.push_back("binaryImage");
+//    wins.push_back("featurePoint");
+//    wins.push_back("binaryImage");
+    wins.push_back("matched feature");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
 

@@ -121,7 +121,7 @@ public:
         std::swap(global_good_matches,good_matches);
     }
 
-    void getLIFMat(cv::Mat &LIFMat,const cv::Mat &img1,const cv::Mat &mask1){
+    void getLIFMat(cv::Mat &LIFMat,std::vector<Point_t> &LIFPos,const cv::Mat &img1,const cv::Mat &mask1){
         Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
         vector<KeyPoint> keypoints_1;
 
@@ -141,12 +141,17 @@ public:
             gray1=img1;
         }
         extractor->compute( gray1, keypoints_1, LIFMat);
-        if(LIFMat.empty()){
-            qDebug()<<"empty";
+        if(!LIFPos.empty()) LIFPos.clear();
+        for(int i=0;i<keypoints_1.size();i++){
+            LIFPos.push_back(keypoints_1[i].pt);
         }
-        Mat outImage;
-        cv::drawKeypoints(gray1,keypoints_1,outImage);
-        imshow("featurePoint",outImage);
+
+//        if(LIFMat.empty()){
+//            qDebug()<<"empty";
+//        }
+//        Mat outImage;
+//        cv::drawKeypoints(gray1,keypoints_1,outImage);
+//        imshow("featurePoint",outImage);
     }
 
     void getGoodMatches(cv::Mat &descriptors_1,cv::Mat &descriptors_2,vector<DMatch> &good_matches){

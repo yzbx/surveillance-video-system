@@ -866,4 +866,12 @@ void dumpVector(std::vector<float> &v)
     std::cout<<std::endl;
 }
 
+void drawMatch(Mat &img, Point_t p1, Point_t p2)
+{
+    int width=img.cols/2;
+    Point_t newP2=p2;
+    newP2.x +=width;
+    cv::line(img,p1,newP2,cv::Scalar(0,0,255),3);
+}
+
 }

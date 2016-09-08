@@ -8,15 +8,8 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
 {
     feature=new trackingObjectFeature;
 
-    feature->Circularity=of.Circularity;
-    feature->Convexity=of.Convexity;
-    feature->Inertia=of.Inertia;
-    feature->onBoundary=of.onBoundary;
-    feature->pos = of.pos;
-    feature->radius=of.radius;
-    feature->rect = of.rect;
-    feature->size=of.size;
-    feature->LIFMat=of.LIFMat;
+//    of.copyTo(feature);
+    feature->copy(of);
 
     status=NEW_STATUS;
 
@@ -79,15 +72,8 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
     {
 //        feature=&of;
         status=NORMAL_STATUS;
-        feature->rect = of.rect;
-        feature->Circularity=of.Circularity;
-        feature->Convexity=of.Convexity;
-        feature->Inertia=of.Inertia;
-        feature->onBoundary=of.onBoundary;
-        feature->radius=of.radius;
-        feature->size=of.size;
-        feature->pos=of.pos;
-        feature->LIFMat=of.LIFMat;
+//        of.copyTo(feature);
+        feature->copy(of);
 
         rects.push_back(of.rect);
         catch_frames++;

@@ -39,6 +39,8 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     /// use hungarian to tracking featureless objects or small objects
     /// update mObjectToBlobMap, mBlobToObjectMap, mMatchedBlobSet, mMatchedObjectSet
     getUnmatchedHungarainAssignment(matchMat);
+    //show the matched feature
+    showMatchedFeature();
 
     ///handle merge(N-1),split(1-N),normal(1-1),missing(1-0),new(0-1)
     /// update mNToOneMap, mOneToNMap, mOneToOneMap, mOneToZeroSet, mZeroToOneSet
@@ -60,7 +62,7 @@ void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
     if(!mMatchedObjectSet.empty())mMatchedObjectSet.clear();
 
     if(emptyBlobs||emptyObjects){
-//        qDebug()<<"empyt blobs or objects";
+        //        qDebug()<<"empyt blobs or objects";
     }
     else{
         int m=matchMat.rows;
@@ -85,7 +87,7 @@ void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
         int unMatchedObjectNum=m-mMatchedObjectSet.size();
         int unMatchedBlobNum=n-mMatchedBlobSet.size();
         if(unMatchedBlobNum==0||unMatchedObjectNum==0){
-//            qDebug()<<"nothing for unmatched hungarain";
+            //            qDebug()<<"nothing for unmatched hungarain";
         }
         else{
             //vector<trackIdx>
@@ -166,7 +168,7 @@ void RectFloatTracker::doAssignment(){
     if(!mNToOneMap.empty())mNToOneMap.clear();
 
     if(emptyBlobs&&emptyObjects){
-//        qDebug()<<"empty Blobs and empty objects";
+        //        qDebug()<<"empty Blobs and empty objects";
     }
     else if(emptyBlobs){
         //handle missed object
@@ -456,11 +458,11 @@ void RectFloatTracker::handleNToOneObjects(){
                     int bigId=std::max(objectIdA,objectIdB);
                     auto mit=mergeProvocationMap.find(smallId);
                     if(mit==mergeProvocationMap.end()){
-//                        std::map<int,int> mergeMap;
-//                        mergeMap[bigId]=1;
-//                        mergeProvocationMap[smallId]=mergeMap;
+                        //                        std::map<int,int> mergeMap;
+                        //                        mergeMap[bigId]=1;
+                        //                        mergeProvocationMap[smallId]=mergeMap;
                         mergeProvocationMap[smallId][bigId]=1;
-//                        mergeChanceMap[smallId][bigId]=InitMergeChance;
+                        //                        mergeChanceMap[smallId][bigId]=InitMergeChance;
                     }
                     else{
                         std::map<Id_t,uint> &mergeMap=mergeProvocationMap[smallId];
@@ -609,11 +611,11 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
 track_t RectFloatTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2){
 
     if(of1->LIFMat.empty()){
-//        qDebug()<<"empty LIFMat in of1";
+        //        qDebug()<<"empty LIFMat in of1";
         return 0.0f;
     }
     if(of2->LIFMat.empty()){
-//        qDebug()<<"empty LIFMat in of2";
+        //        qDebug()<<"empty LIFMat in of2";
         return 0.0f;
     }
     ObjectLocalFeatureMatch matcher;
@@ -621,6 +623,80 @@ track_t RectFloatTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFe
     matcher.getGoodMatches(of1->LIFMat,of2->LIFMat,good_matchers);
 
     return good_matchers.size();
+}
+
+void RectFloatTracker::showMatchedFeature(){
+    assert(!featureVectorList.empty());
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
+
+    assert(!imageList.empty());
+    if(imageList.size()<2) return;
+
+    auto imgIt=imageList.end();
+    imgIt=std::prev(imgIt,2);
+
+    cv::Mat img=imgIt->first;
+    cv::Mat input;
+    if(img.channels()==3){
+        input=img.clone();
+    }
+    else{
+        cvtColor(img,input,CV_GRAY2BGR);
+    }
+    cv::Mat fg0=imageList.back().second;
+    cv::Mat fg;
+    if(fg0.channels()==3){
+        fg=fg0.clone();
+    }
+    else{
+        cvtColor(fg0,fg,CV_GRAY2BGR);
+    }
+
+    cv::Mat showImg;
+    hconcat(input,fg,showImg);
+    for(int i=0;i<tracks.size();i++){
+        std::shared_ptr<trackingObjectFeature> of1=std::make_shared<trackingObjectFeature>(*(tracks[i]->feature));
+        for(int j=0;j<fv.size();j++){
+            std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>(fv[j]);
+
+            if(of1->LIFMat.empty()){
+                continue;
+            }
+            if(of2->LIFMat.empty()){
+                continue;
+            }
+            vector<DMatch> good_matches;
+
+            vector< vector<DMatch> > matches;
+            Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+            //knnMatch(query,train,...)
+            matcher->knnMatch( of1->LIFMat, of2->LIFMat, matches, 2 );
+
+            for(size_t i = 0; i < matches.size(); i++) {
+                DMatch first = matches[i][0];
+                if(matches[i].size()>1){
+                    float dist1 = matches[i][0].distance;
+                    float dist2 = matches[i][1].distance;
+                    if(dist1 < global_match_ratio * dist2) {
+                        good_matches.push_back(first);
+                    }
+                }
+                else{
+                    good_matches.push_back(first);
+                }
+            }
+
+            for(int m=0;m<good_matches.size();m++){
+                int queryIdx=good_matches[m].queryIdx;
+                int trainIdx=good_matches[m].trainIdx;
+                Point_t pos1=of1->LIFPos[queryIdx];
+                Point_t pos2=of2->LIFPos[trainIdx];
+                yzbxlib::drawMatch(showImg,pos1,pos2);
+            }
+        }
+    }
+
+    imshow("matched feature",showImg);
 }
 
 track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2,int costType){
@@ -665,7 +741,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     for(int i=0;i<m;i++){
         for(int j=0;j<n;j++){
             matchMat.at<uchar>(i,j)=calcMatchedFeatureNum(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
-                                                   std::make_shared<trackingObjectFeature>(fv[j]));
+                                                          std::make_shared<trackingObjectFeature>(fv[j]));
         }
     }
 }
