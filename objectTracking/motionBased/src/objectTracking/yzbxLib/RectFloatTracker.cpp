@@ -620,7 +620,7 @@ track_t RectFloatTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFe
     }
     ObjectLocalFeatureMatch matcher;
     vector<DMatch> good_matchers;
-    matcher.getGoodMatches(of1->LIFMat,of2->LIFMat,good_matchers);
+    matcher.getGoodMatches_Step3(of1->LIFMat,of2->LIFMat,good_matchers);
 
     return good_matchers.size();
 }
@@ -861,26 +861,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
         return;
     }
     vector<DMatch> good_matches;
-
-    vector< vector<DMatch> > matches;
-    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-    //knnMatch(query,train,...)
-    matcher->knnMatch( trackMat, fvMat, matches, 2 );
-    //NOTE a parameter!!!
-    float global_match_ratio=0.95;
-    for(size_t i = 0; i < matches.size(); i++) {
-        DMatch first = matches[i][0];
-        if(matches[i].size()>1){
-            float dist1 = matches[i][0].distance;
-            float dist2 = matches[i][1].distance;
-            if(dist1 < global_match_ratio * dist2) {
-                good_matches.push_back(first);
-            }
-        }
-        else{
-            good_matches.push_back(first);
-        }
-    }
+    ObjectLocalFeatureMatch::getGoodMatches_Step3(trackMat,fvMat,good_matches);
 
     Mat showImg,showImg3,showImg4;
     if(imageList.size()>=2){
@@ -923,14 +904,6 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
         cv::imshow("matched feature 4",showImg4);
     }
 
-
-
-    //    for(int i=0;i<m;i++){
-    //        for(int j=0;j<n;j++){
-    //            matchMat.at<uchar>(i,j)=calcMatchedFeatureNum(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
-    //                                                          std::make_shared<trackingObjectFeature>(fv[j]));
-    //        }
-    //    }
 }
 
 

@@ -606,10 +606,11 @@ void MainWindow::on_pushButton_test_clicked()
             break;
         }
 
+        img_pre=img_input;
         if(img_pre.empty()){
-            img_pre=img_input;
             continue;
         }
+
         Mat img1=img_pre;
         Mat img2=img_input;
 
@@ -617,8 +618,10 @@ void MainWindow::on_pushButton_test_clicked()
         int minFeatureNum=50;
         int maxFeatureNum=1000;
         int maxIters=10;
-        Ptr<FeatureDetector> detector=new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), minFeatureNum, maxFeatureNum, maxIters);
-        //        detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 5000, 10000, 10);
+        //        Ptr<FeatureDetector> detector=new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), minFeatureNum, maxFeatureNum, maxIters);
+        //        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
+//        Ptr<FeatureDetector> detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 50, 100, 10);
+        Ptr<FeatureDetector> detector=new BRISK(100);
         vector<KeyPoint> keypoints_1,keypoints_2;
 
         detector->detect(img1, keypoints_1);
@@ -630,7 +633,8 @@ void MainWindow::on_pushButton_test_clicked()
         //        cv::initModule_contrib();
         //        cv::initModule_features2d();
         Mat descriptors_1, descriptors_2;
-        Ptr<DescriptorExtractor> extractor = new SurfDescriptorExtractor;
+        //        Ptr<DescriptorExtractor> extractor = new SurfDescriptorExtractor;
+        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("FREAK");
         //        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SURF");
         assert(!extractor.empty());
 
@@ -650,6 +654,30 @@ void MainWindow::on_pushButton_test_clicked()
         extractor->compute( gray1, keypoints_1, descriptors_1 );
         extractor->compute( gray2, keypoints_2, descriptors_2 );
 
+        vector< vector<DMatch> > matches;
+        vector<DMatch> good_matches;
+        int global_match_ratio=0.8;
+//        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
+//        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
+
+//        for(size_t i = 0; i < matches.size(); i++) {
+//            DMatch first = matches[i][0];
+//            if(matches[i].size()>1){
+//                float dist1 = matches[i][0].distance;
+//                float dist2 = matches[i][1].distance;
+//                if(dist1 < global_match_ratio * dist2) {
+//                    good_matches.push_back(first);
+//                }
+//            }
+//            else{
+//                good_matches.push_back(first);
+//            }
+//        }
+        matcher->match(descriptors_1,descriptors_2,good_matches);
+        Mat outimg;
+        cv::drawMatches(gray1,keypoints_1,gray2,keypoints_2,good_matches,outimg,Scalar(0,0,255),Scalar(0,255,255));
+        imshow("outimg",outimg);
         waitKey(30);
     }
 }
@@ -845,110 +873,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
     PipeLineTracking tracker;
     qDebug()<<"bgsType is not used now! "<<bgsType;
     tracker.process(videoFilePath);
-    //    RectFloatTracker tracker;
-    //    QFileInfo info(videoFile);
-    //    QString suffix=info.suffix();
-    //    QString dumpFileName=videoFile;
-    //    dumpFileName.replace(suffix,"txt");
-    //    tracker.init(dumpFileName);
-    //    if(bgsType=="VIBE"){
-    //        vibe::VIBE bgs(3);
-    //        VideoCapture cap(videoFilePath.toStdString());
-    //        assert(cap.isOpened());
-    //        cv::Mat img_input,img_fg,img_bg;
-    //        int frameNum=0;
-    //        while(1){
-    //            cap>>img_input;
-    //            if(img_input.empty()){
-    //                break;
-    //            }
 
-    //            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
-
-    //            if(frameNum==0){
-    //                bgs.init(img_input);
-    //            }
-    //            else{
-    //                bgs.update(img_input);
-    //                img_fg=bgs.getMask();
-    //                cv::medianBlur(img_fg, img_fg, 5);
-    //                yzbxlib::showImageInWindow("img_input",img_input);
-    //                yzbxlib::showImageInWindow("img_fg",img_fg);
-    ////                tracker.tracking(img_input,img_fg);
-    //                tracker.process(img_input,img);
-    //            }
-
-    //            cv::waitKey(30);
-    //            frameNum++;
-    //            if(frameNum%10==0){
-    //                qDebug()<<"frameNum="<<frameNum;
-    //            }
-    //        }
-    //    }
-    //    else if(bgsType=="PBAS"){
-    //        PBAS bgs;
-    //        VideoCapture cap(videoFilePath.toStdString());
-    //        assert(cap.isOpened());
-    //        cv::Mat img_input,img_fg,img_bg;
-    //        int frameNum=0;
-    //        while(1){
-    //            cap>>img_input;
-    //            if(img_input.empty()){
-    //                break;
-    //            }
-
-    //            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
-
-    //            bgs.process(&img_input, &img_fg);
-    //            cv::medianBlur(img_fg, img_fg, 5);
-    //            tracker.tracking(img_input,img_fg);
-    //            yzbxlib::showImageInWindow("img_input",img_input);
-    //            yzbxlib::showImageInWindow("img_fg",img_fg);
-    //            cv::waitKey(30);
-    //            frameNum++;
-    //            if(frameNum%10==0){
-    //                qDebug()<<"frameNum="<<frameNum;
-    //            }
-    //        }
-    //    }
-    //    else if(bgsType=="SJN_MultiCueBGS"){
-    //        vector<string> strs;
-    //        strs.push_back("MultiCueBGS FG");
-    //        strs.push_back("img_tracking");
-    //        strs.push_back("img_input");
-    //        strs.push_back("img_fg");
-    //        strs.push_back("binaryImage");
-    //        yzbxlib::moveWindows(strs);
-
-    //        bgsFactory_yzbx fac;
-    //        IBGS *bgs=fac.getBgsAlgorithm(bgsType);
-    //        VideoCapture cap(videoFilePath.toStdString());
-    //        assert(cap.isOpened());
-    //        cv::Mat img_input,img_fg,img_bg;
-    //        int frameNum=0;
-    //        while(1){
-    //            cap>>img_input;
-    //            if(img_input.empty()){
-    //                break;
-    //            }
-
-    //            cv::GaussianBlur(img_input, img_input, cv::Size(5,5), 1.5);
-
-    //            bgs->process(img_input, img_fg,img_bg);
-    //            cv::medianBlur(img_fg, img_fg, 5);
-    //            tracker.tracking(img_input,img_fg);
-    //            yzbxlib::showImageInWindow("img_input",img_input);
-    //            yzbxlib::showImageInWindow("img_fg",img_fg);
-    //            cv::waitKey(0);
-    //            frameNum++;
-    //            if(frameNum%1==0){
-    //                qDebug()<<"frameNum="<<frameNum;
-    //            }
-    //        }
-    //    }
-    //    else{
-    //        assert(false);
-    //    }
 }
 
 void MainWindow::on_pushButton_pipeLineTracking_clicked()

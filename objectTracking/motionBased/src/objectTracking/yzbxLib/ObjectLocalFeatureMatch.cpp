@@ -1,7 +1,7 @@
 #include "ObjectLocalFeatureMatch.h"
 
 
-ObjectLocalFeatureMatch::ObjectLocalFeatureMatch()
+ObjectLocalFeatureMatch::ObjectLocalFeatureMatch(int MaxFeaturePointNum)
 {
-
+    this->MaxFeaturePointNum=MaxFeaturePointNum;
 }

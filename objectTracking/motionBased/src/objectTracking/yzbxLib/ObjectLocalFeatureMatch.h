@@ -14,9 +14,48 @@ using namespace cv;
 class ObjectLocalFeatureMatch
 {
 public:
-    ObjectLocalFeatureMatch();
+    ObjectLocalFeatureMatch(int MaxFeaturePointNum=20);
+    int MaxFeaturePointNum;
     void process(const cv::Mat &img1,const cv::Mat &mask1,const cv::Mat &img2,const cv::Mat &mask2){
         getGoodMatches(img1,mask1,img2,mask2);
+    }
+    void getFeaturePoint_Step1(const cv::Mat &img,const cv::Mat &mask, std::vector<cv::KeyPoint> &kps){
+        if(!kps.empty()) kps.clear();
+
+        Ptr<FeatureDetector> detector=new BRISK(10);
+        assert(!detector.empty());
+
+        vector<KeyPoint> keypoints;
+        detector->detect(img, keypoints,mask);
+
+        //use the best MaxFeaturePointNum feature point according to response.
+        if(keypoints.size()<MaxFeaturePointNum){
+            kps.swap(keypoints);
+        }
+        else{
+            //sort from big to small!!!
+            std::sort(keypoints.begin(), keypoints.end(),
+                      [](KeyPoint const & a, KeyPoint const & b) -> bool
+            { return a.response > b.response; } );
+
+            assert(keypoints[0].response>=keypoints[1].response);
+
+            const int n=keypoints.size();
+            for(int i=0;i<MaxFeaturePointNum;i++){
+                kps.push_back(keypoints[i]);
+            }
+        }
+    }
+
+    void getDescriptorMat_Step2(const cv::Mat &img,vector<KeyPoint> &kps ,cv::Mat &des){
+        Ptr<DescriptorExtractor> extractor= DescriptorExtractor::create("FREAK");
+        assert(!extractor.empty());
+        extractor->compute(img, kps, des);
+    }
+
+    static void getGoodMatches_Step3(Mat &descriptors_1, Mat &descriptors_2, vector<DMatch> &good_matches){
+        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
+        matcher->match(descriptors_1, descriptors_2, good_matches);
     }
 
     void getGoodMatches(const cv::Mat &img1,const cv::Mat &mask1,const cv::Mat &img2,const cv::Mat &mask2){
@@ -25,95 +64,28 @@ public:
         assert(img1.channels()==3&&img2.channels()==3);
         assert(mask1.type()==CV_8UC1&&mask2.type()==CV_8UC1);
 
-        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
-//        detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 5000, 10000, 10);
         vector<KeyPoint> keypoints_1,keypoints_2;
-
-        detector->detect(img1, keypoints_1,mask1);
-        detector->detect(img2, keypoints_2,mask2);
+        getFeaturePoint_Step1(img1,mask1,keypoints_1);
+        getFeaturePoint_Step1(img2,mask2,keypoints_2);
         if(keypoints_1.empty()||keypoints_2.empty()){
             return;
         }
 
-//        cv::initModule_contrib();
-//        cv::initModule_features2d();
-        Mat descriptors_1, descriptors_2;
-        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("BRISK");
-        assert(!extractor.empty());
-
-        Mat gray1,gray2;
-        if(img1.channels()==3){
-            cvtColor(img1,gray1,CV_BGR2GRAY);
-            cvtColor(img2,gray2,CV_BGR2GRAY);
-        }
-        else{
-            gray1=img1;
-            gray2=img2;
-        }
-//        imshow("gray1",gray1);
-//        imshow("gray2",gray2);
-//        qDebug()<<"keypoints_1: "<<keypoints_1.size();
-//        qDebug()<<"keypoints_2: "<<keypoints_2.size();
-        extractor->compute( gray1, keypoints_1, descriptors_1 );
-        extractor->compute( gray2, keypoints_2, descriptors_2 );
+        //        cv::initModule_contrib();
+        //        cv::initModule_features2d();
+        Mat descriptors_1,descriptors_2;
+        getDescriptorMat_Step2(img1,keypoints_1,descriptors_1);
+        getDescriptorMat_Step2(img2,keypoints_2,descriptors_2);
 
         //img1-->img2
-        vector< vector<DMatch> > matches;
-        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
-
-        //look whether the match is inside a defined area of the image
-        //only 25% of maximum of possible distance
-//        double tresholdDist = 0.25 * sqrt(double(img1.size().height*img1.size().height + img1.size().width*img1.size().width));
-
-//        vector< DMatch > good_matches2;
-//        good_matches2.reserve(matches.size());
-//        for (size_t i = 0; i < matches.size(); ++i)
-//        {
-//            for (int j = 0; j < matches[i].size(); j++)
-//            {
-//                Point2f from = keypoints_1[matches[i][j].queryIdx].pt;
-//                Point2f to = keypoints_2[matches[i][j].trainIdx].pt;
-
-//                //calculate local distance for each possible match
-//                double dist = sqrt((from.x - to.x) * (from.x - to.x) + (from.y - to.y) * (from.y - to.y));
-
-//                //save as best match if local distance is in specified area and on same height
-//                if (dist < tresholdDist && abs(from.y-to.y)<5)
-//                {
-//                    good_matches2.push_back(matches[i][j]);
-//                    j = matches[i].size();
-//                }
-//            }
-//        }
-
-        vector<KeyPoint> matched1, matched2;
         vector<DMatch> good_matches;
-        for(size_t i = 0; i < matches.size(); i++) {
-            DMatch first = matches[i][0];
-            if(matches[i].size()>1){
-                float dist1 = matches[i][0].distance;
-                float dist2 = matches[i][1].distance;
-                if(dist1 < global_match_ratio * dist2) {
-                    matched1.push_back(keypoints_1[first.queryIdx]);
-                    matched2.push_back(keypoints_2[first.trainIdx]);
-                    good_matches.push_back(first);
-                }
-            }
-            else{
-                matched1.push_back(keypoints_1[first.queryIdx]);
-                matched2.push_back(keypoints_2[first.trainIdx]);
-                good_matches.push_back(first);
-            }
-        }
+        getGoodMatches_Step3(descriptors_1, descriptors_2, good_matches);
 
-        //-- Draw only "good" matches
         Mat img_matches;
         drawMatches( img1, keypoints_1, img2, keypoints_2,
                      good_matches, img_matches);
         //-- Show detected matches
         imshow( "Good Matches", img_matches);
-
 
         //-- set global matches
         std::swap(global_keypoints_1,keypoints_1);
@@ -122,55 +94,18 @@ public:
     }
 
     void getLIFMat(cv::Mat &LIFMat,std::vector<Point_t> &LIFPos,const cv::Mat &img1,const cv::Mat &mask1){
-        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
         vector<KeyPoint> keypoints_1;
+        getFeaturePoint_Step1(img1,mask1,keypoints_1);
 
-        detector->detect(img1, keypoints_1,mask1);
         if(keypoints_1.empty()){
             return;
         }
 
-        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("BRISK");
-        assert(!extractor.empty());
-
-        Mat gray1;
-        if(img1.channels()==3){
-            cvtColor(img1,gray1,CV_BGR2GRAY);
-        }
-        else{
-            gray1=img1;
-        }
-        extractor->compute( gray1, keypoints_1, LIFMat);
+        if(!LIFMat.empty()) LIFMat.release();
+        getDescriptorMat_Step2(img1,keypoints_1,LIFMat);
         if(!LIFPos.empty()) LIFPos.clear();
         for(int i=0;i<keypoints_1.size();i++){
             LIFPos.push_back(keypoints_1[i].pt);
-        }
-
-//        if(LIFMat.empty()){
-//            qDebug()<<"empty";
-//        }
-//        Mat outImage;
-//        cv::drawKeypoints(gray1,keypoints_1,outImage);
-//        imshow("featurePoint",outImage);
-    }
-
-    void getGoodMatches(cv::Mat &descriptors_1,cv::Mat &descriptors_2,vector<DMatch> &good_matches){
-        vector< vector<DMatch> > matches;
-        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
-
-        for(size_t i = 0; i < matches.size(); i++) {
-            DMatch first = matches[i][0];
-            if(matches[i].size()>1){
-                float dist1 = matches[i][0].distance;
-                float dist2 = matches[i][1].distance;
-                if(dist1 < global_match_ratio * dist2) {
-                    good_matches.push_back(first);
-                }
-            }
-            else{
-                good_matches.push_back(first);
-            }
         }
     }
 
