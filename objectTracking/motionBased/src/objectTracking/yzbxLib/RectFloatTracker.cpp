@@ -643,7 +643,8 @@ void RectFloatTracker::showMatchedFeature(){
     else{
         cvtColor(img,input,CV_GRAY2BGR);
     }
-    cv::Mat fg0=imageList.back().second;
+    //    cv::Mat fg0=imageList.back().second;
+    cv::Mat fg0=imageList.back().first;
     cv::Mat fg;
     if(fg0.channels()==3){
         fg=fg0.clone();
@@ -671,7 +672,8 @@ void RectFloatTracker::showMatchedFeature(){
             Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
             //knnMatch(query,train,...)
             matcher->knnMatch( of1->LIFMat, of2->LIFMat, matches, 2 );
-
+            //NOTE a parameter!!!
+            float global_match_ratio=0.8;
             for(size_t i = 0; i < matches.size(); i++) {
                 DMatch first = matches[i][0];
                 if(matches[i].size()>1){
@@ -697,6 +699,56 @@ void RectFloatTracker::showMatchedFeature(){
     }
 
     imshow("matched feature",showImg);
+
+    cv::Mat showImg2;
+    cv::Mat input2=imageList.back().first;
+    hconcat(input,input2,showImg2);
+
+    auto fv1=std::prev(featureVectorList.end(),1);
+    auto fv2=std::prev(featureVectorList.end(),2);
+    for(int i=0;i<fv1->size();i++){
+        std::shared_ptr<trackingObjectFeature> of1=std::make_shared<trackingObjectFeature>((*fv1)[i]);
+        for(int j=0;j<fv2->size();j++){
+            std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>((*fv2)[j]);
+            if(of1->LIFMat.empty()){
+                continue;
+            }
+            if(of2->LIFMat.empty()){
+                continue;
+            }
+            vector<DMatch> good_matches;
+
+            vector< vector<DMatch> > matches;
+            Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+            //knnMatch(query,train,...)
+            matcher->knnMatch( of1->LIFMat, of2->LIFMat, matches, 2 );
+            //NOTE a parameter!!!
+            float global_match_ratio=0.8;
+            for(size_t i = 0; i < matches.size(); i++) {
+                DMatch first = matches[i][0];
+                if(matches[i].size()>1){
+                    float dist1 = matches[i][0].distance;
+                    float dist2 = matches[i][1].distance;
+                    if(dist1 < global_match_ratio * dist2) {
+                        good_matches.push_back(first);
+                    }
+                }
+                else{
+                    good_matches.push_back(first);
+                }
+            }
+
+            for(int m=0;m<good_matches.size();m++){
+                int queryIdx=good_matches[m].queryIdx;
+                int trainIdx=good_matches[m].trainIdx;
+                Point_t pos1=of1->LIFPos[queryIdx];
+                Point_t pos2=of2->LIFPos[trainIdx];
+                yzbxlib::drawMatch(showImg2,pos2,pos1);
+            }
+        }
+    }
+
+    imshow("matched feature 2",showImg2);
 }
 
 track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2,int costType){
@@ -737,13 +789,148 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     }
 
     matchMat.create(m,n,CV_8UC1);
+    matchMat.setTo(0);
 
+    std::map<int,int> trackIdxToidMap;
+    int offset=0;
     for(int i=0;i<m;i++){
-        for(int j=0;j<n;j++){
-            matchMat.at<uchar>(i,j)=calcMatchedFeatureNum(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
-                                                          std::make_shared<trackingObjectFeature>(fv[j]));
+        int newOffset=offset+tracks[i]->feature->LIFPos.size();
+        for(int k=offset;k<newOffset;k++){
+            trackIdxToidMap[k]=i;
+        }
+        offset=newOffset;
+    }
+
+    vector<Point_t> trackPos;
+    Mat trackMat;
+    for(int i=0;i<m;i++){
+        Mat mat=tracks[i]->feature->LIFMat;
+
+        if(mat.empty()) continue;
+
+        if(trackMat.empty()){
+            trackMat=mat.clone();
+
+        }
+        else{
+            vconcat(trackMat,mat,trackMat);
+        }
+
+        vector<Point_t> &ps=tracks[i]->feature->LIFPos;
+        assert(!ps.empty());
+        for(int i=0;i<ps.size();i++){
+            trackPos.push_back(ps[i]);
+        }
+//        std::copy(ps.begin(),ps.end(),trackPos.end());
+    }
+
+    std::map<int,int> fvIdxToIdMap;
+    offset=0;
+    for(int j=0;j<n;j++){
+        int newOffset=offset+fv[j].LIFPos.size();
+        for(int k=offset;k<newOffset;k++){
+            fvIdxToIdMap[k]=j;
+        }
+        offset=newOffset;
+    }
+
+    Mat fvMat;
+    vector<Point_t> fvPos;
+    for(int j=0;j<n;j++){
+        Mat mat=fv[j].LIFMat;
+        if(mat.empty()) continue;
+
+        if(fvMat.empty()){
+            fvMat=mat.clone();
+        }
+        else{
+            vconcat(fvMat,mat,fvMat);
+        }
+
+        vector<Point_t> &ps=fv[j].LIFPos;
+//        std::copy(ps.begin(),ps.end(),fvPos.end());
+        for(int i=0;i<ps.size();i++){
+            fvPos.push_back(ps[i]);
         }
     }
+
+    if(trackMat.empty()){
+        return;
+    }
+    if(fvMat.empty()){
+        return;
+    }
+    vector<DMatch> good_matches;
+
+    vector< vector<DMatch> > matches;
+    Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+    //knnMatch(query,train,...)
+    matcher->knnMatch( trackMat, fvMat, matches, 2 );
+    //NOTE a parameter!!!
+    float global_match_ratio=0.95;
+    for(size_t i = 0; i < matches.size(); i++) {
+        DMatch first = matches[i][0];
+        if(matches[i].size()>1){
+            float dist1 = matches[i][0].distance;
+            float dist2 = matches[i][1].distance;
+            if(dist1 < global_match_ratio * dist2) {
+                good_matches.push_back(first);
+            }
+        }
+        else{
+            good_matches.push_back(first);
+        }
+    }
+
+    Mat showImg,showImg3,showImg4;
+    if(imageList.size()>=2){
+        Mat imgBack=imageList.back().first;
+        auto it=std::prev(imageList.end(),2);
+        Mat img=it->first;
+        hconcat(img,imgBack,showImg);
+        showImg3=showImg.clone();
+        showImg4=showImg.clone();
+    }
+    for(int m=0;m<good_matches.size();m++){
+        int queryIdx=good_matches[m].queryIdx;
+        int trainIdx=good_matches[m].trainIdx;
+
+        int i=trackIdxToidMap[queryIdx];
+        int j=fvIdxToIdMap[trainIdx];
+        uchar num=matchMat.at<uchar>(i,j);
+        matchMat.at<uchar>(i,j)=num+1;
+
+        if(imageList.size()>=2){
+            Point_t pos1=trackPos[queryIdx];
+            Point_t pos2=fvPos[trainIdx];
+            yzbxlib::drawMatch(showImg3,pos1,pos2);
+        }
+    }
+
+    if(imageList.size()>=2){
+        cv::imshow("matched feature 3",showImg3);
+
+        for(int i=0;i<m;i++){
+            for(int j=0;j<n;j++){
+                if(matchMat.at<uchar>(i,j)>StableFeatureNumber){
+                    Point_t p1=tracks[i]->feature->pos;
+                    Point_t p2=fv[j].pos;
+                    yzbxlib::drawMatch(showImg4,p1,p2);
+                }
+            }
+        }
+
+        cv::imshow("matched feature 4",showImg4);
+    }
+
+
+
+    //    for(int i=0;i<m;i++){
+    //        for(int j=0;j<n;j++){
+    //            matchMat.at<uchar>(i,j)=calcMatchedFeatureNum(std::make_shared<trackingObjectFeature>(*(tracks[i]->feature)),\
+    //                                                          std::make_shared<trackingObjectFeature>(fv[j]));
+    //        }
+    //    }
 }
 
 

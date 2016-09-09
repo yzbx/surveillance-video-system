@@ -54,7 +54,7 @@ private:
     const int MaxProvocationTimesForMerge=10;
     const track_t MinSplitGap=100;
     const track_t MaxDistForMergingTrace=100.0;
-    const int StableFeatureNumber=3;
+    const int StableFeatureNumber=1;
     const uint InitMergeChance=2;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
