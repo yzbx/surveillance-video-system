@@ -14,7 +14,7 @@ using namespace cv;
 class ObjectLocalFeatureMatch
 {
 public:
-    ObjectLocalFeatureMatch(int MaxFeaturePointNum=20);
+    ObjectLocalFeatureMatch(int MaxFeaturePointNum=50);
     int MaxFeaturePointNum;
     void process(const cv::Mat &img1,const cv::Mat &mask1,const cv::Mat &img2,const cv::Mat &mask2){
         getGoodMatches(img1,mask1,img2,mask2);
@@ -27,6 +27,18 @@ public:
 
         vector<KeyPoint> keypoints;
         detector->detect(img, keypoints,mask);
+
+
+        //NOTE detect(img,keypoints,mask) failed, keypoints out of mask!!!
+//        assert(mask.channels()==1);
+//        for(int i=0;i<keypoints.size();i++){
+//            Point2f p=keypoints[i].pt;
+////            assert(mask.at<uchar>(p.y,p.x)==255);
+//            if(mask.at<uchar>(p.y,p.x)!=255){
+//                keypoints.erase(keypoints.begin()+i);
+//                i--;
+//            }
+//        }
 
         //use the best MaxFeaturePointNum feature point according to response.
         if(keypoints.size()<MaxFeaturePointNum){
@@ -107,6 +119,7 @@ public:
         for(int i=0;i<keypoints_1.size();i++){
             LIFPos.push_back(keypoints_1[i].pt);
         }
+        assert(LIFPos.size()==LIFMat.rows);
     }
 
     double global_match_ratio=0.8;

@@ -8,18 +8,6 @@ class trackingObjectFeature
 {
 public:
     trackingObjectFeature();
-    void copyTo(trackingObjectFeature *of){
-        of->pos=pos;
-        of->rect=rect;
-        of->size=size;
-        of->Circularity=Circularity;
-        of->Convexity=Convexity;
-        of->Inertia=Inertia;
-        of->radius=radius;
-        of->onBoundary=onBoundary;
-        of->LIFMat=LIFMat.clone();
-        of->LIFPos=LIFPos;
-    }
 
     void copy(const trackingObjectFeature &of){
         pos=of.pos;
@@ -30,8 +18,16 @@ public:
         Inertia=of.Inertia;
         radius=of.radius;
         onBoundary=of.onBoundary;
-        LIFMat=of.LIFMat.clone();
-        LIFPos=of.LIFPos;
+        if(of.LIFMat.empty()){
+            assert(of.LIFPos.empty());
+            LIFMat.release();
+            LIFPos.clear();
+        }
+        else{
+            assert(!of.LIFPos.empty());
+            LIFMat=of.LIFMat.clone();
+            LIFPos=of.LIFPos;
+        }
     }
 
     Point_t pos;

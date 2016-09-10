@@ -24,7 +24,7 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     if(featureVectorList.size()>maxListLength){
         featureVectorList.pop_front();
     }
-
+    showBlobFeature();
     ///LIF->Hungarian, with split/merge support
     /// LIF get stable tracking for 1-N,N-1,1-1,0-1,1-0
     /// Hungarian only convert 0-1 and 1-0 to 1-1
@@ -46,6 +46,28 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     /// update mNToOneMap, mOneToNMap, mOneToOneMap, mOneToZeroSet, mZeroToOneSet
     doAssignment();
     showing(img_input,img_fg,fv);
+}
+
+void RectFloatTracker::showBlobFeature(){
+    assert(!featureVectorList.empty());
+    vector<trackingObjectFeature> &fv=featureVectorList.back();
+    assert(!imageList.empty());
+    Mat input=imageList.back().first.clone();
+    Mat fg=imageList.back().second.clone();
+
+    for(int i=0;i<fv.size();i++){
+        trackingObjectFeature &of=fv[i];
+        rectangle(input,of.rect,Scalar(0,0,255),2);
+        rectangle(fg,of.rect,Scalar::all(255),2);
+        for(int j=0;j<of.LIFPos.size();j++){
+            circle(input,of.LIFPos[j],3,Scalar(255,0,0),2);
+        }
+    }
+
+    namedWindow("blob feature input",WINDOW_NORMAL);
+    namedWindow("blob feature fg",WINDOW_NORMAL);
+    imshow("blob feature input",input);
+    imshow("blob feature fg",fg);
 }
 
 void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
@@ -804,7 +826,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     vector<Point_t> trackPos;
     Mat trackMat;
     for(int i=0;i<m;i++){
-        Mat mat=tracks[i]->feature->LIFMat;
+        Mat &mat=tracks[i]->feature->LIFMat;
 
         if(mat.empty()) continue;
 

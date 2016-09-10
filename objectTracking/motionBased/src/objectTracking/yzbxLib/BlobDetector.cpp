@@ -75,18 +75,9 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         binaryImage=binaryImage0.clone();
     }
 
-    int morph_size = 2;
-    Mat element =cv::getStructuringElement( MORPH_RECT, Size( 2*morph_size + 1, 2*morph_size+1 ),
-                                         Point( morph_size, morph_size ) );
-    yzbx_imfill(binaryImage);
-
-    cv::morphologyEx(binaryImage, binaryImage, MORPH_OPEN, element);
-//    cv::namedWindow("binaryImage",WINDOW_NORMAL);
-//    cv::imshow("binaryImage",binaryImage);
-
     std::vector < std::vector<Point> > contours;
     Mat tmpBinaryImage = binaryImage.clone();
-    findContours(tmpBinaryImage, contours, RETR_LIST, CHAIN_APPROX_NONE);
+    findContours(tmpBinaryImage, contours, CV_RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
     for (size_t contourIdx = 0; contourIdx < contours.size(); contourIdx++)
     {
@@ -179,14 +170,36 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         }
 
         cv::Mat mask_i(image.size(),CV_8UC1);
+        mask_i=Scalar::all(0);
         cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
         ObjectLocalFeatureMatch match;
 //        imshow("mask_i",mask_i);
         match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
+        showBlobFeature(image,mask_i,of);
 //        if(of.LIFMat.empty()){
 //            qDebug()<<"empty";
 //        }
 
         features.push_back(of);
     }
+}
+
+void BlobDetector::showBlobFeature(const Mat &input, const Mat &mask, const trackingObjectFeature &of)
+{
+    Mat showIn=input.clone();
+    Mat showFg=mask.clone();
+
+    namedWindow("showIn",WINDOW_NORMAL);
+    namedWindow("showFg",WINDOW_NORMAL);
+
+    const vector<Point_t> &ps=of.LIFPos;
+    rectangle(showIn,of.rect,Scalar(0,0,255));
+    rectangle(showFg,of.rect,Scalar(255));
+    for(int i=0;i<ps.size();i++){
+        circle(showIn,ps[i],3,Scalar(255,0,0));
+    }
+
+    imshow("showIn",showIn);
+    imshow("showFg",showFg);
+    waitKey(0);
 }

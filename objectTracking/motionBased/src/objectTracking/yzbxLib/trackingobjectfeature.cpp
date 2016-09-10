@@ -2,7 +2,7 @@
 
 trackingObjectFeature::trackingObjectFeature()
 {
-
+    if(!LIFMat.empty()) LIFMat.release();
 }
 
 QString trackingObjectFeature::dump()

@@ -14,6 +14,7 @@ public:
     ~BlobDetector();
     void process(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features);
     void getBlobFeature(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features);
+    void showBlobFeature(const Mat &input,const Mat &mask,const trackingObjectFeature &of);
     SimpleBlobDetector::Params params;
 
 private:
