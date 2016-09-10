@@ -31,7 +31,7 @@ private:
     void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
 
     //return the match feature number for objects-blobs
-    void getLocalFeatureAssignment(cv::Mat &matchMat);
+    void getLocalFeatureAssignment_step1(cv::Mat &matchMat);
     void showAssignment(assignments_t &assignments, std::vector<trackingObjectFeature> &fv);
     track_t calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2);
     void getHungarainAssignment(assignments_t &assignment, int costType=RectDist);
@@ -54,7 +54,7 @@ private:
     const int MaxProvocationTimesForMerge=10;
     const track_t MinSplitGap=100;
     const track_t MaxDistForMergingTrace=100.0;
-    const int StableFeatureNumber=1;
+    const int StableFeatureNumber=3;
     const uint InitMergeChance=2;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
@@ -68,7 +68,7 @@ private:
     std::set<Id_t> deleteLaterObjectSet;
 
     ///use mNewblobs, mUnmatchedObjects, mOneToOneMap, ... to do assignment
-    void doAssignment();
+    void doAssignment_step3();
     void handleOneToOneObjects();
 
     void handleNewObjects();
@@ -81,7 +81,7 @@ private:
 
 
     bool isTraceMergable(vector<Point_t> &traceA, vector<Point_t> &traceB);
-    void getUnmatchedHungarainAssignment(cv::Mat matchMat);
+    void getUnmatchedHungarainAssignment_step2(cv::Mat matchMat);
     track_t getRectGap(Rect_t ra, Rect_t rb);
     void showMatchedFeature();
     void showBlobFeature();

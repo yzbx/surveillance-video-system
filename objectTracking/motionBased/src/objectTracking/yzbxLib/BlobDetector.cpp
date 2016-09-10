@@ -173,9 +173,21 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         mask_i=Scalar::all(0);
         cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
         ObjectLocalFeatureMatch match;
-//        imshow("mask_i",mask_i);
         match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
-        showBlobFeature(image,mask_i,of);
+        for(int i=0;i<of.LIFPos.size();i++){
+            Point_t p=of.LIFPos[i];
+            int x=(int)p.x;
+            int y=(int)p.y;
+            Point3i color;
+            color.x=image.at<Vec3b>(y,x)[0];
+            color.y=image.at<Vec3b>(y,x)[1];
+            color.z=image.at<Vec3b>(y,x)[2];
+            of.LIFColor.push_back(color);
+        }
+//        showBlobFeature(image,mask_i,of);
+
+        //NOTE, avoid auto LIFMat not empty.
+//        if(of.LIFPos.empty()) of.LIFMat.release();
 //        if(of.LIFMat.empty()){
 //            qDebug()<<"empty";
 //        }
@@ -193,10 +205,10 @@ void BlobDetector::showBlobFeature(const Mat &input, const Mat &mask, const trac
     namedWindow("showFg",WINDOW_NORMAL);
 
     const vector<Point_t> &ps=of.LIFPos;
-    rectangle(showIn,of.rect,Scalar(0,0,255));
-    rectangle(showFg,of.rect,Scalar(255));
+    rectangle(showIn,of.rect,Scalar(0,0,255),3);
+    rectangle(showFg,of.rect,Scalar(255),3);
     for(int i=0;i<ps.size();i++){
-        circle(showIn,ps[i],3,Scalar(255,0,0));
+        circle(showIn,ps[i],3,Scalar(255,0,0),3);
     }
 
     imshow("showIn",showIn);

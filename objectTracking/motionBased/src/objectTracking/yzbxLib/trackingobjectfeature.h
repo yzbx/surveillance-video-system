@@ -22,11 +22,15 @@ public:
             assert(of.LIFPos.empty());
             LIFMat.release();
             LIFPos.clear();
+            LIFColor.clear();
         }
         else{
             assert(!of.LIFPos.empty());
+            assert(!of.LIFColor.empty());
+            assert(of.LIFMat.rows==of.LIFColor.size());
             LIFMat=of.LIFMat.clone();
             LIFPos=of.LIFPos;
+            LIFColor=of.LIFColor;
         }
     }
 
@@ -44,8 +48,11 @@ public:
 
     QString dump();
     void fromString(QString str);
+
+    ///LIFMat.rows==LIFPos.size()==LIFColor.size();
     cv::Mat LIFMat;
     std::vector<Point_t> LIFPos;
+    std::vector<cv::Point3i> LIFColor;
 };
 
 #endif // TRACKINGOBJECTFEATURE_H

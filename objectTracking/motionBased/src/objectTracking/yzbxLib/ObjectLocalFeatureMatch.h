@@ -70,6 +70,23 @@ public:
         matcher->match(descriptors_1, descriptors_2, good_matches);
     }
 
+    static void getGoodMatches_Step4(vector<DMatch> &good_matches,const vector<Point2f> &ps1,const vector<Point2f> &ps2,const vector<Point3i> &colors1,const vector<Point3i> &colors2,int MaxColorMatchDistance=10){
+        assert(ps1.size()==colors1.size());
+        assert(ps2.size()==colors2.size());
+        for(auto it=good_matches.begin();it!=good_matches.end();it++){
+            int qi=it->queryIdx;
+            int ti=it->trainIdx;
+            float dis=cv::norm(colors1[qi]-colors2[ti]);
+            if(dis>MaxColorMatchDistance){
+                auto pre=std::prev(it,1);
+                good_matches.erase(it);
+                it=pre;
+            }
+        }
+
+        //TODO we can add distance threshold for match here.
+    }
+
     void getGoodMatches(const cv::Mat &img1,const cv::Mat &mask1,const cv::Mat &img2,const cv::Mat &mask2){
         std::cout<<"image type: "<<getImgType(mask1.type())<<std::endl;
         std::cout<<"image type: "<<getImgType(mask2.type())<<std::endl;

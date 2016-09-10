@@ -31,20 +31,20 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
 
     cv::Mat matchMat;
     ///matchMat may be empty for empty tracks or empty fv
-    getLocalFeatureAssignment(matchMat);
+    getLocalFeatureAssignment_step1(matchMat);
 
 
     ///the feature have keypoints+descriptor
     /// LIF get stable tracking when matched feture > StableFeatureNumber(default=3)
     /// use hungarian to tracking featureless objects or small objects
     /// update mObjectToBlobMap, mBlobToObjectMap, mMatchedBlobSet, mMatchedObjectSet
-    getUnmatchedHungarainAssignment(matchMat);
+    getUnmatchedHungarainAssignment_step2(matchMat);
     //show the matched feature
     showMatchedFeature();
 
     ///handle merge(N-1),split(1-N),normal(1-1),missing(1-0),new(0-1)
     /// update mNToOneMap, mOneToNMap, mOneToOneMap, mOneToZeroSet, mZeroToOneSet
-    doAssignment();
+    doAssignment_step3();
     showing(img_input,img_fg,fv);
 }
 
@@ -70,7 +70,7 @@ void RectFloatTracker::showBlobFeature(){
     imshow("blob feature fg",fg);
 }
 
-void RectFloatTracker::getUnmatchedHungarainAssignment(cv::Mat matchMat){
+void RectFloatTracker::getUnmatchedHungarainAssignment_step2(cv::Mat matchMat){
 
     assert(!featureVectorList.empty());
     vector<trackingObjectFeature> &fv=featureVectorList.back();
@@ -176,7 +176,7 @@ void RectFloatTracker::run()
     runInSingleThread();
 }
 
-void RectFloatTracker::doAssignment(){
+void RectFloatTracker::doAssignment_step3(){
     assert(!featureVectorList.empty());
     vector<trackingObjectFeature> &fv=featureVectorList.back();
 
@@ -422,6 +422,8 @@ void RectFloatTracker::handleOneToNObjects(){
         ///get merged feature for objectId
         track_t r[4];
         cv::Mat unSplitLIF;
+        vector<Point_t> unSplitPos;
+        vector<Point3i> unSplitColor;
         for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
             Rect_t &rect=fv[*ia].rect;
             if(ia==splitBlobSet.begin()){
@@ -444,12 +446,22 @@ void RectFloatTracker::handleOneToNObjects(){
             else{
                 vconcat(unSplitLIF,fv[*ia].LIFMat,unSplitLIF);
             }
+
+            for(int i=0;i<fv[*ia].LIFPos.size();i++){
+                unSplitPos.push_back(fv[*ia].LIFPos[i]);
+            }
+
+            for(int i=0;i<fv[*ia].LIFColor.size();i++){
+                unSplitColor.push_back(fv[*ia].LIFColor[i]);
+            }
         }
 
         Rect_t unSplitRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
         Point_t unSplitCenter((r[0]+r[2])*0.5f,(r[1]+r[3])*0.5f);
         trackingObjectFeature *of=(tracks[trackIdx]->feature);
         of->LIFMat=unSplitLIF;
+        of->LIFPos=unSplitPos;
+        of->LIFColor=unSplitColor;
         of->pos=unSplitCenter;
         of->rect=unSplitRect;
         of->size=unSplitRect.area();
@@ -627,6 +639,7 @@ void RectFloatTracker::showing(const cv::Mat &img_input,const cv::Mat &img_fg,st
         }
     }
 
+    cv::namedWindow("img_tracking",WINDOW_NORMAL);
     cv::imshow("img_tracking",img_tracking);
 }
 
@@ -799,7 +812,7 @@ track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, s
     }
 }
 
-void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
+void RectFloatTracker::getLocalFeatureAssignment_step1(cv::Mat &matchMat){
     assert(featureVectorList.size()==imageList.size());
     assert(!featureVectorList.empty());
     std::vector<trackingObjectFeature> &fv=featureVectorList.back();
@@ -824,6 +837,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     }
 
     vector<Point_t> trackPos;
+    vector<Point3i> trackColor;
     Mat trackMat;
     for(int i=0;i<m;i++){
         Mat &mat=tracks[i]->feature->LIFMat;
@@ -843,6 +857,11 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
         for(int i=0;i<ps.size();i++){
             trackPos.push_back(ps[i]);
         }
+        vector<Point3i> &color=tracks[i]->feature->LIFColor;
+        assert(ps.size()==color.size());
+        for(int i=0;i<color.size();i++){
+            trackColor.push_back(color[i]);
+        }
 //        std::copy(ps.begin(),ps.end(),trackPos.end());
     }
 
@@ -858,6 +877,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
 
     Mat fvMat;
     vector<Point_t> fvPos;
+    vector<Point3i> fvColor;
     for(int j=0;j<n;j++){
         Mat mat=fv[j].LIFMat;
         if(mat.empty()) continue;
@@ -870,9 +890,14 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
         }
 
         vector<Point_t> &ps=fv[j].LIFPos;
-//        std::copy(ps.begin(),ps.end(),fvPos.end());
+        assert(!ps.empty());
         for(int i=0;i<ps.size();i++){
             fvPos.push_back(ps[i]);
+        }
+        vector<Point3i> &color=fv[j].LIFColor;
+        assert(ps.size()==color.size());
+        for(int i=0;i<color.size();i++){
+            fvColor.push_back(color[i]);
         }
     }
 
@@ -884,6 +909,7 @@ void RectFloatTracker::getLocalFeatureAssignment(cv::Mat &matchMat){
     }
     vector<DMatch> good_matches;
     ObjectLocalFeatureMatch::getGoodMatches_Step3(trackMat,fvMat,good_matches);
+    ObjectLocalFeatureMatch::getGoodMatches_Step4(good_matches,trackPos,fvPos,trackColor,fvColor);
 
     Mat showImg,showImg3,showImg4;
     if(imageList.size()>=2){

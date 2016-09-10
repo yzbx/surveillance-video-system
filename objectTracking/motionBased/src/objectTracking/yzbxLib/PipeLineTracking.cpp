@@ -60,6 +60,8 @@ void PipeLineTracking::process(QString sourceData){
 //    wins.push_back("binaryImage");
     wins.push_back("matched feature");
     wins.push_back("matched feature 2");
+    wins.push_back("matched feature 3");
+    wins.push_back("matched feature 4");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
 
