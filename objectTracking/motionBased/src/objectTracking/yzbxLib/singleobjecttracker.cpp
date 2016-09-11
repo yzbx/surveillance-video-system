@@ -15,8 +15,9 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
 
     skipped_frames=0;
     catch_frames=1;
+    lifetime=1;
+    splitMergeType=NORMAL_SMTYPE;
     rects.push_back(of.rect);
-
     trace.push_back(of.pos);
 }
 
@@ -76,10 +77,12 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
         feature->copy(of);
 
         rects.push_back(of.rect);
-        catch_frames++;
+        catch_frames+=(1+skipped_frames);
+        skipped_frames=0;
     }
     else{
         status=MISSING_STATUS;
+        skipped_frames++;
         Rect_t lastRect=rects.back();
         Point_t rectCenter(lastRect.x+lastRect.width/2,lastRect.y+lastRect.height/2);
         Point_t diff=prediction-rectCenter;
@@ -93,6 +96,8 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
     }
 
     trace.push_back(prediction);
+    lifetime++;
+    assert(lifetime==(catch_frames+skipped_frames));
 }
 
 void singleObjectTracker::predict(trackingObjectFeature &of){

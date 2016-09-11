@@ -58,10 +58,10 @@ void PipeLineTracking::process(QString sourceData){
     wins.push_back("MultiCueBGS FG");
 //    wins.push_back("featurePoint");
 //    wins.push_back("binaryImage");
-    wins.push_back("matched feature");
-    wins.push_back("matched feature 2");
-    wins.push_back("matched feature 3");
-    wins.push_back("matched feature 4");
+//    wins.push_back("matched feature");
+//    wins.push_back("matched feature 2");
+//    wins.push_back("matched feature 3");
+//    wins.push_back("matched feature 4");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
 
@@ -93,7 +93,14 @@ void PipeLineTracking::process(QString sourceData){
 
 void PipeLineTracking::PipeLine_Bgs()
 {
-    ibgs->process(img_input,img_fg,img_bg);
+    cv::Mat fg;
+    ibgs->process(img_input,fg,img_bg);
+    if(fg.channels()==3){
+        cvtColor(fg,img_fg,CV_BGR2GRAY);
+    }
+    else{
+        img_fg=fg;
+    }
 }
 
 void PipeLineTracking::PipeLine_Features(std::vector<trackingObjectFeature> &fv)
@@ -103,7 +110,14 @@ void PipeLineTracking::PipeLine_Features(std::vector<trackingObjectFeature> &fv)
 
 void PipeLineTracking::PipeLine_Input(QString sourceData)
 {
-    fin.process(sourceData,img_input);
+    cv::Mat input;
+    fin.process(sourceData,input);
+    if(input.channels()==3){
+        img_input=input;
+    }
+    else{
+        cvtColor(input,img_input,CV_GRAY2BGR);
+    }
 }
 
 void PipeLineTracking::PipeLine_DumpFV(int frameNum,const vector<int> &ids,vector<trackingObjectFeature> &fv)

@@ -19,14 +19,6 @@ Tracking_yzbx *trackingFactory_yzbx::getTrackingAlgorithm(QString trackingType)
         MotionBasedTracker *t=new MotionBasedTracker;
         return t;
     }
-    else if(trackingType.compare("MultiObjectTracking",Qt::CaseInsensitive)==0){
-        MultiObjectTracking *t=new MultiObjectTracking;
-        return t;
-    }
-    else if(trackingType.compare("BlobBasedTracker",Qt::CaseInsensitive)==0){
-        BlobBasedTracker *t=new BlobBasedTracker;
-        return t;
-    }
     else{
         qDebug()<<"unexpected trackingType:"<<trackingType;
         return NULL;

@@ -32,9 +32,6 @@ SOURCES += qyzbxlib.cpp \
     Kalman.cpp \
     singleobjecttracker.cpp \
     trackingobjectfeature.cpp \
-    multiobjecttracking.cpp \
-    blobbasedtracker.cpp \
-    BlobDetector.cpp \
     TrackingResultReplay.cpp \
     HungarianBasedTracking.cpp \
     GraphBasedTracker.cpp \
@@ -46,7 +43,8 @@ SOURCES += qyzbxlib.cpp \
     ObjectTrajectoryProcessing.cpp \
     PipeLineTracking.cpp \
     TrackingBlobsMatchAnnotation.cpp \
-    TrackingAlgorithmParamter.cpp
+    TrackingAlgorithmParamter.cpp \
+    BlobDetector.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -69,9 +67,6 @@ HEADERS += qyzbxlib.h\
     Kalman.h \
     singleobjecttracker.h \
     trackingobjectfeature.h \
-    multiobjecttracking.h \
-    blobbasedtracker.h \
-    BlobDetector.h \
     TrackingResultReplay.h \
     HungarianBasedTracking.h \
     GraphBasedTracker.h \
@@ -83,7 +78,8 @@ HEADERS += qyzbxlib.h\
     ObjectTrajectoryProcessing.h \
     PipeLineTracking.h \
     TrackingBlobsMatchAnnotation.h \
-    TrackingAlgorithmParamter.h
+    TrackingAlgorithmParamter.h \
+    BlobDetector.h
 
 unix {
     target.path = /usr/lib

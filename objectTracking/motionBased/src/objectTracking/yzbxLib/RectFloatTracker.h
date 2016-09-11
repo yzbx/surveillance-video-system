@@ -52,10 +52,11 @@ private:
     //split provocation
     const int MaxProvocationTimesForSplit=3;
     const int MaxProvocationTimesForMerge=10;
-    const track_t MinSplitGap=100;
+    const track_t MinSplitGap=5;
     const track_t MaxDistForMergingTrace=100.0;
     const int StableFeatureNumber=3;
     const uint InitMergeChance=2;
+    const uint MaxFreshObjectLifeTime=5;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
     //NOTE must use objectId here, because trackIdx will be invalid when remove some object
@@ -78,12 +79,10 @@ private:
     //NOTE merge later, split first!!!
     void handleNToOneObjects();
 
-
-
     bool isTraceMergable(vector<Point_t> &traceA, vector<Point_t> &traceB);
     void getUnmatchedHungarainAssignment_step2(cv::Mat matchMat);
     track_t getRectGap(Rect_t ra, Rect_t rb);
-    void showMatchedFeature();
+    void showMatchedFeature(const Mat matchMat);
     void showBlobFeature();
 };
 

@@ -14,14 +14,16 @@ public:
     int track_id;
     std::vector<Point_t> trace;
     std::vector<Rect_t> rects;
-    int skipped_frames;
-    int catch_frames;
     Point_t prediction;
     trackingObjectFeature *feature;
     STATUS status;
     Point_t bornPos;
-    int bornFrameNum;
-
+    enum SplitMergeType splitMergeType;
+//private:
+    int skipped_frames;
+    int catch_frames;
+    int lifetime;
+public:
     track_t CalcDist(trackingObjectFeature &of);
     void Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length);
     QString dump(){

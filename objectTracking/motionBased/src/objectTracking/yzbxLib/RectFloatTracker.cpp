@@ -10,12 +10,16 @@ RectFloatTracker::RectFloatTracker()
     //if (Cost[i + assignment[i] * N] > dist_thres)
     param.dist_thres = 100;
 
-    param.maximum_allowed_skipped_frames = 100;
+    param.maximum_allowed_skipped_frames = 5;
     param.max_trace_length=100;
 }
 
 void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<trackingObjectFeature> &fv)
 {
+    ///PipeLine must ensure this!!!
+    assert(img_input.channels()==3);
+    assert(img_fg.channels()==1);
+
     imageList.push_back(std::make_pair(img_input,img_fg));
     if(imageList.size()>maxListLength){
         imageList.pop_front();
@@ -39,8 +43,8 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     /// use hungarian to tracking featureless objects or small objects
     /// update mObjectToBlobMap, mBlobToObjectMap, mMatchedBlobSet, mMatchedObjectSet
     getUnmatchedHungarainAssignment_step2(matchMat);
-    //show the matched feature
-    showMatchedFeature();
+    //show the matched feature through p2p match.
+    showMatchedFeature(matchMat);
 
     ///handle merge(N-1),split(1-N),normal(1-1),missing(1-0),new(0-1)
     /// update mNToOneMap, mOneToNMap, mOneToOneMap, mOneToZeroSet, mZeroToOneSet
@@ -305,8 +309,18 @@ void RectFloatTracker::handleOneToNObjects(){
             }
             ///the minimal distance for *ia to other blobs association to object trackIdx.
             if(minRectGap>MinSplitGap){
-                //new object
+                //new object, set splitMergeStatus
                 tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++));
+                tracks.back()->trace=tracks[trackIdx]->trace;
+                tracks.back()->trace.push_back(fv[*ia].pos);
+                tracks.back()->rects=tracks[trackIdx]->rects;
+                tracks.back()->rects.push_back(fv[*ia].rect);
+                tracks.back()->lifetime=tracks[trackIdx]->lifetime;
+                tracks.back()->skipped_frames=tracks[trackIdx]->skipped_frames;
+                tracks.back()->catch_frames=tracks[trackIdx]->catch_frames;
+                tracks.back()->splitMergeType=SPLITED_SMTYPE;
+
+                tracks[trackIdx]->status=DELETE_TO_SPLIT;
                 splitToNewMap[trackIdx].insert(*ia);
             }
         }
@@ -389,6 +403,18 @@ void RectFloatTracker::handleOneToNObjects(){
                 for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
                     splitToNewMap[trackIdx].insert(*ia);
                     tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++));
+
+
+                    tracks.back()->trace=tracks[trackIdx]->trace;
+                    tracks.back()->trace.push_back(fv[*ia].pos);
+                    tracks.back()->rects=tracks[trackIdx]->rects;
+                    tracks.back()->rects.push_back(fv[*ia].rect);
+                    tracks.back()->lifetime=tracks[trackIdx]->lifetime+1;
+                    tracks.back()->skipped_frames=tracks[trackIdx]->skipped_frames;
+                    tracks.back()->catch_frames=tracks[trackIdx]->catch_frames+1;
+                    tracks.back()->splitMergeType=SPLITED_SMTYPE;
+
+                    tracks[trackIdx]->status=DELETE_TO_SPLIT;
                 }
             }
             else{
@@ -480,6 +506,11 @@ void RectFloatTracker::handleNToOneObjects(){
         std::set<Index_t> &ids=git->second;
         int fvIdx=git->first;
         for(auto ia=ids.begin();ia!=ids.end();ia++){
+            //cannot merge !!!
+            if(tracks[*ia]->splitMergeType==SPLITED_SMTYPE||tracks[*ia]->lifetime>MaxFreshObjectLifeTime){
+                continue;
+            }
+
             for(auto ib=std::next(ia,1);ib!=ids.end();ib++){
                 vector<Point_t> &traceA=tracks[*ia]->trace;
                 vector<Point_t> &traceB=tracks[*ib]->trace;
@@ -660,7 +691,7 @@ track_t RectFloatTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectFe
     return good_matchers.size();
 }
 
-void RectFloatTracker::showMatchedFeature(){
+void RectFloatTracker::showMatchedFeature(const cv::Mat matchMat){
     assert(!featureVectorList.empty());
     vector<trackingObjectFeature> &fv=featureVectorList.back();
 
@@ -670,120 +701,59 @@ void RectFloatTracker::showMatchedFeature(){
     auto imgIt=imageList.end();
     imgIt=std::prev(imgIt,2);
 
-    cv::Mat img=imgIt->first;
-    cv::Mat input;
-    if(img.channels()==3){
-        input=img.clone();
-    }
-    else{
-        cvtColor(img,input,CV_GRAY2BGR);
-    }
-    //    cv::Mat fg0=imageList.back().second;
-    cv::Mat fg0=imageList.back().first;
-    cv::Mat fg;
-    if(fg0.channels()==3){
-        fg=fg0.clone();
-    }
-    else{
-        cvtColor(fg0,fg,CV_GRAY2BGR);
-    }
+    cv::Mat input1=imgIt->first;
+    cv::Mat input2=imageList.back().first;
+    cv::Mat fg1=imgIt->second;
+    cv::Mat fg2=imageList.back().second;
 
-    cv::Mat showImg;
-    hconcat(input,fg,showImg);
+    cv::Mat showImgInput,showImgFg;
+
+    //step 1, draw rect
     for(int i=0;i<tracks.size();i++){
         std::shared_ptr<trackingObjectFeature> of1=std::make_shared<trackingObjectFeature>(*(tracks[i]->feature));
-        for(int j=0;j<fv.size();j++){
-            std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>(fv[j]);
+        cv::rectangle(input1,of1->rect,Scalar(255,0,0),3);
+        cv::rectangle(fg1,of1->rect,Scalar::all(255),3);
+    }
+    for(int i=0;i<fv.size();i++){
+        std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>(fv[i]);
+        cv::rectangle(input2,of2->rect,Scalar(0,0,255),3);
+        cv::rectangle(fg2,of2->rect,Scalar::all(255),3);
+    }
+    hconcat(input1,input2,showImgInput);
+    hconcat(fg1,fg2,showImgFg);
 
-            if(of1->LIFMat.empty()){
-                continue;
-            }
-            if(of2->LIFMat.empty()){
-                continue;
-            }
-            vector<DMatch> good_matches;
+    //step 2, draw match number, match line
+    int m=matchMat.rows;
+    int n=matchMat.cols;
+    for(int i=0;i<m;i++){
+        for(int j=0;j<n;j++){
 
-            vector< vector<DMatch> > matches;
-            Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-            //knnMatch(query,train,...)
-            matcher->knnMatch( of1->LIFMat, of2->LIFMat, matches, 2 );
-            //NOTE a parameter!!!
-            float global_match_ratio=0.8;
-            for(size_t i = 0; i < matches.size(); i++) {
-                DMatch first = matches[i][0];
-                if(matches[i].size()>1){
-                    float dist1 = matches[i][0].distance;
-                    float dist2 = matches[i][1].distance;
-                    if(dist1 < global_match_ratio * dist2) {
-                        good_matches.push_back(first);
-                    }
-                }
-                else{
-                    good_matches.push_back(first);
-                }
+            Point_t p1=tracks[i]->feature->pos;
+            Point_t p2=fv[j].pos;
+            int matchNum=(int)matchMat.at<uchar>(i,j);
+
+            if(matchNum>StableFeatureNumber){
+                yzbxlib::drawMatch(showImgInput,p1,p2,cv::Scalar(0,0,255));
+            }
+            else if(matchNum>0){
+                yzbxlib::drawMatch(showImgInput,p1,p2,cv::Scalar(255,0,0));
             }
 
-            for(int m=0;m<good_matches.size();m++){
-                int queryIdx=good_matches[m].queryIdx;
-                int trainIdx=good_matches[m].trainIdx;
-                Point_t pos1=of1->LIFPos[queryIdx];
-                Point_t pos2=of2->LIFPos[trainIdx];
-                yzbxlib::drawMatch(showImg,pos1,pos2);
+            if(matchNum>0){
+                string text=boost::lexical_cast<string>(matchNum);
+                Point_t pt=(p1+p2+Point_t(input1.cols,0))*0.5f;
+                cv::putText(showImgInput, text, pt, FONT_HERSHEY_COMPLEX, 1,
+                            cv::Scalar(0,255,255), 2, 8);
             }
         }
     }
 
-    imshow("matched feature",showImg);
 
-    cv::Mat showImg2;
-    cv::Mat input2=imageList.back().first;
-    hconcat(input,input2,showImg2);
-
-    auto fv1=std::prev(featureVectorList.end(),1);
-    auto fv2=std::prev(featureVectorList.end(),2);
-    for(int i=0;i<fv1->size();i++){
-        std::shared_ptr<trackingObjectFeature> of1=std::make_shared<trackingObjectFeature>((*fv1)[i]);
-        for(int j=0;j<fv2->size();j++){
-            std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>((*fv2)[j]);
-            if(of1->LIFMat.empty()){
-                continue;
-            }
-            if(of2->LIFMat.empty()){
-                continue;
-            }
-            vector<DMatch> good_matches;
-
-            vector< vector<DMatch> > matches;
-            Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
-            //knnMatch(query,train,...)
-            matcher->knnMatch( of1->LIFMat, of2->LIFMat, matches, 2 );
-            //NOTE a parameter!!!
-            float global_match_ratio=0.8;
-            for(size_t i = 0; i < matches.size(); i++) {
-                DMatch first = matches[i][0];
-                if(matches[i].size()>1){
-                    float dist1 = matches[i][0].distance;
-                    float dist2 = matches[i][1].distance;
-                    if(dist1 < global_match_ratio * dist2) {
-                        good_matches.push_back(first);
-                    }
-                }
-                else{
-                    good_matches.push_back(first);
-                }
-            }
-
-            for(int m=0;m<good_matches.size();m++){
-                int queryIdx=good_matches[m].queryIdx;
-                int trainIdx=good_matches[m].trainIdx;
-                Point_t pos1=of1->LIFPos[queryIdx];
-                Point_t pos2=of2->LIFPos[trainIdx];
-                yzbxlib::drawMatch(showImg2,pos2,pos1);
-            }
-        }
-    }
-
-    imshow("matched feature 2",showImg2);
+    //step 3 show
+    namedWindow("show matched feature input",WINDOW_NORMAL);
+    namedWindow("show matched feature fg",WINDOW_NORMAL);
+    imshow("show matched feature input",showImgInput);
+    imshow("show matched feature fg",showImgFg);
 }
 
 track_t RectFloatTracker::calcCost(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2,int costType){
@@ -911,15 +881,7 @@ void RectFloatTracker::getLocalFeatureAssignment_step1(cv::Mat &matchMat){
     ObjectLocalFeatureMatch::getGoodMatches_Step3(trackMat,fvMat,good_matches);
     ObjectLocalFeatureMatch::getGoodMatches_Step4(good_matches,trackPos,fvPos,trackColor,fvColor);
 
-    Mat showImg,showImg3,showImg4;
-    if(imageList.size()>=2){
-        Mat imgBack=imageList.back().first;
-        auto it=std::prev(imageList.end(),2);
-        Mat img=it->first;
-        hconcat(img,imgBack,showImg);
-        showImg3=showImg.clone();
-        showImg4=showImg.clone();
-    }
+
     for(int m=0;m<good_matches.size();m++){
         int queryIdx=good_matches[m].queryIdx;
         int trainIdx=good_matches[m].trainIdx;
@@ -928,66 +890,6 @@ void RectFloatTracker::getLocalFeatureAssignment_step1(cv::Mat &matchMat){
         int j=fvIdxToIdMap[trainIdx];
         uchar num=matchMat.at<uchar>(i,j);
         matchMat.at<uchar>(i,j)=num+1;
-
-        if(imageList.size()>=2){
-            Point_t pos1=trackPos[queryIdx];
-            Point_t pos2=fvPos[trainIdx];
-            yzbxlib::drawMatch(showImg3,pos1,pos2);
-        }
-    }
-
-    if(imageList.size()>=2){
-        cv::imshow("matched feature 3",showImg3);
-
-        for(int i=0;i<m;i++){
-            for(int j=0;j<n;j++){
-                if(matchMat.at<uchar>(i,j)>StableFeatureNumber){
-                    Point_t p1=tracks[i]->feature->pos;
-                    Point_t p2=fv[j].pos;
-                    yzbxlib::drawMatch(showImg4,p1,p2);
-                }
-            }
-        }
-
-        cv::imshow("matched feature 4",showImg4);
     }
 
 }
-
-
-//void RectFloatTracker::showAssignment(assignments_t &assignments,std::vector<trackingObjectFeature> &fv){
-//    cv::Mat img_objects=img_input.clone();
-//    cv::Mat img_blobs=img_input.clone();
-//    assert(assignments.size()==tracks.size());
-
-//    for(int i=0;i<tracks.size();i++){
-//        Point_t p1=tracks[i]->prediction;
-//        Point_t p2=tracks[i]->feature->pos;
-//        cv::circle(img_blobs,p1,5,Scalar(0,0,255),3);
-//        cv::circle(img_blobs,p2,5,Scalar(0,0,255),CV_FILLED);
-//        cv::line(img_objects,p2,p1,Scalar(255,0,0),3);
-//    }
-
-//    for(int i=0;i<fv.size();i++){
-//        trackingObjectFeature &of=fv[i];
-//        Point_t p=of.pos;
-//        cv::circle(img_blobs,p,5,Scalar(0,0,255),CV_FILLED);
-//    }
-
-//    Mat img_assign;
-//    cv::hconcat(img_objects,img_blobs,img_assign);
-//    for(int i=0;i<assignments.size();i++){
-//        if(assignments[i]!=-1){
-//            assert(assignments[i]<fv.size());
-//            trackingObjectFeature &of=fv[assignments[i]];
-
-//            Point_t p1=tracks[i]->prediction;
-//            Point_t p2=of.pos;
-//            p2.x+=img_input.cols;
-
-//            cv::line(img_assign,p1,p2,Scalar(255,0,0),3);
-//        }
-//    }
-
-//    imshow("img_assign",img_assign);
-//}

@@ -70,7 +70,7 @@ public:
         matcher->match(descriptors_1, descriptors_2, good_matches);
     }
 
-    static void getGoodMatches_Step4(vector<DMatch> &good_matches,const vector<Point2f> &ps1,const vector<Point2f> &ps2,const vector<Point3i> &colors1,const vector<Point3i> &colors2,int MaxColorMatchDistance=10){
+    static void getGoodMatches_Step4(vector<DMatch> &good_matches,const vector<Point2f> &ps1,const vector<Point2f> &ps2,const vector<Point3i> &colors1,const vector<Point3i> &colors2,int MaxColorMatchDistance=10,int MaxPosMatchDistance=100){
         assert(ps1.size()==colors1.size());
         assert(ps2.size()==colors2.size());
         for(auto it=good_matches.begin();it!=good_matches.end();it++){
@@ -81,6 +81,15 @@ public:
                 auto pre=std::prev(it,1);
                 good_matches.erase(it);
                 it=pre;
+            }
+            else{
+                ///avoid repeat erase.
+                float positionDist=cv::norm(ps1[qi]-ps2[ti]);
+                if(positionDist>MaxPosMatchDistance){
+                    auto pre=std::prev(it,1);
+                    good_matches.erase(it);
+                    it=pre;
+                }
             }
         }
 
