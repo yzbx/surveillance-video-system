@@ -16,8 +16,18 @@ public:
     typedef uint Id_t;
     RectFloatTracker();
     void process(const cv::Mat &img_input,const cv::Mat &img_fg,vector<trackingObjectFeature> &fv);
+    void setRecordFile(QString recordFile){
+        globalRecordFile=recordFile;
+    }
+    void setFrameNum(int n){
+        frameNum=n;
+    }
+
 private:
+    int frameNum;
+    QString globalRecordFile;
     TrackingAlgorithmParamter param;
+
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;
 
     int globalChannel;
@@ -31,7 +41,9 @@ private:
     void showing(const cv::Mat &img_input, const cv::Mat &img_fg, std::vector<trackingObjectFeature> featureVector);
 
     //return the match feature number for objects-blobs
-    void getLocalFeatureAssignment_step1(cv::Mat &matchMat);
+    void getLocalFeatureAssignment_step2(cv::Mat &matchMat);
+    //add merge and split to object tracking system.
+    void getRectOverlapAssignment_step1();
     void showAssignment(assignments_t &assignments, std::vector<trackingObjectFeature> &fv);
     track_t calcMatchedFeatureNum(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2);
     void getHungarainAssignment(assignments_t &assignment, int costType=RectDist);
@@ -57,6 +69,7 @@ private:
     const int StableFeatureNumber=3;
     const uint InitMergeChance=2;
     const uint MaxFreshObjectLifeTime=5;
+    const uint MinDumpLifeTime=10;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
     //NOTE must use objectId here, because trackIdx will be invalid when remove some object
@@ -69,7 +82,7 @@ private:
     std::set<Id_t> deleteLaterObjectSet;
 
     ///use mNewblobs, mUnmatchedObjects, mOneToOneMap, ... to do assignment
-    void doAssignment_step3();
+    void doAssignment_step4();
     void handleOneToOneObjects();
 
     void handleNewObjects();
@@ -80,10 +93,16 @@ private:
     void handleNToOneObjects();
 
     bool isTraceMergable(vector<Point_t> &traceA, vector<Point_t> &traceB);
-    void getUnmatchedHungarainAssignment_step2(cv::Mat matchMat);
+    void getUnmatchedHungarainAssignment_step3(cv::Mat matchMat);
     track_t getRectGap(Rect_t ra, Rect_t rb);
     void showMatchedFeature(const Mat matchMat);
     void showBlobFeature();
+    void doRectOverlap_splitTrack(Index_t trackIdx, std::set<Index_t> &blobset);
+    void doRectOverlap_splitBlob(Index_t blobIdx, std::set<Index_t> &trackset);
+    void showNewBlobFeature();
+    void showKalmanFeature();
+    void showAssignment();
+    void dumpDeleteObject(Index_t trackIdx);
 };
 
 #endif // RECTFLOATTRACKER_H

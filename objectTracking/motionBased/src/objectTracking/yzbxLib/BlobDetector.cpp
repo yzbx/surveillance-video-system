@@ -169,21 +169,25 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
             of.onBoundary=false;
         }
 
-        cv::Mat mask_i(image.size(),CV_8UC1);
-        mask_i=Scalar::all(0);
-        cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
-        ObjectLocalFeatureMatch match;
-        match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
-        for(int i=0;i<of.LIFPos.size();i++){
-            Point_t p=of.LIFPos[i];
-            int x=(int)p.x;
-            int y=(int)p.y;
-            Point3i color;
-            color.x=image.at<Vec3b>(y,x)[0];
-            color.y=image.at<Vec3b>(y,x)[1];
-            color.z=image.at<Vec3b>(y,x)[2];
-            of.LIFColor.push_back(color);
+        if(UseLIF){
+            cv::Mat mask_i(image.size(),CV_8UC1);
+            mask_i=Scalar::all(0);
+            cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
+            ObjectLocalFeatureMatch match;
+            match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
+            for(int i=0;i<of.LIFPos.size();i++){
+                Point_t p=of.LIFPos[i];
+                int x=(int)p.x;
+                int y=(int)p.y;
+                Point3i color;
+                color.x=image.at<Vec3b>(y,x)[0];
+                color.y=image.at<Vec3b>(y,x)[1];
+                color.z=image.at<Vec3b>(y,x)[2];
+                of.LIFColor.push_back(color);
+            }
         }
+
+
 //        showBlobFeature(image,mask_i,of);
 
         //NOTE, avoid auto LIFMat not empty.

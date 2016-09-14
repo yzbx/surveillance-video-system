@@ -23,12 +23,14 @@ public:
     void setBgsType(QString bgsType){
         this->bgsType=bgsType;
     }
-
+    void setRecordFile(QString recordFile);
 private:
+    QString recordFile;
     bool firstDump=true;
     track_t dist_thres=200;
 
     QString bgsType="SJN_MultiCueBGS";
+//    QString bgsType="LOBSTERBGS";
     FrameInput fin;
     cv::Mat img_input,img_fg,img_bg;
     bgsFactory_yzbx fac;

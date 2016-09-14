@@ -874,4 +874,167 @@ void drawMatch(Mat &img, Point_t p1, Point_t p2,cv::Scalar color,int thickness)
     cv::line(img,p1,newP2,color,thickness);
 }
 
+Rect_t getMergedRect(Rect_t ra, Rect_t rb)
+{
+    Rect_t t;
+    t.x=std::min(ra.tl().x,rb.tl().x);
+    t.y=std::min(ra.tl().y,rb.tl().y);
+    t.width=std::max(ra.br().x-t.x,rb.br().x-t.x);
+    t.height=std::max(ra.br().y-t.y,rb.br().y-t.y);
+
+    return t;
+}
+
+bool splitRect(const Rect_t &mergedRect, Rect_t &r1, Rect_t &r2)
+{
+    Rect_t rt=yzbxlib::getMergedRect(r1,r2);
+
+    if(r1.x<r2.x){
+        //case 1, tl=r1,br=r2
+        if(r1.x==rt.x&&r1.y==rt.y){
+            r1.x=mergedRect.x;
+            r1.y=mergedRect.y;
+
+            Point_t p=mergedRect.br()-r2.br()+r2.tl();
+            r2.x=p.x;
+            r2.y=p.y;
+            return true;
+        }//case 2, bl=r1,tr=r2
+        else if(r1.x==rt.x&&r2.y==rt.y){
+            r1.x=mergedRect.x;
+            r2.y=mergedRect.y;
+
+            r1.y=r1.tl().y+mergedRect.br().y-r1.br().y;
+            r2.x=r2.tl().x+mergedRect.br().x-r2.br().x;
+            return true;
+        }
+    }
+    else{
+        if(r2.x==rt.x&&r2.y==rt.y){
+            r2.x=mergedRect.x;
+            r2.y=mergedRect.y;
+
+            Point_t p=mergedRect.br()-r1.br()+r1.tl();
+            r1.x=p.x;
+            r1.y=p.y;
+            return true;
+        }
+        else if(r2.x==rt.x&&r1.y==rt.y){
+            r2.x=mergedRect.x;
+            r1.y=mergedRect.y;
+
+            r2.y=r2.tl().y+mergedRect.br().y-r2.br().y;
+            r1.x=r1.tl().x+mergedRect.br().x-r1.br().x;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+void annotation(Mat showImg, Rect_t r, const string title, Scalar color)
+{
+    int rows=showImg.rows;
+    int cols=showImg.cols;
+
+    cv::rectangle(showImg,r,color,5);
+    if(r.y<20){
+        cv::putText(showImg,title,Point(r.x,20),FONT_HERSHEY_COMPLEX,1,color,2,8);
+    }
+    else{
+        cv::putText(showImg, title, r.tl(), FONT_HERSHEY_COMPLEX, 1,
+                color, 2, 8);
+    }
+}
+
+track_t getOverlapArea(Rect_t ra, Rect_t rb)
+{
+    return std::max(0.0f,std::min(ra.br().x,rb.br().x)-std::max(ra.tl().x,rb.tl().x))*
+            std::max(0.0f,std::min(ra.br().y,rb.br().y)-std::max(ra.tl().y,rb.tl().y));
+}
+
+track_t getOverlapRatio(Rect_t ra, Rect_t rb)
+{
+    track_t overlap=getOverlapArea(ra,rb);
+//    return overlap/(ra.area()+rb.area()-overlap);
+    return std::max(overlap/ra.area(),overlap/rb.area());
+}
+
+Rect_t getSubRect(Rect_t mergedRect, Rect_t subRect)
+{
+    Point_t tl=subRect.tl();
+    Point_t br=subRect.br();
+    Point_t tr=tl+Point_t(subRect.width,0);
+    Point_t bl=br-Point_t(subRect.width,0);
+    vector<Point_t> subPs;
+    subPs.push_back(tl);
+    subPs.push_back(br);
+    subPs.push_back(tr);
+    subPs.push_back(bl);
+
+    Point_t mtl=mergedRect.tl();
+    Point_t mbr=mergedRect.br();
+    Point_t mtr=mtl+Point_t(mergedRect.width,0);
+    Point_t mbl=mbl-Point_t(mergedRect.width,0);
+    vector<Point_t> ps;
+    ps.push_back(mtl);
+    ps.push_back(mbr);
+    ps.push_back(mtr);
+    ps.push_back(mbl);
+
+    track_t minCost=0;
+    int minIdx;
+    for(int i=0;i<ps.size();i++){
+        track_t dist=cv::norm(ps[i]-subPs[i]);
+        if(i==0||minCost<dist){
+            minCost=dist;
+            minIdx=i;
+        }
+    }
+
+    Point_t dif=ps[minIdx]-subPs[minIdx];
+    Rect_t r=subRect;
+    r.x+=dif.x;
+    r.y+=dif.y;
+
+    return r;
+}
+
+track_t getOverlapDist(Rect_t ra, Rect_t rb)
+{
+    track_t overlap=getOverlapArea(ra,rb);
+    return 1-overlap/(ra.area()+rb.area());
+}
+
+QString getOutputFileName(QString inputFileName)
+{
+    QString outputFileName=inputFileName;
+    QFileInfo info(inputFileName);
+    if(inputFileName.contains(".")){
+        outputFileName.replace("/","_");
+        outputFileName.replace(info.suffix(),"txt");
+    }
+    else{
+        outputFileName.replace("/","_");
+        outputFileName+=".txt";
+    }
+
+
+//    QFileInfo info(inputFileName);
+//    if(info.isDir()){
+//        outputFileName.replace("/","_");
+//        outputFileName+=".txt";
+//    }
+//    else if(info.isFile()){
+//        outputFileName.replace("/","_");
+//        outputFileName.replace(info.suffix(),"txt");
+//    }
+//    else{
+//        qDebug()<<inputFileName;
+//        assert(false);
+//    }
+
+    return outputFileName;
+}
+
 }

@@ -24,7 +24,25 @@ bool isRectAInRectB(Rect_t A, Rect_t B);
 bool isPointInRect(cv::Point2f p, Rect_t rect);
 track_t getRectGap(Rect_t ra,Rect_t rb);
 void drawMatch(cv::Mat &img,Point_t p1,Point_t p2,cv::Scalar color=cv::Scalar(0,0,255),int thickness=3);
+Rect_t getMergedRect(Rect_t ra,Rect_t rb);
+bool splitRect(const Rect_t &mergedRect,Rect_t &r1,Rect_t &r2);
+void annotation(cv::Mat showImg,Rect_t r,const string title="",cv::Scalar color=cv::Scalar(0,0,255));
+
+//return the overlap area.
+track_t getOverlapArea(Rect_t ra,Rect_t rb);
+
+//return the ratio for max(overlap/area(ra),overlap/area(rb))
+track_t getOverlapRatio(Rect_t ra,Rect_t rb);
+
+//return the rect with the minimal cost move subRect to mergedRect.
+Rect_t getSubRect(Rect_t mergedRect,Rect_t subRect);
 //void insertToSetList(std::list<std::set<int>> &setList,int value);
+
+//return rect distance
+track_t getOverlapDist(Rect_t ra,Rect_t rb);
+
+//from input to output
+QString getOutputFileName(QString inputFileName);
 }
 
 //set qt sync with file.
