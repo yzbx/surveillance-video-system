@@ -64,7 +64,8 @@ void PipeLineTracking::process(QString sourceData){
 //    wins.push_back("matched feature 4");
     yzbxlib::moveWindows(wins,3);
     int frameNum=0;
-
+    assert(!recordFile.isEmpty());
+    tracker.setRecordFile(recordFile);
     while(1){
         PipeLine_Input(sourceData);
         if(img_input.empty()){
@@ -75,11 +76,13 @@ void PipeLineTracking::process(QString sourceData){
             qWarning()<<"empty img_fg for frameNum="<<frameNum;
         }
         else{
+
             std::vector<trackingObjectFeature> fv;
             PipeLine_Features(fv);
             cv::imshow("img_input",img_input);
             cv::imshow("img_fg",img_fg);
             cv::waitKey(30);
+            tracker.setFrameNum(frameNum);
             tracker.process(img_input,img_fg,fv);
 //            vector<int> ids;
 //            matcher.process(frameNum,dist_thres,fv,annTxt,ids);
@@ -162,4 +165,19 @@ void PipeLineTracking::PipeLine_Replay(QString dataSource, QString replaySource,
         replaySource="/home/yzbx/Downloads/BitSync/surveillance-video-system/UrbanTracker-Annotation/MOT2D2015/atrium.csv";
     }
     replay.process(dataSource,replaySource,bgsType,saveVideo);
+}
+
+void PipeLineTracking::setRecordFile(QString recordFile)
+{
+    assert(this->recordFile.isEmpty());
+    this->recordFile=recordFile;
+    QFile data(recordFile);
+    if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
+        qDebug()<<"cannot open file "<<recordFile;
+        exit(-1);
+    }
+    QTextStream out(&data);
+    QStringList firstLine;
+    firstLine<<"frameNum"<<"objectId"<<"x"<<"y"<<"width"<<"height";
+    out<<firstLine.join(",")<<"\n";
 }

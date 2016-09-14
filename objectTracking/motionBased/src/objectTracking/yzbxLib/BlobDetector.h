@@ -20,6 +20,7 @@ public:
 private:
     double maxObjectSize=0;
     size_t cols=0,rows=0;
+    bool UseLIF=false;
 };
 
 #endif // BLOBDETECTOR_H

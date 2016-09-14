@@ -27,8 +27,7 @@ public:
 
         vector<KeyPoint> keypoints;
         detector->detect(img, keypoints,mask);
-
-
+        kps.swap(keypoints);
         //NOTE detect(img,keypoints,mask) failed, keypoints out of mask!!!
 //        assert(mask.channels()==1);
 //        for(int i=0;i<keypoints.size();i++){
@@ -41,22 +40,22 @@ public:
 //        }
 
         //use the best MaxFeaturePointNum feature point according to response.
-        if(keypoints.size()<MaxFeaturePointNum){
-            kps.swap(keypoints);
-        }
-        else{
-            //sort from big to small!!!
-            std::sort(keypoints.begin(), keypoints.end(),
-                      [](KeyPoint const & a, KeyPoint const & b) -> bool
-            { return a.response > b.response; } );
+//        if(keypoints.size()<MaxFeaturePointNum){
+//            kps.swap(keypoints);
+//        }
+//        else{
+//            //sort from big to small!!!
+//            std::sort(keypoints.begin(), keypoints.end(),
+//                      [](KeyPoint const & a, KeyPoint const & b) -> bool
+//            { return a.response > b.response; } );
 
-            assert(keypoints[0].response>=keypoints[1].response);
+//            assert(keypoints[0].response>=keypoints[1].response);
 
-            const int n=keypoints.size();
-            for(int i=0;i<MaxFeaturePointNum;i++){
-                kps.push_back(keypoints[i]);
-            }
-        }
+//            const int n=keypoints.size();
+//            for(int i=0;i<MaxFeaturePointNum;i++){
+//                kps.push_back(keypoints[i]);
+//            }
+//        }
     }
 
     void getDescriptorMat_Step2(const cv::Mat &img,vector<KeyPoint> &kps ,cv::Mat &des){
@@ -66,8 +65,41 @@ public:
     }
 
     static void getGoodMatches_Step3(Mat &descriptors_1, Mat &descriptors_2, vector<DMatch> &good_matches){
-        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
-        matcher->match(descriptors_1, descriptors_2, good_matches);
+//        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
+//        matcher->match(descriptors_1, descriptors_2, good_matches);
+        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING);
+        vector<vector<DMatch>> knn_matchesA,knn_matchesB;
+        vector<DMatch> sym_matchesA,sym_matchesB;
+        if(!good_matches.empty()) good_matches.clear();
+        matcher->knnMatch(descriptors_1,descriptors_2,knn_matchesA,2);
+        matcher->knnMatch(descriptors_2,descriptors_1,knn_matchesB,2);
+
+        for(int i=0;i<knn_matchesA.size();i++){
+            if(knn_matchesA[i].size()>1){
+                assert(knn_matchesA[i][0].distance<=knn_matchesA[i][1].distance);
+                if(knn_matchesA[i][0].distance/knn_matchesA[i][1].distance<0.8){
+                    sym_matchesA.push_back(knn_matchesA[i][0]);
+                }
+            }
+        }
+
+        for(int i=0;i<knn_matchesB.size();i++){
+            if(knn_matchesB[i].size()>1){
+                if(knn_matchesB[i][0].distance/knn_matchesB[i][1].distance<0.8){
+                    sym_matchesB.push_back(knn_matchesB[i][0]);
+                }
+            }
+        }
+
+        for(int i=0;i<sym_matchesA.size();i++){
+            for(int j=0;j<sym_matchesB.size();j++){
+                if(sym_matchesA[i].queryIdx==sym_matchesB[j].trainIdx&&
+                        sym_matchesA[i].trainIdx==sym_matchesB[j].queryIdx){
+                    good_matches.push_back(sym_matchesA[i]);
+                    break;
+                }
+            }
+        }
     }
 
     static void getGoodMatches_Step4(vector<DMatch> &good_matches,const vector<Point2f> &ps1,const vector<Point2f> &ps2,const vector<Point3i> &colors1,const vector<Point3i> &colors2,int MaxColorMatchDistance=10,int MaxPosMatchDistance=100){

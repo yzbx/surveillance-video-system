@@ -620,7 +620,7 @@ void MainWindow::on_pushButton_test_clicked()
         int maxIters=10;
         //        Ptr<FeatureDetector> detector=new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), minFeatureNum, maxFeatureNum, maxIters);
         //        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
-//        Ptr<FeatureDetector> detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 50, 100, 10);
+        //        Ptr<FeatureDetector> detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 50, 100, 10);
         Ptr<FeatureDetector> detector=new BRISK(100);
         vector<KeyPoint> keypoints_1,keypoints_2;
 
@@ -657,23 +657,23 @@ void MainWindow::on_pushButton_test_clicked()
         vector< vector<DMatch> > matches;
         vector<DMatch> good_matches;
         int global_match_ratio=0.8;
-//        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
+        //        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
         Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
-//        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
+        //        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
 
-//        for(size_t i = 0; i < matches.size(); i++) {
-//            DMatch first = matches[i][0];
-//            if(matches[i].size()>1){
-//                float dist1 = matches[i][0].distance;
-//                float dist2 = matches[i][1].distance;
-//                if(dist1 < global_match_ratio * dist2) {
-//                    good_matches.push_back(first);
-//                }
-//            }
-//            else{
-//                good_matches.push_back(first);
-//            }
-//        }
+        //        for(size_t i = 0; i < matches.size(); i++) {
+        //            DMatch first = matches[i][0];
+        //            if(matches[i].size()>1){
+        //                float dist1 = matches[i][0].distance;
+        //                float dist2 = matches[i][1].distance;
+        //                if(dist1 < global_match_ratio * dist2) {
+        //                    good_matches.push_back(first);
+        //                }
+        //            }
+        //            else{
+        //                good_matches.push_back(first);
+        //            }
+        //        }
         matcher->match(descriptors_1,descriptors_2,good_matches);
         Mat outimg;
         cv::drawMatches(gray1,keypoints_1,gray2,keypoints_2,good_matches,outimg,Scalar(0,0,255),Scalar(0,255,255));
@@ -867,12 +867,31 @@ void MainWindow::on_pushButton_vibe_clicked()
 void MainWindow::on_pushButton_vibeBasedTracking_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
-    QString videoFilePath=globalVideoHome+"/"+videoFile;
-    QString bgsType=ui->comboBox_vibe->currentText();
+    if(videoFile=="all"){
+        for(int i=0;i<globalVideosList.size();i++){
+            cv::destroyAllWindows();
+            videoFile=globalVideosList[i];
+            QString videoFilePath=globalVideoHome+"/"+videoFile;
+            QString bgsType=ui->comboBox_vibe->currentText();
 
-    PipeLineTracking tracker;
-    qDebug()<<"bgsType is not used now! "<<bgsType;
-    tracker.process(videoFilePath);
+            PipeLineTracking tracker;
+            qDebug()<<"bgsType is not used now! "<<bgsType;
+            QString recordFile=yzbxlib::getOutputFileName(videoFile);
+            tracker.setRecordFile(recordFile);
+            tracker.process(videoFilePath);
+        }
+    }
+    else{
+
+        QString videoFilePath=globalVideoHome+"/"+videoFile;
+        QString bgsType=ui->comboBox_vibe->currentText();
+
+        PipeLineTracking tracker;
+        qDebug()<<"bgsType is not used now! "<<bgsType;
+        QString recordFile=yzbxlib::getOutputFileName(videoFile);
+        tracker.setRecordFile(recordFile);
+        tracker.process(videoFilePath);
+    }
 
 }
 

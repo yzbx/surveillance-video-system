@@ -1,6 +1,6 @@
 #include "singleobjecttracker.h"
 
-singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID):
+singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID, int frameNum):
     track_id(trackID),
     skipped_frames(0),
     prediction(of.pos),
@@ -19,6 +19,8 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     splitMergeType=NORMAL_SMTYPE;
     rects.push_back(of.rect);
     trace.push_back(of.pos);
+    frames.push_back(frameNum);
+    vec_status.push_back(status);
 }
 
 track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
@@ -27,39 +29,39 @@ track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
     track_t distP=sqrtf(dif.x * dif.x + dif.y * dif.y);
     Rect_t lastRect=this->feature->rect;
     Rect_t r=of.rect;
+    track_t distR=yzbxlib::getOverlapDist(lastRect,r);
+//    std::array<track_t, 4> diff;
+//    diff[0] = prediction.x - lastRect.width / 2 - r.x;
+//    diff[1] = prediction.y - lastRect.height / 2 - r.y;
+//    diff[2] = static_cast<track_t>(lastRect.width - r.width);
+//    diff[3] = static_cast<track_t>(lastRect.height - r.height);
 
-    std::array<track_t, 4> diff;
-    diff[0] = prediction.x - lastRect.width / 2 - r.x;
-    diff[1] = prediction.y - lastRect.height / 2 - r.y;
-    diff[2] = static_cast<track_t>(lastRect.width - r.width);
-    diff[3] = static_cast<track_t>(lastRect.height - r.height);
+//    track_t dist = 0;
+//    for (size_t i = 0; i < diff.size(); ++i)
+//    {
+//        dist += diff[i] * diff[i];
+//    }
+//    track_t distR=sqrtf(dist);
 
-    track_t dist = 0;
-    for (size_t i = 0; i < diff.size(); ++i)
-    {
-        dist += diff[i] * diff[i];
-    }
-    track_t distR=sqrtf(dist);
+//    track_t sizeRatio;
+//    {
+//        if(of.onBoundary||feature->onBoundary){
+//            sizeRatio=1;
+//        }
+//        else{
+//           float ratio=of.size/feature->size;
+//           ratio=(ratio+1/ratio)/2;
+//           float tolerateRatio=0.2;
+//           if(ratio<1-tolerateRatio||ratio>1+tolerateRatio){
+//               sizeRatio=1+(1-ratio)*(1-ratio)-tolerateRatio*tolerateRatio;
+//           }
+//           else{
+//               sizeRatio=1;
+//           }
+//        }
+//    }
 
-    track_t sizeRatio;
-    {
-        if(of.onBoundary||feature->onBoundary){
-            sizeRatio=1;
-        }
-        else{
-           float ratio=of.size/feature->size;
-           ratio=(ratio+1/ratio)/2;
-           float tolerateRatio=0.2;
-           if(ratio<1-tolerateRatio||ratio>1+tolerateRatio){
-               sizeRatio=1+(1-ratio)*(1-ratio)-tolerateRatio*tolerateRatio;
-           }
-           else{
-               sizeRatio=1;
-           }
-        }
-    }
-
-    track_t weight=distR+distP;
+    track_t weight=distR*distP;
     return weight;
 }
 
@@ -98,6 +100,70 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
     trace.push_back(prediction);
     lifetime++;
     assert(lifetime==(catch_frames+skipped_frames));
+}
+
+void singleObjectTracker::NormalUpdate(const trackingObjectFeature &of, int frameNum)
+{
+
+    KF.GetPrediction();
+    prediction = KF.Update(of.pos,true);
+    if(AvoidUpdate){
+        AvoidUpdate=false;
+        return;
+    }
+
+    status=NORMAL_STATUS;
+    vec_status.push_back(status);
+    frames.push_back(frameNum);
+    feature->copy(of);
+    rects.push_back(of.rect);
+    catch_frames+=(1+skipped_frames);
+    skipped_frames=0;
+
+    trace.push_back(prediction);
+    lifetime++;
+    assert(lifetime==(catch_frames+skipped_frames));
+}
+
+void singleObjectTracker::MissUpdate(int frameNum)
+{
+    KF.GetPrediction();
+    prediction = KF.Update(Point_t(0,0),false);
+    if(AvoidUpdate){
+        AvoidUpdate=false;
+        return;
+    }
+
+    status=MISSING_STATUS;
+    vec_status.push_back(status);
+    frames.push_back(frameNum);
+    skipped_frames++;
+    Rect_t lastRect=rects.back();
+    Point_t diff=prediction-feature->pos;
+    //BUG may out of image range!
+    rects.push_back(Rect_t(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height));
+
+    trace.push_back(prediction);
+    lifetime++;
+    assert(lifetime==(catch_frames+skipped_frames));
+}
+
+void singleObjectTracker::PreUpdateForBiggestBlob(const trackingObjectFeature &of)
+{
+    feature->copy(of);
+    status=PREUPDATE_STATUS;
+}
+
+void singleObjectTracker::AvoidUpdateTwice()
+{
+    AvoidUpdate=true;
+}
+
+Rect_t singleObjectTracker::GetPredictRect()
+{
+    Rect_t lastRect=rects.back();
+    Point_t diff=prediction-feature->pos;
+    return Rect_t(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height);
 }
 
 void singleObjectTracker::predict(trackingObjectFeature &of){

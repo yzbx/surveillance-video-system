@@ -96,13 +96,13 @@ void HungarianBasedTracking::hungarianTracking(vector<trackingObjectFeature> &fv
                 if (Cost[i + assignment[i] * N] > dist_thres)
                 {
                     assignment[i] = -1;
-                    tracks[i]->skipped_frames = 1;
+//                    tracks[i]->skipped_frames = 1;
                 }
             }
             else
             {
                 // If track have no assigned detect, then increment skipped frames counter.
-                tracks[i]->skipped_frames++;
+//                tracks[i]->skipped_frames++;
             }
         }
 
@@ -111,11 +111,11 @@ void HungarianBasedTracking::hungarianTracking(vector<trackingObjectFeature> &fv
         // -----------------------------------
         for (uint i = 0; i < tracks.size(); i++)
         {
-            if (tracks[i]->skipped_frames > (int)maximum_allowed_skipped_frames)
+            if (tracks[i]->get_skipped_frames() > (int)maximum_allowed_skipped_frames)
             {
-                if(tracks[i]->catch_frames>10){
-                    output(i);
-                }
+//                if(tracks[i]->catch_frames>10){
+//                    output(i);
+//                }
                 tracks.erase(tracks.begin() + i);
                 assignment.erase(assignment.begin() + i);
                 i--;
@@ -142,7 +142,7 @@ void HungarianBasedTracking::hungarianTracking(vector<trackingObjectFeature> &fv
 
         if (assignment[i] != -1) // If we have assigned detect, then update using its coordinates,
         {
-            tracks[i]->skipped_frames = 0;
+//            tracks[i]->skipped_frames = 0;
             tracks[i]->Update(fv[assignment[i]], true, max_trace_length);
         }
         else				     // if not continue using predictions
