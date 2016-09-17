@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
 
-    QString configFilePath="/home/yzbx/config/surveillance-video-system.ini";
+    QString configFilePath="/home/yzbx/config2/surveillance-video-system.ini";
     ui->lineEdit_inputPath->setText(configFilePath);
 
     loadIni(configFilePath);
@@ -900,4 +900,19 @@ void MainWindow::on_pushButton_pipeLineTracking_clicked()
     QString inputData=globalVideoHome+"/"+ui->comboBox_video->currentText();
     PipeLineTracking tracker;
     tracker.process(inputData,"");
+}
+
+void MainWindow::on_pushButton_KLTTracking_clicked()
+{
+    QString videoFile=ui->comboBox_video->currentText();
+    if(videoFile==""){
+
+    }
+    else{
+        QString videoPath=globalVideoHome+"/"+videoFile;
+        QString configFile=ui->lineEdit_inputPath->text();
+        DataDrivePipeLine klt(configFile);
+        klt.mainData->setCurrentVideo(videoPath);
+        klt.run();
+    }
 }

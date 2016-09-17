@@ -21,6 +21,7 @@
 #include "../extern/vibe/vibe.hpp"
 #include "../extern/vibe/PBAS.h"
 #include "PipeLineTracking.h"
+#include "KLTTrackingDemo.h"
 
 
 class YZBXLIBSHARED_EXPORT QYzbxLib

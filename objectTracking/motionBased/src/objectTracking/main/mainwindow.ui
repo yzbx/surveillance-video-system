@@ -304,7 +304,7 @@
     <property name="geometry">
      <rect>
       <x>430</x>
-      <y>320</y>
+      <y>340</y>
       <width>161</width>
       <height>41</height>
      </rect>
@@ -316,8 +316,8 @@
    <widget class="QPushButton" name="pushButton_test">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>340</y>
+      <x>290</x>
+      <y>350</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -329,14 +329,40 @@
    <widget class="QPushButton" name="pushButton_pipeLineTracking">
     <property name="geometry">
      <rect>
-      <x>60</x>
-      <y>320</y>
+      <x>40</x>
+      <y>350</y>
       <width>141</width>
       <height>25</height>
      </rect>
     </property>
     <property name="text">
      <string>PipeLineTracking</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_KLTTracking">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>310</y>
+      <width>89</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>KLTTracking</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_MeanShiftTracking">
+    <property name="geometry">
+     <rect>
+      <x>140</x>
+      <y>310</y>
+      <width>151</width>
+      <height>25</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>MeanShiftTracking</string>
     </property>
    </widget>
   </widget>

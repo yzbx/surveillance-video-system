@@ -69,6 +69,8 @@ private slots:
 
     void on_pushButton_pipeLineTracking_clicked();
 
+    void on_pushButton_KLTTracking_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);

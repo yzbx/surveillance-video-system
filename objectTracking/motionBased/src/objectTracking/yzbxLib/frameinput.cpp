@@ -17,6 +17,7 @@ void FrameInput::getNextFrame(QString videoFile, cv::Mat &nextFrame)
         nextFrame.release();
     }
     assert(nextFrame.empty());
+    assert(!videoFile.isEmpty());
 //    qDebug()<<"get Next Frame "<<this->frameNum<<"from "<<videoFile;
 
     if(videoFile==this->videoFilePath){

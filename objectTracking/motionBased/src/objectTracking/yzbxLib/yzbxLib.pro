@@ -44,7 +44,11 @@ SOURCES += qyzbxlib.cpp \
     PipeLineTracking.cpp \
     TrackingBlobsMatchAnnotation.cpp \
     TrackingAlgorithmParamter.cpp \
-    BlobDetector.cpp
+    BlobDetector.cpp \
+    DataDriveMain.cpp \
+    DataDrivePipeLine.cpp \
+    KLTTrackingDemo.cpp \
+    DataDriveFunctions.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -79,7 +83,11 @@ HEADERS += qyzbxlib.h\
     PipeLineTracking.h \
     TrackingBlobsMatchAnnotation.h \
     TrackingAlgorithmParamter.h \
-    BlobDetector.h
+    BlobDetector.h \
+    DataDriveMain.h \
+    DataDrivePipeLine.h \
+    KLTTrackingDemo.h \
+    DataDriveFunctions.h
 
 unix {
     target.path = /usr/lib
