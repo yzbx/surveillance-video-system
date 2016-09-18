@@ -275,8 +275,8 @@ bool KLTAssignment::run()
         for(int i=0;i<data->tracks.size();i++){
             if(data->tracks[i]->status!=MISSING_STATUS){
                 prev_fv.push_back(*(data->tracks[i]->feature));
-                prevBlobToTrack[prev_fv.size()]=i;
-                trackToPrevBlob[i]=prev_fv.size();
+                prevBlobToTrack[prev_fv.size()-1]=i;
+                trackToPrevBlob[i]=prev_fv.size()-1;
             }
         }
         data->prevBlobToTrack.swap(prevBlobToTrack);
