@@ -25,9 +25,10 @@ bool Bgs::run()
             cv::cvtColor(img_fg,data->img_fg,CV_BGR2GRAY);
         }
         else{
-            data->img_fg=img_fg;
+            data->img_fg=img_fg.clone();
         }
 
+        img_fg.release();
         return true;
     }
 }
@@ -389,6 +390,10 @@ bool KLTAssignment::run()
     imshow("KLT",image);
 
     waitKey(30);
+
+    gray.release();
+    prev_gray.release();
+    image.release();
     return true;
 }
 
