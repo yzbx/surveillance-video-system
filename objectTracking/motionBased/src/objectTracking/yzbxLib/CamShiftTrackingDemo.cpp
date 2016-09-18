@@ -1,16 +1,16 @@
-#include "KLTTrackingDemo.h"
+#include "CamShiftTrackingDemo.h"
 
-KLTTrackingDemo::KLTTrackingDemo(QString configFile):DataDrivePipeLine(configFile)
+CamShiftTrackingDemo::CamShiftTrackingDemo(QString configFile):DataDrivePipeLine(configFile)
 {
 
 }
 
-void KLTTrackingDemo::run()
+void CamShiftTrackingDemo::run()
 {
     pipeline.push_back(std::make_shared<DataDrive::Input>(DataDrive::Input(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::Bgs>(DataDrive::Bgs(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::BlobFeature>(DataDrive::BlobFeature(mainData)));
-    pipeline.push_back(std::make_shared<DataDrive::KLTTracker>(DataDrive::KLTTracker(mainData)));
+    pipeline.push_back(std::make_shared<DataDrive::CamShiftTracker>(DataDrive::CamShiftTracker(mainData)));
 
     bool gameover=false;
     while(!gameover){

@@ -1,16 +1,15 @@
-#include "KLTTrackingDemo.h"
+#include "MeanShiftTrackingDemo.h"
 
-KLTTrackingDemo::KLTTrackingDemo(QString configFile):DataDrivePipeLine(configFile)
+MeanShiftTrackingDemo::MeanShiftTrackingDemo(QString configFile):DataDrivePipeLine(configFile)
 {
 
 }
 
-void KLTTrackingDemo::run()
-{
+void MeanShiftTrackingDemo::run(){
     pipeline.push_back(std::make_shared<DataDrive::Input>(DataDrive::Input(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::Bgs>(DataDrive::Bgs(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::BlobFeature>(DataDrive::BlobFeature(mainData)));
-    pipeline.push_back(std::make_shared<DataDrive::KLTTracker>(DataDrive::KLTTracker(mainData)));
+    pipeline.push_back(std::make_shared<DataDrive::MeanShiftTracker>(DataDrive::MeanShiftTracker(mainData)));
 
     bool gameover=false;
     while(!gameover){

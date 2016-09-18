@@ -48,7 +48,10 @@ SOURCES += qyzbxlib.cpp \
     DataDriveMain.cpp \
     DataDrivePipeLine.cpp \
     KLTTrackingDemo.cpp \
-    DataDriveFunctions.cpp
+    DataDriveFunctions.cpp \
+    MeanShiftTrackingDemo.cpp \
+    CamShiftTrackingDemo.cpp \
+    DataDriveTracker.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -87,7 +90,10 @@ HEADERS += qyzbxlib.h\
     DataDriveMain.h \
     DataDrivePipeLine.h \
     KLTTrackingDemo.h \
-    DataDriveFunctions.h
+    DataDriveFunctions.h \
+    MeanShiftTrackingDemo.h \
+    CamShiftTrackingDemo.h \
+    DataDriveTracker.h
 
 unix {
     target.path = /usr/lib

@@ -1037,4 +1037,14 @@ QString getOutputFileName(QString inputFileName)
     return outputFileName;
 }
 
+void getGrayMat(const Mat &input, Mat &output)
+{
+    if(input.channels()==3){
+        cv::cvtColor(input,output,cv::COLOR_BGR2GRAY);
+    }
+    else{
+        output=input.clone();
+    }
+}
+
 }

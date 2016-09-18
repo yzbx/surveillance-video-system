@@ -43,6 +43,8 @@ track_t getOverlapDist(Rect_t ra,Rect_t rb);
 
 //from input to output
 QString getOutputFileName(QString inputFileName);
+
+void getGrayMat(const cv::Mat &input,cv::Mat &output);
 }
 
 //set qt sync with file.

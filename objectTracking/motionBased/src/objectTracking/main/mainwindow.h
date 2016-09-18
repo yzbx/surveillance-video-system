@@ -71,6 +71,12 @@ private slots:
 
     void on_pushButton_KLTTracking_clicked();
 
+    void on_pushButton_MeanShiftTracking_clicked();
+
+    void on_pushButton_camshiftTracking_clicked();
+
+    void on_pushButton_dataDrive_clicked();
+
 private:
     Ui::MainWindow *ui;
     void loadIni(QString filepath);

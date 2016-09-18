@@ -14,6 +14,8 @@ public:
 
     uint maximum_allowed_skipped_frames = 100;
     uint max_trace_length=100;
+    uint MatchNumThreshold=3;
+    uint MaxFreshObjectLifeTime=5;
 };
 
 #endif // TRACKINGALGORITHMPARAMTER_H

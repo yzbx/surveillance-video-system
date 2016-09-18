@@ -55,7 +55,7 @@ void BlobDetector::process(InputArray _image, InputArray _binaryImage, std::vect
 
 void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, std::vector<trackingObjectFeature> &features)
 {
-
+    if(!features.empty()) features.clear();
     Mat image = _image.getMat(), binaryImage0 = _binaryImage.getMat();
 
     //check and init blobDetector
@@ -79,6 +79,22 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
     Mat tmpBinaryImage = binaryImage.clone();
     findContours(tmpBinaryImage, contours, CV_RETR_EXTERNAL, CHAIN_APPROX_NONE);
 
+    vector<Point2f> KLTPoints;
+    if(UseKLT){
+        TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+        Size subPixWinSize(10,10), winSize(31,31);
+        const int MAX_COUNT = 500;
+        cv::Mat gray;
+        if(image.channels()==3)
+            cv::cvtColor(image,gray,CV_BGR2GRAY);
+        else
+            gray=image.clone();
+
+        //    goodFeaturesToTrack(gray, points[1], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
+        //    cornerSubPix(gray, points[1], subPixWinSize, Size(-1,-1), termcrit);
+        goodFeaturesToTrack(gray, KLTPoints, MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
+        cornerSubPix(gray, KLTPoints, subPixWinSize, Size(-1,-1), termcrit);
+    }
     for (size_t contourIdx = 0; contourIdx < contours.size(); contourIdx++)
     {
         trackingObjectFeature of;
@@ -169,10 +185,13 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
             of.onBoundary=false;
         }
 
+        cv::Mat mask_i(image.size(),CV_8UC1);
+        mask_i=Scalar::all(0);
+        cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
+
+        of.mask=mask_i;
         if(UseLIF){
-            cv::Mat mask_i(image.size(),CV_8UC1);
-            mask_i=Scalar::all(0);
-            cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
+
             ObjectLocalFeatureMatch match;
             match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
             for(int i=0;i<of.LIFPos.size();i++){
@@ -184,6 +203,15 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
                 color.y=image.at<Vec3b>(y,x)[1];
                 color.z=image.at<Vec3b>(y,x)[2];
                 of.LIFColor.push_back(color);
+            }
+        }
+
+        if(UseKLT){
+            for(int i=0;i<KLTPoints.size();i++){
+                Point p=KLTPoints[i];
+                if(mask_i.at<uchar>(p.y,p.x)==255){
+                    of.KLTPos.push_back(p);
+                }
             }
         }
 

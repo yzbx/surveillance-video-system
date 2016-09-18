@@ -10,7 +10,7 @@ class DataDrivePipeLine
 {
 public:
     DataDrivePipeLine(QString configFile);
-    void run();
+    virtual void run();
 
 //private:
     std::shared_ptr<DataDriveMain> mainData;

@@ -7,6 +7,14 @@
 typedef float track_t;
 typedef cv::Point_<track_t> Point_t;
 typedef cv::Rect_<track_t> Rect_t;
+typedef uint Index_t;
+typedef uint Id_t;
+enum CostType{
+    RectDist,
+    PosDist,
+    KLTDist,
+    LIFDist
+};
 #define Mat_t CV_32FC
 
 //separate FG strategy

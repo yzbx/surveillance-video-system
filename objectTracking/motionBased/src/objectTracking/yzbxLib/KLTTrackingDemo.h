@@ -3,13 +3,11 @@
 #include <QtCore>
 #include "DataDriveMain.h"
 #include "DataDrivePipeLine.h"
-class KLTTrackingDemo
+class KLTTrackingDemo : public DataDrivePipeLine
 {
 public:
-    KLTTrackingDemo(QString VideoPath);
-
+    KLTTrackingDemo(QString configFile);
     void run();
-
 };
 
 #endif // KLTTRACKINGDEMO_H

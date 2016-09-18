@@ -32,6 +32,8 @@ public:
             LIFPos=of.LIFPos;
             LIFColor=of.LIFColor;
         }
+        KLTPos=of.KLTPos;
+        mask=of.mask.clone();
     }
 
     Point_t pos;
@@ -53,6 +55,8 @@ public:
     cv::Mat LIFMat;
     std::vector<Point_t> LIFPos;
     std::vector<cv::Point3i> LIFColor;
+    std::vector<cv::Point2i> KLTPos;
+    cv::Mat mask;
 };
 
 #endif // TRACKINGOBJECTFEATURE_H

@@ -22,6 +22,9 @@
 #include "../extern/vibe/PBAS.h"
 #include "PipeLineTracking.h"
 #include "KLTTrackingDemo.h"
+#include "MeanShiftTrackingDemo.h"
+#include "CamShiftTrackingDemo.h"
+#include "DataDriveTracker.h"
 
 
 class YZBXLIBSHARED_EXPORT QYzbxLib

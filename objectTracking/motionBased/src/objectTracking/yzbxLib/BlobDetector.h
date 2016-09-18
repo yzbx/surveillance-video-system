@@ -21,6 +21,7 @@ private:
     double maxObjectSize=0;
     size_t cols=0,rows=0;
     bool UseLIF=false;
+    bool UseKLT=true;
 };
 
 #endif // BLOBDETECTOR_H

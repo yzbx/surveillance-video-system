@@ -8,12 +8,6 @@
 class RectFloatTracker : public QThread
 {
 public:
-    enum CostType{
-        RectDist,
-        LIFDist
-    };
-    typedef uint Index_t;
-    typedef uint Id_t;
     RectFloatTracker();
     void process(const cv::Mat &img_input,const cv::Mat &img_fg,vector<trackingObjectFeature> &fv);
     void setRecordFile(QString recordFile){
