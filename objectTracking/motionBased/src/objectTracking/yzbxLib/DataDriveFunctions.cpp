@@ -320,6 +320,8 @@ bool KLTAssignment::run()
     data->img_input.copyTo(image);
     //NOTE for matchNum > 255
     cv::Mat matchMat(prev_fv.size(),fv.size(),CV_8UC1);
+    matchMat=Scalar::all(0);
+
     for( i = k = 0; i < points[1].size(); i++ )
     {
         circle( image, points[1][i], 3, Scalar(255,0,0), -1, 8);
@@ -497,6 +499,8 @@ bool SplitAndMerge::run()
 
     }
 
+    waitKey(0);
+    return true;
 }
 
 void SplitAndMerge::handleOneToOneObjects()
