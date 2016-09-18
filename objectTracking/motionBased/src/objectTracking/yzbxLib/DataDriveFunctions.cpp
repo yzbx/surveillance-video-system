@@ -724,6 +724,9 @@ bool ShowAssignment::run()
     {
         for(int i=0;i<data->tracks.size();i++){
             Rect rect=data->tracks[i]->feature->rect;
+            int id=data->tracks[i]->track_id;
+            string title=boost::lexical_cast<string>(id);
+            yzbxlib::annotation(showImg,rect,title);
             rectangle(showImg,rect,Scalar(255,0,0),3,8);
         }
     }
@@ -732,6 +735,8 @@ bool ShowAssignment::run()
     {
         for(int i=0;i<fv.size();i++){
             Rect rect=fv[i].rect;
+            string title=boost::lexical_cast<string>(i);
+            yzbxlib::annotation(showImg,rect,title);
             rectangle(showImg,rect,Scalar(0,255,0),3,8);
         }
     }

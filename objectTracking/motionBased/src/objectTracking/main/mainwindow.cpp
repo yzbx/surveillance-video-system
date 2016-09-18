@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :
     globalDatasetList.sort();
     ui->comboBox_dataset->addItems(globalDatasetList);
 
-    QString configFilePath="/home/yzbx/config2/surveillance-video-system.ini";
+    QString configFilePath="/home/yzbx/config/surveillance-video-system.ini";
     ui->lineEdit_inputPath->setText(configFilePath);
 
     loadIni(configFilePath);
