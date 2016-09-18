@@ -189,7 +189,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         mask_i=Scalar::all(0);
         cv::drawContours(mask_i,contours,contourIdx,cv::Scalar::all(255),CV_FILLED);
 
-        of.mask=mask_i;
+        of.mask=mask_i.clone();
         if(UseLIF){
 
             ObjectLocalFeatureMatch match;
@@ -215,7 +215,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
             }
         }
 
-
+        mask_i.release();
 //        showBlobFeature(image,mask_i,of);
 
         //NOTE, avoid auto LIFMat not empty.
