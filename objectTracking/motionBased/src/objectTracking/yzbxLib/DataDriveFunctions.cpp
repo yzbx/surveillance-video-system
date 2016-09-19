@@ -97,7 +97,7 @@ bool KLTTracker::run()
         points[0][k]=points[0][i];
         points[1][k++] = points[1][i];
         circle( image, points[1][i], 3, Scalar(0,255,0), -1, 8);
-        line(image,points[0][k],points[1][k],Scalar(0,0,255),3,8);
+        line(image,points[0][i],points[1][i],Scalar(0,0,255),3,8);
     }
     points[1].resize(k);
 
@@ -338,6 +338,7 @@ bool KLTAssignment::run()
         int matchMat_x=-1,matchMat_y=-1;
         for(int i=0;i<prev_fv.size();i++){
             cv::Mat mask=prev_fv[i].mask;
+
             assert(!mask.empty());
             if(mask.at<uchar>(prev_p.y,prev_p.x)==255){
                 matchMat_y=i;
@@ -346,6 +347,7 @@ bool KLTAssignment::run()
         }
         for(int i=0;i<fv.size();i++){
             cv::Mat mask=fv[i].mask;
+
             assert(!mask.empty());
             if(mask.at<uchar>(p.y,p.x)==255){
                 matchMat_x=i;
@@ -499,7 +501,7 @@ bool SplitAndMerge::run()
 
     }
 
-    waitKey(0);
+//    waitKey(0);
     return true;
 }
 
@@ -739,8 +741,8 @@ bool ShowAssignment::run()
     {
         for(int i=0;i<fv.size();i++){
             Rect rect=fv[i].rect;
-            string title=boost::lexical_cast<string>(i);
-            yzbxlib::annotation(showImg,rect,title);
+//            string title=boost::lexical_cast<string>(i);
+//            yzbxlib::annotation(showImg,rect,title);
             rectangle(showImg,rect,Scalar(0,255,0),3,8);
         }
     }
