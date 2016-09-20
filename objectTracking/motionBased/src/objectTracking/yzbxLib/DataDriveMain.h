@@ -38,6 +38,7 @@ public:
         recordFile=filepath;
         recordFile.remove(globalVideoHome+"/");
 
+        recordFile=yzbxlib::getOutputFileName(recordFile);
         QFile data(recordFile);
         if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
             qDebug()<<"cannot open file "<<recordFile;
