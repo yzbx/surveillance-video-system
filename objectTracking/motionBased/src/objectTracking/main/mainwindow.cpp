@@ -950,12 +950,11 @@ void MainWindow::on_pushButton_camshiftTracking_clicked()
 void MainWindow::on_pushButton_dataDrive_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
-    if(videoFile==""){
+    if(videoFile=="all"){
         for(int i=0;i<globalVideosList.size();i++){
             cv::destroyAllWindows();
             videoFile=globalVideosList[i];
 
-            QString videoFilePath=globalVideoHome+"/"+videoFile;
             QString videoPath=globalVideoHome+"/"+videoFile;
             QString configFile=ui->lineEdit_inputPath->text();
             DataDrivePipeLine *klt=new DataDriveTracker(configFile);
