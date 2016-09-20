@@ -920,7 +920,7 @@ void MainWindow::on_pushButton_KLTTracking_clicked()
 void MainWindow::on_pushButton_MeanShiftTracking_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
-    if(videoFile==""){
+    if(videoFile=="all"){
 
     }
     else{
@@ -935,7 +935,7 @@ void MainWindow::on_pushButton_MeanShiftTracking_clicked()
 void MainWindow::on_pushButton_camshiftTracking_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
-    if(videoFile==""){
+    if(videoFile=="all"){
 
     }
     else{
@@ -951,7 +951,17 @@ void MainWindow::on_pushButton_dataDrive_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
     if(videoFile==""){
+        for(int i=0;i<globalVideosList.size();i++){
+            cv::destroyAllWindows();
+            videoFile=globalVideosList[i];
 
+            QString videoFilePath=globalVideoHome+"/"+videoFile;
+            QString videoPath=globalVideoHome+"/"+videoFile;
+            QString configFile=ui->lineEdit_inputPath->text();
+            DataDrivePipeLine *klt=new DataDriveTracker(configFile);
+            klt->mainData->setCurrentVideo(videoPath);
+            klt->run();
+        }
     }
     else{
         QString videoPath=globalVideoHome+"/"+videoFile;

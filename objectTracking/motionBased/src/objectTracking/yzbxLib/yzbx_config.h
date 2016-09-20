@@ -6,6 +6,7 @@
 //for tracking library
 typedef float track_t;
 typedef cv::Point_<track_t> Point_t;
+typedef cv::Point2f Point_KLT;
 typedef cv::Rect_<track_t> Rect_t;
 typedef uint Index_t;
 typedef uint Id_t;

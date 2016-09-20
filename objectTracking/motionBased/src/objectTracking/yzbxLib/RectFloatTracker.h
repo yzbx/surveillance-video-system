@@ -64,6 +64,7 @@ private:
     const uint InitMergeChance=2;
     const uint MaxFreshObjectLifeTime=5;
     const uint MinDumpLifeTime=10;
+    uint NextTrackID;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
     //NOTE must use objectId here, because trackIdx will be invalid when remove some object

@@ -55,7 +55,7 @@ public:
     cv::Mat LIFMat;
     std::vector<Point_t> LIFPos;
     std::vector<cv::Point3i> LIFColor;
-    std::vector<cv::Point2i> KLTPos;
+    std::vector<Point_KLT> KLTPos;
     cv::Mat mask;
 };
 

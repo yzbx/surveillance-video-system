@@ -3,7 +3,7 @@
 RectFloatTracker::RectFloatTracker()
 {
     maxListLength=2;
-    param.NextTrackID=0;
+    NextTrackID=0;
     param.dt=0.2f;
     param.Accel_noise_mag=0.1f;
 
@@ -285,7 +285,7 @@ void RectFloatTracker::doRectOverlap_splitTrack(Index_t trackIdx,std::set<Index_
     for(auto blob=blobset.begin();blob!=blobset.end();blob++){
         if(*blob!=maxAreaBlobIdx){
             tracks.push_back(std::make_unique<singleObjectTracker>(fv[*blob],param.dt,
-                             param.Accel_noise_mag,param.NextTrackID++,frameNum));
+                             param.Accel_noise_mag,NextTrackID++,frameNum));
             tracks.back()->AvoidUpdateTwice();
         }
     }
@@ -718,7 +718,7 @@ void RectFloatTracker::handleOneToNObjects(){
             ///the minimal distance for *ia to other blobs association to object trackIdx.
             if(minRectGap>MinSplitGap){
                 //new object, set splitMergeStatus
-                tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++,frameNum));
+                tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, NextTrackID++,frameNum));
                 tracks.back()->trace=tracks[trackIdx]->trace;
                 tracks.back()->trace.push_back(fv[*ia].pos);
                 tracks.back()->rects=tracks[trackIdx]->rects;
@@ -810,7 +810,7 @@ void RectFloatTracker::handleOneToNObjects(){
                 //split it all!!! for it's not for background cluster.
                 for(auto ia=splitBlobSet.begin();ia!=splitBlobSet.end();ia++){
                     splitToNewMap[trackIdx].insert(*ia);
-                    tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, param.NextTrackID++,frameNum));
+                    tracks.push_back(std::make_unique<singleObjectTracker>(fv[*ia], param.dt, param.Accel_noise_mag, NextTrackID++,frameNum));
 
 
                     tracks.back()->trace=tracks[trackIdx]->trace;
@@ -981,7 +981,7 @@ void RectFloatTracker::handleNToOneObjects(){
         tracks.push_back(std::make_unique<singleObjectTracker>(fv[fvIdx],
                                                                param.dt,
                                                                param.Accel_noise_mag,
-                                                               param.NextTrackID++,
+                                                               NextTrackID++,
                                                                frameNum));
 
         for(auto it=mergeSet.begin();it!=mergeSet.end();it++){
@@ -1016,7 +1016,7 @@ void RectFloatTracker::handleNewObjects(){
     vector<trackingObjectFeature> &fv=featureVectorList.back();
     for(auto newit=mZeroToOneSet.begin();newit!=mZeroToOneSet.end();newit++){
         tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit],
-                         param.dt, param.Accel_noise_mag, param.NextTrackID++,frameNum));
+                         param.dt, param.Accel_noise_mag, NextTrackID++,frameNum));
     }
 }
 

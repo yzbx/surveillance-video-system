@@ -26,4 +26,8 @@ DataDriveMain::DataDriveMain(QString configFile)
 
     bgsFactory_yzbx fac;
     bgs=fac.getBgsAlgorithm(bgsType);
+
+    QString ParamConfigFile=QString::fromStdString(globalPt.get<std::string>("DataDrive.ParamConfigFile"));
+    ParamConfigFile=yzbxlib::getAbsoluteFilePath(configFile,ParamConfigFile);
+    param.loadConfig(ParamConfigFile.toStdString());
 }

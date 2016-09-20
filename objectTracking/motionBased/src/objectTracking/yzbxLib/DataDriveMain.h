@@ -14,8 +14,10 @@ public:
     DataDriveMain(QString configFile);
     FrameInput frameInput;
     QString videoFilePath;
+    QString recordFile;
     cv::Mat img_input,img_fg,img_background;
     int frameNum=0;
+    uint NextTrackID=0;
 
     IBGS* bgs;
     QString bgsType="SJN_MultiCueBGS";
@@ -33,6 +35,18 @@ public:
 
     void setCurrentVideo(QString filepath){
         videoFilePath=filepath;
+        recordFile=filepath;
+        recordFile.remove(globalVideoHome+"/");
+
+        QFile data(recordFile);
+        if (!data.open(QFile::WriteOnly|QFile::Truncate)) {
+            qDebug()<<"cannot open file "<<recordFile;
+            exit(-1);
+        }
+        QTextStream out(&data);
+        QStringList firstLine;
+        firstLine<<"frameNum"<<"objectId"<<"x"<<"y"<<"width"<<"height";
+        out<<firstLine.join(",")<<"\n";
     }
 
     ///KLT Assignment
@@ -58,6 +72,12 @@ public:
 
     ///Update, New, Delete
     std::set<Index_t> deleteLaterObjectSet;
+
+    ///KLT point transformation for split blob
+    map<Index_t,set<Index_t>> pointIdxToBlobSet[2];
+    map<Index_t,set<Index_t>> blobIdxToPointSet[2];
+    //    map<Index_t,Index_t> kltPointMatch;
+    vector<Point_KLT> points[2];
 
     TrackingAlgorithmParamter param;
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;

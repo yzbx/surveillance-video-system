@@ -69,6 +69,11 @@ public:
     KLTAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
+class OverLapAssignment:public Base{
+public:
+    OverLapAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
+};
 
 class HungarianAssignment:public Base{
 public:
@@ -96,14 +101,27 @@ public:
     void handleOneToNObjects();
     //NOTE merge later, split first!!!
     void handleNToOneObjects();
-
+    //transform of.rect and of.pos, return true; else do nothing and return false.
+    bool AffineTransform(const Index_t blobIdx,const Index_t trackIdx,trackingObjectFeature &of);
 };
 
+class FilterDeleteObjectToDump:public Base{
+public:
+    FilterDeleteObjectToDump(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
+private:
+    bool isGoodObject(Id_t id){
+        return true;
+    }
+    void dumpTracjectoryAfterFilter(int trackIdx);
+};
 
 class UpdateTrackStatus:public Base{
 public:
     UpdateTrackStatus(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
+
+
 }
 #endif // DATADRIVEFUNCTIONS_H
