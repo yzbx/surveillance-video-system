@@ -118,3 +118,16 @@ void FrameInput::init(QString videoFile)
         }
     }
 }
+
+void FrameInput::setStartFrameNum(QString videoFile, int frameNum)
+{
+    init(videoFile);
+    QFileInfo info(videoFile);
+    if(info.isDir()){
+        this->frameNum=frameNum;
+    }
+    else{
+        videoCap.set(CV_CAP_PROP_POS_FRAMES,frameNum);
+        this->frameNum=frameNum;
+    }
+}

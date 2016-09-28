@@ -16,6 +16,7 @@ public:
     QString saveFilePath;
     int id;
     vector<Rect> rectTrace;
+    vector<int> frameTrace;
     int frameNum;
     bool bestFileSaved=false;
 };

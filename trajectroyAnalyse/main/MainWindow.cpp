@@ -56,6 +56,7 @@ void MainWindow::loadconfig(QString configFile)
             file.close();
         }
 
+        assert(globalCSVList.size()==globalVideoList.size());
         ui->comboBox_trajectory->addItems(globalCSVList);
         ui->comboBox_video->addItems(globalVideoList);
     }
@@ -63,14 +64,23 @@ void MainWindow::loadconfig(QString configFile)
 
 void MainWindow::on_pushButton_loadTrajectory_clicked()
 {
+    ui->listWidget->clear();
+    objectRecordMap.clear();
+
     QString videoFile=ui->comboBox_video->currentText();
     QString csvFile=ui->comboBox_trajectory->currentText();
     QFileInfo info(csvFile);
     QString baseName=info.baseName();
     assert(!baseName.isEmpty());
 
+    videoFile=globalVideoHome+"/"+videoFile;
+    csvFile=globalCSVHome+"/"+csvFile;
     QFile file(csvFile);
+    if(!file.open(QIODevice::ReadOnly)){
+        assert(false);
+    }
     QTextStream in(&file);
+
     QString filedata=in.readAll();
     QStringList csvFileData=filedata.split("\n",QString::SkipEmptyParts);
     int id,frameNum;
@@ -102,6 +112,7 @@ void MainWindow::on_pushButton_loadTrajectory_clicked()
             ObjectRecord record;
             record.id=id;
             record.frameNum=obj_frameNum;
+            record.videoPath=videoFile;
 
 
             //create dir to save object image
@@ -115,15 +126,19 @@ void MainWindow::on_pushButton_loadTrajectory_clicked()
             //if object image file exist at first time, this mean it's the best! mark bestFileSaved=true.
             //if object image file not exist at first time, we save it without check onBoundary
             //for the rest loop, if onBoundary==false, which mean bestFile, we resave the file and mark bestFileSaved=true
-            record.saveFilePath=globalImageDatabaseDir+"/"+baseName+QString::number(id)+".jpg";
+            record.saveFilePath=globalImageDatabaseDir+"/"+baseName+"/"+QString::number(id)+".jpg";
             QFileInfo info(record.saveFilePath);
             if(info.isFile()){
                 record.bestFileSaved=true;
             }
             else{
-                Mat firstImageFile=img(r);
+//                Mat firstImageFile=img(r);
+                Mat firstImageFile=img.clone();
+                rectangle(firstImageFile,r,Scalar(0,0,255),3,8);
                 bool flag=imwrite(record.saveFilePath.toStdString(),firstImageFile);
                 assert(flag);
+
+                qDebug()<<record.saveFilePath;
             }
 
             objectRecordMap[id]=record;
@@ -131,25 +146,95 @@ void MainWindow::on_pushButton_loadTrajectory_clicked()
 
         ObjectRecord & record=objectRecordMap[id];
         record.rectTrace.push_back(r);
+        record.frameTrace.push_back(obj_frameNum);
         if(!record.bestFileSaved){
             bool onBoundary=yzbxlib::rectOnBoundary(r,img);
             if(!onBoundary){
-                Mat firstImageFile=img(r);
+//                Mat firstImageFile=img(r);
+                Mat firstImageFile=img.clone();
+                rectangle(firstImageFile,r,Scalar(0,0,255),3,8);
                 bool flag=imwrite(record.saveFilePath.toStdString(),firstImageFile);
                 record.bestFileSaved=true;
                 assert(flag);
+
+                qDebug()<<record.saveFilePath;
             }
         }
     }
 
     //show best file on listwidget
 //    m_listeWidget->addItem(new QListWidgetItem(QIcon("../ics.jpg"),"Wallpaper"));
-    ui->listWidget->clear();
+
     for(auto it=objectRecordMap.begin();it!=objectRecordMap.end();it++){
         int id=it->first;
         ObjectRecord &r=it->second;
         QString text="id="+QString::number(id);
-        ui->listWidget->addItem(new QListWidgetItem(QIcon(r.saveFilePath),text));
+        //donot have enough memory
+//        ui->listWidget->addItem(new QListWidgetItem(QIcon(r.saveFilePath),text));
+//        if(ui->listWidget->count()>20){
+//            qDebug()<<"size of objectRecordMap="<<objectRecordMap.size();
+//            break;
+//        }
+        ui->listWidget->addItem(text);
+        cout<<"id="<<id<<": trace.size()="<<r.rectTrace.size()<<endl;
     }
 
+}
+
+void MainWindow::on_comboBox_video_currentIndexChanged(int index)
+{
+    if(!trajectoryToVideo){
+        videoToTrajectory=true;
+        ui->comboBox_trajectory->setCurrentIndex(index);
+    }
+    else{
+        trajectoryToVideo=false;
+    }
+}
+
+void MainWindow::on_comboBox_trajectory_currentIndexChanged(int index)
+{
+    if(!videoToTrajectory){
+        trajectoryToVideo=true;
+        ui->comboBox_video->setCurrentIndex(index);
+    }
+    else{
+        videoToTrajectory=false;
+    }
+}
+
+void MainWindow::on_listWidget_currentRowChanged(int currentRow)
+{
+    qDebug()<<currentRow;
+    int id=currentRow;
+    ObjectRecord &record=objectRecordMap[id];
+    Mat image=imread(record.saveFilePath.toStdString());
+    namedWindow("list image",WINDOW_NORMAL);
+    imshow("list image",image);
+}
+
+void MainWindow::on_listWidget_doubleClicked(const QModelIndex &index)
+{
+    qDebug()<<index.row()<<" "<<index.column();
+    int id=index.row();
+    ObjectRecord &record=objectRecordMap[id];
+    FrameInput fin;
+    fin.setStartFrameNum(record.videoPath,record.frameNum);
+    int frameNum=record.frameNum;
+    Mat image;
+    for(int i=0;i<record.frameTrace.size();i++){
+        int record_frameNum=record.frameTrace[i];
+        Rect r=record.rectTrace[i];
+        while(record_frameNum>=frameNum){
+            fin.getNextFrame(record.videoPath,image);
+            frameNum++;
+            assert(!image.empty());
+        }
+        if(r.width>0&&r.height>0){
+            rectangle(image,r,Scalar(0,0,255),3,8);
+            namedWindow("list image",WINDOW_NORMAL);
+            imshow("list image",image);
+            waitKey(30);
+        }
+    }
 }

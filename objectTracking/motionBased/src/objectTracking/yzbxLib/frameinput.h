@@ -22,6 +22,7 @@ public:
     void getNextFrame(QString videoFile,cv::Mat &nextFrame);
     void initBgs(IBGS *ibgs,int initFrameNum=100);
     void init(QString videoFile);
+    void setStartFrameNum(QString videoFile,int frameNum);
 };
 
 #endif // FRAMEINPUT_H
