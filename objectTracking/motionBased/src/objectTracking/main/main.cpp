@@ -22,8 +22,10 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
         txt = QString("Fatal: %1").arg(msg);
         break;
     case QtInfoMsg:
-        txt = QString("Debug: %1").arg(msg);
-        fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        txt = QString("Info: %1").arg(msg);
+//        fprintf(stderr, "Info: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
+        fprintf(stderr,"%s\n",localMsg.constData());
+        return;
         break;
     }
     QFile outFile("log.txt");

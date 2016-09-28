@@ -68,10 +68,18 @@ class KLTAssignment:public Base{
 public:
     KLTAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
+    void dump();
 };
+
 class OverLapAssignment:public Base{
 public:
     OverLapAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
+};
+
+class RestOverLapAssignment:public Base{
+public:
+    RestOverLapAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 

@@ -274,6 +274,7 @@ bool KLTAssignment::run()
         std::map<Index_t,Index_t> prevBlobToTrack;
         std::map<Index_t,Index_t> trackToPrevBlob;
         for(int i=0;i<data->tracks.size();i++){
+            //KLT will use previous image and current image.
             if(data->tracks[i]->status!=MISSING_STATUS){
                 prev_fv.push_back(*(data->tracks[i]->feature));
                 prevBlobToTrack[prev_fv.size()-1]=i;
@@ -332,6 +333,11 @@ bool KLTAssignment::run()
 
     Mat image;
     data->img_input.copyTo(image);
+    auto imgIt=std::prev(data->imglist.end(),2);
+    Mat prev_image=imgIt->first;
+    Mat mergeImage;
+    cv::hconcat(prev_image,image,mergeImage);
+
     //NOTE for matchNum > 255
     cv::Mat matchMat(prev_fv.size(),fv.size(),CV_8UC1);
     matchMat=Scalar::all(0);
@@ -346,7 +352,6 @@ bool KLTAssignment::run()
         points[1][k++] = points[1][i];
         circle(image,points[1][i], 3, Scalar(0,255,0), -1, 8);
         line(image,points[0][i],points[1][i],Scalar(0,0,255),3,8);
-
         Point2i p=points[1][i];
         Point2i prev_p=points[0][i];
         int matchMat_x=-1,matchMat_y=-1;
@@ -386,6 +391,8 @@ bool KLTAssignment::run()
             pointIdxToBlobSet[1][pointIdx].insert(blobIdx);
             blobIdxToPointSet[0][prev_blobIdx].insert(pointIdx);
             blobIdxToPointSet[1][blobIdx].insert(pointIdx);
+
+            yzbxlib::drawMatch(mergeImage,points[0][i],points[1][i],Scalar(0,0,255),1);
         }
     }
     data->KLTMatchMat=matchMat;
@@ -425,12 +432,89 @@ bool KLTAssignment::run()
     cv::namedWindow("KLT",WINDOW_NORMAL);
     imshow("KLT",image);
 
+    cv::namedWindow("merged KLT",WINDOW_NORMAL);
+    imshow("merged KLT",mergeImage);
+
+    dump();
     waitKey(30);
 
-    gray.release();
-    prev_gray.release();
-    image.release();
+//    gray.release();
+//    prev_gray.release();
+//    image.release();
     return true;
+}
+
+void KLTAssignment::dump()
+{
+    //output assignment result
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto imgIt=std::prev(data->imglist.end(),1);
+    auto prev_imgIt=std::prev(data->imglist.end(),2);
+
+    Mat input,mask,prev_input,prev_mask;
+    input=imgIt->first.clone();
+    mask=imgIt->second.clone();
+    prev_input=prev_imgIt->first.clone();
+    prev_mask=prev_imgIt->second.clone();
+    //blob
+    for(int i=0;i<fv.size();i++){
+        Rect_t r=fv[i].rect;
+        string idxstr=boost::lexical_cast<string>(i);
+//        string title="index="+idxstr;
+        string title=idxstr;
+        yzbxlib::annotation(input,r,title);
+        rectangle(input,r,Scalar(0,0,255),3,8);
+        rectangle(mask,r,Scalar::all(255),3,8);
+    }
+
+    //object
+    for(int i=0;i<data->tracks.size();i++){
+        Rect_t r=data->tracks[i]->feature->rect;
+        Index_t trackIdx=data->tracks[i]->track_id;
+        string idxstr=boost::lexical_cast<string>(trackIdx);
+        string title="id="+idxstr;
+        yzbxlib::annotation(prev_input,r,title);
+        rectangle(prev_input,r,Scalar(0,0,255),3,8);
+        rectangle(prev_mask,r,Scalar::all(255),3,8);
+    }
+
+    Mat blob,object;
+    cvtColor(mask,mask,CV_GRAY2BGR);
+    hconcat(input,mask,blob);
+    cvtColor(prev_mask,prev_mask,CV_GRAY2BGR);
+    hconcat(prev_input,prev_mask,object);
+    namedWindow("KLT blob",WINDOW_NORMAL);
+    imshow("KLT blob",blob);
+    namedWindow("KLT object",WINDOW_NORMAL);
+    imshow("KLT object",object);
+
+    qDebug()<<data->frameNum;
+    //assignment
+    for(auto it=data->blobToTrackSet.begin();it!=data->blobToTrackSet.end();it++){
+        Index_t blobIdx=it->first;
+        set<Index_t> &trackset=it->second;
+        cout<<"blobIdx="<<blobIdx<<" match :";
+        for(auto t=trackset.begin();t!=trackset.end();t++){
+            Index_t trackIdx=*t;
+            Id_t trackId=data->tracks[trackIdx]->track_id;
+            cout<<trackId<<",";
+        }
+        cout<<endl;
+    }
+
+    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
+        Index_t trackIdx=it->first;
+        Id_t trackId=data->tracks[trackIdx]->track_id;
+        set<Index_t> &blobset=it->second;
+        cout<<"trackIdx="<<trackId<<" match :";
+        for(auto b=blobset.begin();b!=blobset.end();b++){
+            Index_t blobIdx=*b;
+            cout<<blobIdx<<",";
+        }
+        cout<<endl;
+    }
+
+    waitKey(0);
 }
 
 bool UpdateTrackStatus::run()
@@ -614,9 +698,19 @@ void SplitAndMerge::handleNToOneObjects()
 
 
         Rect_t rb=fv[blobIdx].rect;
+        bool firstTime=true;
         for(auto track=trackset.begin();track!=trackset.end();track++){
-            assert(data->tracks[*track]->status==PREUPDATE_STATUS||
-                    data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
+            if(data->tracks[*track]->status==PREUPDATE_STATUS){
+                assert(data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
+                qDebug()<<"PREUPDATE_STATUS";
+            }
+            else if(data->tracks[*track]->status==NEW_STATUS){
+                qDebug()<<"NEW_STATUS";
+            }
+            else{
+                assert(data->tracks[*track]->status==NORMAL_STATUS);
+                assert(data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
+            }
 
             int trackIdx=*track;
             trackingObjectFeature of;
@@ -624,8 +718,9 @@ void SplitAndMerge::handleNToOneObjects()
             bool flag=AffineTransform(blobIdx,trackIdx,of);
             //use KLT transform
             if(flag){
-                if(track==trackset.begin()){
+                if(firstTime){
                     fv[blobIdx]=of;
+                    firstTime=false;
                 }
                 else{
                     fv.push_back(of);
@@ -638,14 +733,16 @@ void SplitAndMerge::handleNToOneObjects()
                 of.rect=subRect;
                 of.pos+=(of.rect.tl()-predict_rect.tl());
 
-                if(track==trackset.begin()){
+                if(firstTime){
                     fv[blobIdx]=of;
+                    firstTime=false;
                 }
                 else{
                     fv.push_back(of);
                 }
                 assert(data->tracks[*track]->feature->LIFMat.empty());
             }
+
         }
     }
 }
@@ -678,7 +775,8 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
     //    cv::Mat T=cv::getAffineTransform(points[0],points[1]);
     cv::Mat T=cv::estimateRigidTransform(points[0],points[1],false);
     string type=getImgType(T.type());
-    qDebug()<<"type="<<QString::fromStdString(type);
+//    qDebug()<<"type="<<QString::fromStdString(type);
+    assert(T.type()==CV_64F);
     cv::Mat pointMat(3,1,CV_64FC1);
     cv::Mat newPointMat;
     vector<Point_t> srcPt;
@@ -940,6 +1038,11 @@ void FilterDeleteObjectToDump::dumpTracjectoryAfterFilter(int trackIdx)
 
         file.close();
     }
+}
+
+bool RestOverLapAssignment::run()
+{
+
 }
 
 }

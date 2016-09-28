@@ -25,7 +25,7 @@
 #include "MeanShiftTrackingDemo.h"
 #include "CamShiftTrackingDemo.h"
 #include "DataDriveTracker.h"
-
+#include "ObjectRecord.h"
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

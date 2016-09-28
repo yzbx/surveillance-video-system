@@ -45,6 +45,10 @@ track_t getOverlapDist(Rect_t ra,Rect_t rb);
 QString getOutputFileName(QString inputFileName);
 
 void getGrayMat(const cv::Mat &input,cv::Mat &output);
+
+void csvToTrajectory(QString line,int &frameNum,int &id,Rect &r);
+
+bool rectOnBoundary(Rect r, Mat &img);
 }
 
 //set qt sync with file.

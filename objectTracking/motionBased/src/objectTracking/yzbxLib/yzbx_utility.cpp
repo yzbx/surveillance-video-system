@@ -1047,4 +1047,38 @@ void getGrayMat(const Mat &input, Mat &output)
     }
 }
 
+void csvToTrajectory(QString line, int &frameNum, int &id, Rect &r)
+{
+    QStringList strlist=line.split(",",QString::SkipEmptyParts);
+    QString str=strlist[0];
+    bool flag;
+    frameNum=str.toInt(&flag);
+    assert(flag);
+
+    str=strlist[1];
+    id=str.toInt(&flag);
+    assert(flag);
+
+    int a[4];
+    for(int i=0;i<4;i++){
+        str=strlist[2+i];
+        a[i]=(int)str.toFloat(&flag);
+        assert(flag);
+    }
+
+    r=Rect(a[0],a[1],a[2],a[3]);
+}
+
+bool rectOnBoundary(Rect r, Mat &img)
+{
+    Point_t tl=r.tl();
+    Point_t br=r.br();
+    if(tl.x<5||tl.y<5||br.x+5>img.cols||br.y+5>img.rows){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+
 }
