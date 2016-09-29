@@ -9,3 +9,8 @@ void DataDrivePipeLine::run()
 {
     assert(false);
 }
+
+void DataDrivePipeLine::runAll()
+{
+    assert(false);
+}

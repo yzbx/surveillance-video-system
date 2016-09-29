@@ -7,6 +7,7 @@ class DataDriveTracker:public DataDrivePipeLine
 public:
     DataDriveTracker(QString configFile);
     void run();
+    void runAll();
 };
 
 #endif // DATADRIVETRACKER_H

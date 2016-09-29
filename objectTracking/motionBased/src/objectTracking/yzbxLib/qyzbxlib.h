@@ -26,6 +26,7 @@
 #include "CamShiftTrackingDemo.h"
 #include "DataDriveTracker.h"
 #include "ObjectRecord.h"
+#include "ObjectCount.h"
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

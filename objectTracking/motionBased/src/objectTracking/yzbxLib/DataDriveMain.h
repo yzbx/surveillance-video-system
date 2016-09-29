@@ -12,6 +12,7 @@ class DataDriveMain
 {
 public:
     DataDriveMain(QString configFile);
+
     FrameInput frameInput;
     QString videoFilePath;
     QString recordFile;
@@ -19,7 +20,7 @@ public:
     int frameNum=0;
     uint NextTrackID=0;
 
-    IBGS* bgs;
+    std::unique_ptr<IBGS> bgs;
     QString bgsType="SJN_MultiCueBGS";
 
     BlobDetector blobFeatureDetector;
@@ -34,9 +35,8 @@ public:
     QStringList globalVideoList;
 
     void setCurrentVideo(QString filepath){
-        videoFilePath=filepath;
+        videoFilePath=globalVideoHome+"/"+filepath;
         recordFile=filepath;
-        recordFile.remove(globalVideoHome+"/");
 
         recordFile=yzbxlib::getOutputFileName(recordFile);
         QFile data(recordFile);

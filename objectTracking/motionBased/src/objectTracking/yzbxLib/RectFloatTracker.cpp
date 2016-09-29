@@ -892,16 +892,15 @@ void RectFloatTracker::handleOneToNObjects(){
 
         Rect_t unSplitRect(r[0],r[1],r[2]-r[0],r[3]-r[1]);
         Point_t unSplitCenter((r[0]+r[2])*0.5f,(r[1]+r[3])*0.5f);
-        trackingObjectFeature *of=(tracks[trackIdx]->feature);
-        of->LIFMat=unSplitLIF;
-        of->LIFPos=unSplitPos;
-        of->LIFColor=unSplitColor;
-        of->pos=unSplitCenter;
-        of->rect=unSplitRect;
-        of->size=unSplitRect.area();
+        tracks[trackIdx]->feature->LIFMat=unSplitLIF;
+        tracks[trackIdx]->feature->LIFPos=unSplitPos;
+        tracks[trackIdx]->feature->LIFColor=unSplitColor;
+        tracks[trackIdx]->feature->pos=unSplitCenter;
+        tracks[trackIdx]->feature->rect=unSplitRect;
+        tracks[trackIdx]->feature->size=unSplitRect.area();
 
         //        tracks[trackIdx]->Update(*of, true, param.max_trace_length);
-        tracks[trackIdx]->NormalUpdate(*of,frameNum);
+//        tracks[trackIdx]->NormalUpdate(*of,frameNum);
     }
 }
 

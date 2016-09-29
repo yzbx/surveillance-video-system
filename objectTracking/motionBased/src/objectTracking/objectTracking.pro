@@ -4,5 +4,6 @@ SUBDIRS += \
     main \
     benchmark \
     yzbxLib \
+    ObjectCount
 
 

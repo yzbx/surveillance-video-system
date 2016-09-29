@@ -912,7 +912,7 @@ void MainWindow::on_pushButton_KLTTracking_clicked()
         QString videoPath=globalVideoHome+"/"+videoFile;
         QString configFile=ui->lineEdit_inputPath->text();
         DataDrivePipeLine *klt=new KLTTrackingDemo(configFile);
-        klt->mainData->setCurrentVideo(videoPath);
+        klt->mainData->setCurrentVideo(videoFile);
         klt->run();
     }
 }
@@ -927,7 +927,7 @@ void MainWindow::on_pushButton_MeanShiftTracking_clicked()
         QString videoPath=globalVideoHome+"/"+videoFile;
         QString configFile=ui->lineEdit_inputPath->text();
         DataDrivePipeLine *klt=new MeanShiftTrackingDemo(configFile);
-        klt->mainData->setCurrentVideo(videoPath);
+        klt->mainData->setCurrentVideo(videoFile);
         klt->run();
     }
 }
@@ -942,7 +942,7 @@ void MainWindow::on_pushButton_camshiftTracking_clicked()
         QString videoPath=globalVideoHome+"/"+videoFile;
         QString configFile=ui->lineEdit_inputPath->text();
         DataDrivePipeLine *klt=new CamShiftTrackingDemo(configFile);
-        klt->mainData->setCurrentVideo(videoPath);
+        klt->mainData->setCurrentVideo(videoFile);
         klt->run();
     }
 }
@@ -950,23 +950,14 @@ void MainWindow::on_pushButton_camshiftTracking_clicked()
 void MainWindow::on_pushButton_dataDrive_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
-    if(videoFile=="all"){
-        for(int i=0;i<globalVideosList.size();i++){
-            cv::destroyAllWindows();
-            videoFile=globalVideosList[i];
+    QString configFile=ui->lineEdit_inputPath->text();
+    std::unique_ptr<DataDrivePipeLine> tracker=std::make_unique<DataDriveTracker>(DataDriveTracker(configFile));
 
-            QString videoPath=globalVideoHome+"/"+videoFile;
-            QString configFile=ui->lineEdit_inputPath->text();
-            DataDrivePipeLine *klt=new DataDriveTracker(configFile);
-            klt->mainData->setCurrentVideo(videoPath);
-            klt->run();
-        }
+    if(videoFile=="all"){
+        tracker->runAll();
     }
     else{
-        QString videoPath=globalVideoHome+"/"+videoFile;
-        QString configFile=ui->lineEdit_inputPath->text();
-        DataDrivePipeLine *klt=new DataDriveTracker(configFile);
-        klt->mainData->setCurrentVideo(videoPath);
-        klt->run();
+        tracker->mainData->setCurrentVideo(videoFile);
+        tracker->run();
     }
 }

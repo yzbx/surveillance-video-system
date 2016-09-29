@@ -6,7 +6,7 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     prediction(of.pos),
     KF(of.pos, dt, Accel_noise_mag)
 {
-    feature=new trackingObjectFeature;
+    feature=std::make_unique<trackingObjectFeature>(trackingObjectFeature());
 
 //    of.copyTo(feature);
     feature->copy(of);

@@ -52,7 +52,8 @@ SOURCES += qyzbxlib.cpp \
     MeanShiftTrackingDemo.cpp \
     CamShiftTrackingDemo.cpp \
     DataDriveTracker.cpp \
-    ObjectRecord.cpp
+    ObjectRecord.cpp \
+    ObjectCount.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -95,7 +96,8 @@ HEADERS += qyzbxlib.h\
     MeanShiftTrackingDemo.h \
     CamShiftTrackingDemo.h \
     DataDriveTracker.h \
-    ObjectRecord.h
+    ObjectRecord.h \
+    ObjectCount.h
 
 unix {
     target.path = /usr/lib

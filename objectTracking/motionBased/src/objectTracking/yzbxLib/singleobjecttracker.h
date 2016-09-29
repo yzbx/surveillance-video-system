@@ -18,7 +18,7 @@ public:
     std::vector<STATUS> vec_status;
     std::vector<int> frames;
     Point_t prediction;
-    trackingObjectFeature *feature;
+    std::unique_ptr<trackingObjectFeature> feature;
     STATUS status;
     Point_t firstSeePos;
     Point_t lastSeePos;

@@ -1,11 +1,11 @@
-#include "DataDriveTracker.h"
+#include "ObjectCount.h"
 
-DataDriveTracker::DataDriveTracker(QString configFile):DataDrivePipeLine(configFile)
+ObjectCount::ObjectCount(QString configFile):DataDrivePipeLine(configFile)
 {
 
 }
 
-void DataDriveTracker::run()
+void ObjectCount::run()
 {
     pipeline.push_back(std::make_shared<DataDrive::Input>(DataDrive::Input(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::Bgs>(DataDrive::Bgs(mainData)));
@@ -28,14 +28,5 @@ void DataDriveTracker::run()
 
             if(!flag) break;
         }
-    }
-}
-
-void DataDriveTracker::runAll(){
-    for(int i=0;i<mainData->globalVideoList.size();i++){
-        QString currentVideo=mainData->globalVideoList[i];
-        mainData->setCurrentVideo(currentVideo);
-        pipeline.clear();
-        run();
     }
 }
