@@ -20,7 +20,8 @@ public:
     Point_t prediction;
     trackingObjectFeature *feature;
     STATUS status;
-    Point_t bornPos;
+    Point_t firstSeePos;
+    Point_t lastSeePos;
     enum SplitMergeType splitMergeType;
 private:
     int skipped_frames;
@@ -55,6 +56,24 @@ public:
     void PreUpdateForBiggestBlob(const trackingObjectFeature &of);
     void AvoidUpdateTwice();
     Rect_t GetPredictRect();
+    void dumpToScreen(){
+        map<STATUS,string> statusStr;
+        statusStr[MISSING_STATUS]="missing";
+        statusStr[NORMAL_STATUS]="normal";
+        statusStr[NEW_STATUS]="new";
+//        DELETE_TO_SPLIT,DELETE_TO_MERGE,PREUPDATE_STATUS
+        statusStr[DELETE_TO_SPLIT]="delete_split";
+        statusStr[DELETE_TO_MERGE]="delete_merge";
+        statusStr[PREUPDATE_STATUS]="preupdate";
+        cout<<"track_id="<<track_id<<endl;
+        cout<<"lifetime="<<lifetime;
+        cout<<", skipped_frame="<<skipped_frames;
+        cout<<", catch_frames="<<catch_frames;
+        cout<<", status="<<statusStr[status];
+
+        cout<<endl;
+    }
+
     QString dump(){
         QStringList dumpstrs;
         dumpstrs<<QString::number(track_id)

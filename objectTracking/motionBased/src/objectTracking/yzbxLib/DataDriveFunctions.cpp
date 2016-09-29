@@ -392,7 +392,7 @@ bool KLTAssignment::run()
             blobIdxToPointSet[0][prev_blobIdx].insert(pointIdx);
             blobIdxToPointSet[1][blobIdx].insert(pointIdx);
 
-            yzbxlib::drawMatch(mergeImage,points[0][i],points[1][i],Scalar(0,0,255),1);
+            yzbxlib::drawMatch(mergeImage,points[0][i],points[1][i],Scalar(0,0,255),2);
         }
     }
     data->KLTMatchMat=matchMat;
@@ -483,10 +483,11 @@ void KLTAssignment::dump()
     hconcat(input,mask,blob);
     cvtColor(prev_mask,prev_mask,CV_GRAY2BGR);
     hconcat(prev_input,prev_mask,object);
-    namedWindow("KLT blob",WINDOW_NORMAL);
-    imshow("KLT blob",blob);
-    namedWindow("KLT object",WINDOW_NORMAL);
-    imshow("KLT object",object);
+
+    Mat klt;
+    vconcat(object,blob,klt);
+    namedWindow("KLT dump",WINDOW_NORMAL);
+    imshow("KLT dump",klt);
 
     qDebug()<<data->frameNum;
     //assignment
@@ -514,11 +515,31 @@ void KLTAssignment::dump()
         cout<<endl;
     }
 
-    waitKey(0);
+    waitKey(30);
 }
 
-bool UpdateTrackStatus::run()
+bool FilterBadTrack::run()
 {
+    for(int i=data->tracks.size()-1;i>=0;i--){
+        if(data->tracks[i]->status==MISSING_STATUS){
+            Point_t p1=data->tracks[i]->firstSeePos;
+            Point_t p2=data->tracks[i]->lastSeePos;
+
+            if(cv::norm(p1-p2)<20){
+                qDebug()<<"delete bad track: "<<data->tracks[i]->track_id;
+                data->tracks.erase(data->tracks.begin()+i);
+                continue;
+            }
+
+            if(data->tracks[i]->feature->onBoundary){
+                qDebug()<<"delete bad track: "<<data->tracks[i]->track_id;
+                data->tracks.erase(data->tracks.begin()+i);
+                continue;
+            }
+        }
+
+        data->tracks[i]->dumpToScreen();
+    }
     return true;
 }
 
@@ -715,9 +736,14 @@ void SplitAndMerge::handleNToOneObjects()
             int trackIdx=*track;
             trackingObjectFeature of;
             of.copy(*(data->tracks[trackIdx]->feature));
-            bool flag=AffineTransform(blobIdx,trackIdx,of);
+            Rect_t r_before=of.rect;
+//            bool flag=AffineTransform(blobIdx,trackIdx,of);
+            bool flag=false;
+
             //use KLT transform
             if(flag){
+                data->tracks[*track]->NormalUpdate(of,data->frameNum);
+
                 if(firstTime){
                     fv[blobIdx]=of;
                     firstTime=false;
@@ -733,6 +759,7 @@ void SplitAndMerge::handleNToOneObjects()
                 of.rect=subRect;
                 of.pos+=(of.rect.tl()-predict_rect.tl());
 
+                data->tracks[*track]->NormalUpdate(of,data->frameNum);
                 if(firstTime){
                     fv[blobIdx]=of;
                     firstTime=false;
@@ -741,6 +768,20 @@ void SplitAndMerge::handleNToOneObjects()
                     fv.push_back(of);
                 }
                 assert(data->tracks[*track]->feature->LIFMat.empty());
+            }
+
+            if(flag){
+                Rect_t r_after=of.rect;
+                Mat before=data->img_input.clone();
+                Mat after=data->img_input.clone();
+                rectangle(before,r_before,Scalar(0,0,255),3);
+                rectangle(after,r_after,Scalar(0,0,255),3);
+                Mat beforeAfter;
+                hconcat(before,after,beforeAfter);
+                namedWindow("before and after",WINDOW_NORMAL);
+                imshow("before and after",beforeAfter);
+                cout<<r_before.x<<","<<r_before.y<<","<<r_before.width<<","<<r_before.height<<endl;
+                cout<<r_after.x<<","<<r_after.y<<","<<r_after.width<<","<<r_after.height<<endl;
             }
 
         }
@@ -771,6 +812,30 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
     if(points[0].size()<3||points[1].size()<3){
         return false;
     }
+
+    int psize=points[0].size();
+    Point_KLT dif_sum(0,0);
+    for(int i=0;i<psize;i++){
+        Point_KLT dif=points[0][i]-points[1][i];
+        dif_sum+=dif;
+    }
+
+    Point_KLT mean_dif(dif_sum.x/psize,dif_sum.y/psize);
+    Rect_t r_before=of.rect;
+    Rect_t r_after=of.rect;
+    r_after.x+=mean_dif.x;
+    r_after.y+=mean_dif.y;
+
+    Mat before=data->img_input.clone();
+    Mat after=data->img_input.clone();
+    rectangle(before,r_before,Scalar(0,0,255),3);
+    rectangle(after,r_after,Scalar(0,0,255),3);
+    Mat beforeAfter;
+    hconcat(before,after,beforeAfter);
+    namedWindow("offset before and after",WINDOW_NORMAL);
+    imshow("offset before and after",beforeAfter);
+    cout<<r_before.x<<","<<r_before.y<<","<<r_before.width<<","<<r_before.height<<endl;
+    cout<<r_after.x<<","<<r_after.y<<","<<r_after.width<<","<<r_after.height<<endl;
 
     //    cv::Mat T=cv::getAffineTransform(points[0],points[1]);
     cv::Mat T=cv::estimateRigidTransform(points[0],points[1],false);
@@ -826,6 +891,24 @@ track_t HungarianAssignment::calcDist(std::shared_ptr<trackingObjectFeature> of1
         assert(false);
         return -1.0f;
     }
+}
+void HungarianAssignment::dump(assignments_t unMatchedAssignment,vector<Index_t> unMatchedObjects,vector<Index_t> unMatchedBlobs)
+{
+    qDebug()<<data->frameNum;
+    //assignment
+    for (size_t i = 0; i < unMatchedAssignment.size(); i++)
+    {
+        if (unMatchedAssignment[i] != -1)
+        {
+            Index_t trackIdx=unMatchedObjects[i];
+            Index_t blobIdx=unMatchedBlobs[unMatchedAssignment[i]];
+            cout<<"blobIdx="<<blobIdx<<" match :"<<trackIdx<<endl;
+        }
+    }
+
+    //TODO missed track
+
+    //TODO new blob
 }
 
 bool HungarianAssignment::run()
@@ -897,7 +980,9 @@ bool HungarianAssignment::run()
             }
         }
 
+        dump(unMatchedAssignment,unMatchedObjects,unMatchedBlobs);
     }
+
 
     return true;
 }

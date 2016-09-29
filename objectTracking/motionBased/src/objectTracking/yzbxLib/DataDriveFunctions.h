@@ -89,6 +89,7 @@ public:
     track_t calcDist(std::shared_ptr<trackingObjectFeature> of1,
                      std::shared_ptr<trackingObjectFeature> of2,int costType=PosDist);
     bool run();
+    void dump(assignments_t unMatchedAssignment,vector<Index_t> unMatchedObjects,vector<Index_t> unMatchedBlobs);
 };
 
 class ShowAssignment:public Base{
@@ -124,9 +125,9 @@ private:
     void dumpTracjectoryAfterFilter(int trackIdx);
 };
 
-class UpdateTrackStatus:public Base{
+class FilterBadTrack:public Base{
 public:
-    UpdateTrackStatus(std::shared_ptr<DataDriveMain> data):Base(data){}
+    FilterBadTrack(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 

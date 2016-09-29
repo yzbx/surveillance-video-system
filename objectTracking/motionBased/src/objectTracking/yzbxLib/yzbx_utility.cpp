@@ -986,7 +986,7 @@ Rect_t getSubRect(Rect_t mergedRect, Rect_t subRect)
     int minIdx;
     for(int i=0;i<ps.size();i++){
         track_t dist=cv::norm(ps[i]-subPs[i]);
-        if(i==0||minCost<dist){
+        if(i==0||minCost>dist){
             minCost=dist;
             minIdx=i;
         }

@@ -17,6 +17,7 @@ void DataDriveTracker::run()
     pipeline.push_back(std::make_shared<DataDrive::ShowAssignment>(DataDrive::ShowAssignment(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::SplitAndMerge>(DataDrive::SplitAndMerge(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::FilterDeleteObjectToDump>(DataDrive::FilterDeleteObjectToDump(mainData)));
+    pipeline.push_back(std::make_shared<DataDrive::FilterBadTrack>(DataDrive::FilterBadTrack(mainData)));
 
     bool gameover=false;
     while(!gameover){
