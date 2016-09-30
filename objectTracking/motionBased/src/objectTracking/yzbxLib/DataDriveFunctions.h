@@ -112,6 +112,7 @@ public:
     void handleNToOneObjects();
     //transform of.rect and of.pos, return true; else do nothing and return false.
     bool AffineTransform(const Index_t blobIdx,const Index_t trackIdx,trackingObjectFeature &of);
+    void dump();
 };
 
 class FilterDeleteObjectToDump:public Base{

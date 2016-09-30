@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <opencv2/core/types_c.h>
 #include "cvhogdetector.h"
-#include "dlibhogdetector.h"
+//#include "dlibhogdetector.h"
 
 
 int main(int argc, char *argv[])

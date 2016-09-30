@@ -22,12 +22,12 @@ public:
     STATUS status;
     Point_t firstSeePos;
     Point_t lastSeePos;
-    enum SplitMergeType splitMergeType;
+    SplitMergeType splitMergeType;
 private:
     int skipped_frames;
     int catch_frames;
     int lifetime;
-    bool AvoidUpdate=false;
+    bool AvoidUpdate;
 public:
     int get_skipped_frames(){
         return skipped_frames;
@@ -53,6 +53,9 @@ public:
     void Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length);
     void NormalUpdate(const trackingObjectFeature &of, int frameNum);
     void MissUpdate(int frameNum);
+    void OneToNUpdateForBiggestBlob(const trackingObjectFeature &of,int frameNum);
+    void OneToNUpdateForNewBlob();
+    void NToOneUpdate(trackingObjectFeature &of,int frameNum);
     void PreUpdateForBiggestBlob(const trackingObjectFeature &of);
     void AvoidUpdateTwice();
     Rect_t GetPredictRect();
@@ -61,15 +64,32 @@ public:
         statusStr[MISSING_STATUS]="missing";
         statusStr[NORMAL_STATUS]="normal";
         statusStr[NEW_STATUS]="new";
+        statusStr[OneToN_STATUS]="OneToN";
+        statusStr[NToOne_STATUS]="NToOne";
 //        DELETE_TO_SPLIT,DELETE_TO_MERGE,PREUPDATE_STATUS
         statusStr[DELETE_TO_SPLIT]="delete_split";
         statusStr[DELETE_TO_MERGE]="delete_merge";
         statusStr[PREUPDATE_STATUS]="preupdate";
         cout<<"track_id="<<track_id<<endl;
         cout<<"lifetime="<<lifetime;
-        cout<<", skipped_frame="<<skipped_frames;
-        cout<<", catch_frames="<<catch_frames;
+        cout<<", onBoudary="<<feature->onBoundary;
+        int frameNum=frames.back();
+        cout<<", frameNum="<<frameNum;
+//        cout<<", skipped_frame="<<skipped_frames;
+//        cout<<", catch_frames="<<catch_frames;
         cout<<", status="<<statusStr[status];
+
+//        cout<<", frames=(";
+//        for(int i=0;i<frames.size();i++){
+//            cout<<frames[i]<<",";
+//        }
+//        cout<<")";
+
+//        cout<<", firstSeePos=("<<firstSeePos.x<<","<<firstSeePos.y<<")";
+//        cout<<", lastSeePos=("<<lastSeePos.x<<","<<lastSeePos.y<<")";
+        cout<<", displacement="<<cv::norm(lastSeePos-firstSeePos);
+        cout<<", rect=("<<feature->rect.x<<","<<feature->rect.y
+           <<","<<feature->rect.width<<","<<feature->rect.height<<")";
 
         cout<<endl;
     }

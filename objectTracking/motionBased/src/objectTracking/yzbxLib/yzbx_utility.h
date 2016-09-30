@@ -12,6 +12,12 @@
 #include <fstream>
 #include <QtCore>
 
+#define MEASURE_TIME(x)                        \
+{ auto startTime = cv::getTickCount(); \
+    x;                                   \
+    auto endTime = cv::getTickCount();   \
+    std::cout << #x << " " << (endTime - startTime) * cv::getTickFrequency() << std::endl; }
+
 namespace yzbxlib
 {
 QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);

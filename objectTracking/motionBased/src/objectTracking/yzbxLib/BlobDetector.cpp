@@ -178,7 +178,8 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         of.rect=cv::boundingRect(contours[contourIdx]);
         Point_t tl=of.rect.tl();
         Point_t br=of.rect.br();
-        if(tl.x<5||tl.y<5||br.x+5>binaryImage.cols||br.y+5>binaryImage.rows){
+        const int gap=10;
+        if(tl.x<gap||tl.y<gap||br.x+gap>binaryImage.cols||br.y+gap>binaryImage.rows){
             of.onBoundary=true;
         }
         else{

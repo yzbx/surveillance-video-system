@@ -18,13 +18,19 @@ CVHOGDetector::CVHOGDetector(int argc, char *argv[])
 int CVHOGDetector::main(int argc, char** argv)
 {
     string filename;
+    string savefilename;
     if( argc == 1 )
     {
         printf("Usage: peopledetect video_filename\n");
-        filename="/mnt/hgfs/I/Win7/dataset/大王卡口全景东向西_大王卡口全景东向西/大王卡口全景东向西_大王卡口全景东向西_20150318090325.mp4";
+//        filename="/mnt/hgfs/I/Win7/dataset/大王卡口全景东向西_大王卡口全景东向西/大王卡口全景东向西_大王卡口全景东向西_20150318090325.mp4";
+        filename="/media/yzbx/15311446439/测试视频/12.wmv";
     }
-    else {
+    else if(argc ==2){
         filename=argv[1];
+    }
+    else{
+        filename=argv[1];
+        savefilename=argv[2];
     }
     VideoCapture cap(filename);
     if(!cap.isOpened()){
@@ -34,7 +40,8 @@ int CVHOGDetector::main(int argc, char** argv)
     HOGDescriptor hog;
     hog.setSVMDetector(HOGDescriptor::getDefaultPeopleDetector());
     namedWindow("people detector", 1);
-
+    cv::VideoWriter videoWriter;
+    bool firstTimeToOpen=true;
     for(;;)
     {
         Mat img;
@@ -42,7 +49,9 @@ int CVHOGDetector::main(int argc, char** argv)
 
         if(!img.data){
             std::cout<<"empty image"<<endl;
+            break;
         }
+//        cv::resize(img,img,Size(0,0),0.5,0.5);
 
         vector<Rect> found, found_filtered;
         double t = (double)getTickCount();
@@ -73,10 +82,23 @@ int CVHOGDetector::main(int argc, char** argv)
             r.height = cvRound(r.height*0.8);
             rectangle(img, r.tl(), r.br(), cv::Scalar(0,255,0), 3);
         }
-        imshow("people detector", img);
-        int c = waitKey(30) & 255;
-        if( c == 'q' || c == 'Q')
-            break;
+
+        if(argc>2){
+            if(firstTimeToOpen){
+                cv::Size s=img.size();
+                assert(videoWriter.open(savefilename,CV_FOURCC('D', 'I', 'V', 'X'),50,s,true));
+                firstTimeToOpen=false;
+            }
+
+            assert(videoWriter.isOpened());
+            videoWriter<<img;
+        }
+        else{
+            imshow("people detector", img);
+            int c = waitKey(30) & 255;
+            if( c == 'q' || c == 'Q')
+                break;
+        }
     }
 
     return 0;

@@ -3,20 +3,19 @@
 singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID, int frameNum):
     track_id(trackID),
     skipped_frames(0),
+    catch_frames(1),
+    lifetime(1),
+    status(NEW_STATUS),
+    splitMergeType(NORMAL_SMTYPE),
+    AvoidUpdate(false),
+    firstSeePos(of.pos),
+    lastSeePos(of.pos),
     prediction(of.pos),
     KF(of.pos, dt, Accel_noise_mag)
 {
     feature=std::make_unique<trackingObjectFeature>(trackingObjectFeature());
-
-//    of.copyTo(feature);
     feature->copy(of);
 
-    status=NEW_STATUS;
-
-    skipped_frames=0;
-    catch_frames=1;
-    lifetime=1;
-    splitMergeType=NORMAL_SMTYPE;
     rects.push_back(of.rect);
     trace.push_back(of.pos);
     frames.push_back(frameNum);
@@ -67,7 +66,7 @@ track_t singleObjectTracker::CalcDist(trackingObjectFeature &of)
 
 void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length)
 {
-
+    assert(false);
     KF.GetPrediction();
     prediction = KF.Update(of.pos, dataCorrect);
 
@@ -122,6 +121,8 @@ void singleObjectTracker::NormalUpdate(const trackingObjectFeature &of, int fram
 
     trace.push_back(prediction);
     lifetime++;
+    lastSeePos=of.pos;
+    assert(lifetime==1+frameNum-frames[0]);
     assert(lifetime==(catch_frames+skipped_frames));
 }
 
@@ -145,17 +146,74 @@ void singleObjectTracker::MissUpdate(int frameNum)
 
     trace.push_back(prediction);
     lifetime++;
+//    lastSeePos=of.pos;
+    assert(lifetime==1+frameNum-frames[0]);
+    assert(lifetime==(catch_frames+skipped_frames));
+}
+
+void singleObjectTracker::OneToNUpdateForBiggestBlob(const trackingObjectFeature &of, int frameNum)
+{
+    KF.GetPrediction();
+    prediction = KF.Update(of.pos,true);
+    if(AvoidUpdate){
+        AvoidUpdate=false;
+        return;
+    }
+
+    status=OneToN_STATUS;
+    vec_status.push_back(status);
+    frames.push_back(frameNum);
+    feature->copy(of);
+    rects.push_back(of.rect);
+    catch_frames+=(1+skipped_frames);
+    skipped_frames=0;
+
+    trace.push_back(prediction);
+    lifetime++;
+    lastSeePos=of.pos;
+    assert(lifetime==1+frameNum-frames[0]);
+    assert(lifetime==(catch_frames+skipped_frames));
+}
+
+void singleObjectTracker::OneToNUpdateForNewBlob()
+{
+    status=OneToN_STATUS;
+}
+
+void singleObjectTracker::NToOneUpdate(trackingObjectFeature &of, int frameNum)
+{
+    KF.GetPrediction();
+    prediction = KF.Update(of.pos,true);
+    if(AvoidUpdate){
+        AvoidUpdate=false;
+        return;
+    }
+
+    status=NToOne_STATUS;
+    vec_status.push_back(status);
+    frames.push_back(frameNum);
+    feature->copy(of);
+    rects.push_back(of.rect);
+    catch_frames+=(1+skipped_frames);
+    skipped_frames=0;
+
+    trace.push_back(prediction);
+    lifetime++;
+//    lastSeePos=of.pos;
+    assert(lifetime==1+frameNum-frames[0]);
     assert(lifetime==(catch_frames+skipped_frames));
 }
 
 void singleObjectTracker::PreUpdateForBiggestBlob(const trackingObjectFeature &of)
 {
+    assert(false);
     feature->copy(of);
     status=PREUPDATE_STATUS;
 }
 
 void singleObjectTracker::AvoidUpdateTwice()
 {
+    assert(false);
     AvoidUpdate=true;
 }
 

@@ -512,24 +512,25 @@ void KLTAssignment::dump()
         cout<<endl;
     }
 
-    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
-        Index_t trackIdx=it->first;
-        Id_t trackId=data->tracks[trackIdx]->track_id;
-        set<Index_t> &blobset=it->second;
-        cout<<"trackIdx="<<trackId<<" match :";
-        for(auto b=blobset.begin();b!=blobset.end();b++){
-            Index_t blobIdx=*b;
-            cout<<blobIdx<<",";
-        }
-        cout<<endl;
-    }
+//    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
+//        Index_t trackIdx=it->first;
+//        Id_t trackId=data->tracks[trackIdx]->track_id;
+//        set<Index_t> &blobset=it->second;
+//        cout<<"trackIdx="<<trackId<<" match :";
+//        for(auto b=blobset.begin();b!=blobset.end();b++){
+//            Index_t blobIdx=*b;
+//            cout<<blobIdx<<",";
+//        }
+//        cout<<endl;
+//    }
 
-    waitKey(30);
 }
 
 bool FilterBadTrack::run()
 {
     for(int i=data->tracks.size()-1;i>=0;i--){
+        data->tracks[i]->dumpToScreen();
+
         if(data->tracks[i]->status==MISSING_STATUS){
             Point_t p1=data->tracks[i]->firstSeePos;
             Point_t p2=data->tracks[i]->lastSeePos;
@@ -546,8 +547,6 @@ bool FilterBadTrack::run()
                 continue;
             }
         }
-
-        data->tracks[i]->dumpToScreen();
     }
     return true;
 }
@@ -589,6 +588,27 @@ bool SplitAndMerge::run()
         ///update mOneToOneMap mNToOneMap mOneToNMap
         auto &mObjectToBlobMap=data->trackToBlobSet;
         auto &mBlobToObjectMap=data->blobToTrackSet;
+        ///remove M-N, do 0-1, 1-0, 1-1, 1-N, N-1
+        for(auto ia=mObjectToBlobMap.begin();ia!=mObjectToBlobMap.end();ia++){
+            Index_t trackIdx=ia->first;
+            if(ia->second.size()>1){
+                set<Index_t> &blobset=ia->second;
+                for(auto ib=blobset.begin();ib!=blobset.end();){
+                    Index_t blobIdx=*ib;
+                    if(mBlobToObjectMap[blobIdx].size()>1){
+                        qDebug()<<"remove M-N: "<<trackIdx<<","<<blobIdx;
+
+                        auto it=mBlobToObjectMap[blobIdx].find(trackIdx);
+                        mBlobToObjectMap[blobIdx].erase(it);
+
+                        ib=blobset.erase(ib);
+                    }
+                    else{
+                        ib++;
+                    }
+                }
+            }
+        }
         for(auto ia=mObjectToBlobMap.begin();ia!=mObjectToBlobMap.end();ia++){
             //tracksIdx
             Index_t trackIdx=ia->first;
@@ -603,6 +623,13 @@ bool SplitAndMerge::run()
             }
             else{
                 data->mOneToNMap[trackIdx]=ia->second;
+
+                std::set<Index_t> &blobset=ia->second;
+                for(auto ib=blobset.begin();ib!=blobset.end();ib++){
+                    Index_t fvIdx=*ib;
+                    assert(mBlobToObjectMap[fvIdx].size()==1);
+                }
+
             }
         }
 
@@ -623,7 +650,6 @@ bool SplitAndMerge::run()
             }
         }
         handleNewObjects();
-
 
         //handle one to one object
         handleOneToOneObjects();
@@ -704,13 +730,13 @@ void SplitAndMerge::handleOneToNObjects()
             }
         }
         //change blob feature
-        data->tracks[trackIdx]->PreUpdateForBiggestBlob(fv[maxAreaBlobIdx]);
+        data->tracks[trackIdx]->OneToNUpdateForBiggestBlob(fv[maxAreaBlobIdx],data->frameNum);
 
         for(auto blob=blobset.begin();blob!=blobset.end();blob++){
             if(*blob!=maxAreaBlobIdx){
                 data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[*blob],param.dt,
                                        param.Accel_noise_mag,data->NextTrackID++,data->frameNum));
-                data->tracks.back()->AvoidUpdateTwice();
+                data->tracks.back()->OneToNUpdateForNewBlob();
             }
         }
     }
@@ -726,10 +752,10 @@ void SplitAndMerge::handleNToOneObjects()
         Index_t blobIdx=it->first;
         std::set<Index_t> &trackset=it->second;
 
-
         Rect_t rb=fv[blobIdx].rect;
         bool firstTime=true;
         for(auto track=trackset.begin();track!=trackset.end();track++){
+
             if(data->tracks[*track]->status==PREUPDATE_STATUS){
                 assert(data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
                 qDebug()<<"PREUPDATE_STATUS";
@@ -743,6 +769,7 @@ void SplitAndMerge::handleNToOneObjects()
             }
 
             int trackIdx=*track;
+
             trackingObjectFeature of;
             of.copy(*(data->tracks[trackIdx]->feature));
             Rect_t r_before=of.rect;
@@ -751,7 +778,7 @@ void SplitAndMerge::handleNToOneObjects()
 
             //use KLT transform
             if(flag){
-                data->tracks[*track]->NormalUpdate(of,data->frameNum);
+                data->tracks[*track]->NToOneUpdate(of,data->frameNum);
 
                 if(firstTime){
                     fv[blobIdx]=of;
@@ -768,7 +795,7 @@ void SplitAndMerge::handleNToOneObjects()
                 of.rect=subRect;
                 of.pos+=(of.rect.tl()-predict_rect.tl());
 
-                data->tracks[*track]->NormalUpdate(of,data->frameNum);
+                data->tracks[*track]->NToOneUpdate(of,data->frameNum);
                 if(firstTime){
                     fv[blobIdx]=of;
                     firstTime=false;
@@ -777,20 +804,6 @@ void SplitAndMerge::handleNToOneObjects()
                     fv.push_back(of);
                 }
                 assert(data->tracks[*track]->feature->LIFMat.empty());
-            }
-
-            if(flag){
-                Rect_t r_after=of.rect;
-                Mat before=data->img_input.clone();
-                Mat after=data->img_input.clone();
-                rectangle(before,r_before,Scalar(0,0,255),3);
-                rectangle(after,r_after,Scalar(0,0,255),3);
-                Mat beforeAfter;
-                hconcat(before,after,beforeAfter);
-                namedWindow("before and after",WINDOW_NORMAL);
-                imshow("before and after",beforeAfter);
-                cout<<r_before.x<<","<<r_before.y<<","<<r_before.width<<","<<r_before.height<<endl;
-                cout<<r_after.x<<","<<r_after.y<<","<<r_after.width<<","<<r_after.height<<endl;
             }
 
         }
@@ -874,6 +887,51 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
     of.KLTPos.clear();
     of.KLTPos =points[1];
     return true;
+}
+
+void SplitAndMerge::dump()
+{
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto imgIt=std::prev(data->imglist.end(),1);
+    auto prev_imgIt=std::prev(data->imglist.end(),2);
+
+    Mat input,mask,prev_input,prev_mask;
+    input=imgIt->first.clone();
+    mask=imgIt->second.clone();
+    prev_input=prev_imgIt->first.clone();
+    prev_mask=prev_imgIt->second.clone();
+    //blob
+    for(int i=0;i<fv.size();i++){
+        Rect_t r=fv[i].rect;
+        string idxstr=boost::lexical_cast<string>(i);
+//        string title="index="+idxstr;
+        string title=idxstr;
+        yzbxlib::annotation(input,r,title);
+        rectangle(input,r,Scalar(0,0,255),3,8);
+        rectangle(mask,r,Scalar::all(255),3,8);
+    }
+
+    //object
+    for(int i=0;i<data->tracks.size();i++){
+        Rect_t r=data->tracks[i]->feature->rect;
+        Index_t trackIdx=data->tracks[i]->track_id;
+        string idxstr=boost::lexical_cast<string>(trackIdx);
+        string title="id="+idxstr;
+        yzbxlib::annotation(prev_input,r,title);
+        rectangle(prev_input,r,Scalar(0,0,255),3,8);
+        rectangle(prev_mask,r,Scalar::all(255),3,8);
+    }
+
+    Mat blob,object;
+    cvtColor(mask,mask,CV_GRAY2BGR);
+    hconcat(input,mask,blob);
+    cvtColor(prev_mask,prev_mask,CV_GRAY2BGR);
+    hconcat(prev_input,prev_mask,object);
+
+    Mat klt;
+    vconcat(object,blob,klt);
+    namedWindow("SplitAndMerge dump",WINDOW_NORMAL);
+    imshow("SplitAndMerge dump",klt);
 }
 
 track_t HungarianAssignment::calcDist(std::shared_ptr<trackingObjectFeature> of1, std::shared_ptr<trackingObjectFeature> of2, int costType)
@@ -1001,7 +1059,6 @@ bool ShowAssignment::run()
     if(data->fvlist.size()<2){
         assert(false);
     }
-
     vector<trackingObjectFeature> &fv=data->fvlist.back();
     Mat showImg=data->img_input.clone();
     //show track
@@ -1021,7 +1078,7 @@ bool ShowAssignment::run()
             Rect rect=fv[i].rect;
             //            string title=boost::lexical_cast<string>(i);
             //            yzbxlib::annotation(showImg,rect,title);
-            rectangle(showImg,rect,Scalar(0,255,0),3,8);
+            rectangle(showImg,rect,Scalar(0,255,255),3,8);
         }
     }
 

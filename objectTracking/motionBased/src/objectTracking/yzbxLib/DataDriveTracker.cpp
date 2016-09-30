@@ -22,7 +22,10 @@ void DataDriveTracker::run()
     bool gameover=false;
     while(!gameover){
         for(int i=0;i<pipeline.size();i++){
-            bool flag=pipeline[i]->run();
+
+            bool flag;
+            cout<<"i="<<i<<" *********************************"<<endl;
+            MEASURE_TIME(flag=pipeline[i]->run());
 
             if(i==0&&flag==false) gameover=true;
 
