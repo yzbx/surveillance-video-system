@@ -27,6 +27,7 @@
 #include "DataDriveTracker.h"
 #include "ObjectRecord.h"
 #include "ObjectCount.h"
+#include "DataDrivePipeLine.h"
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

@@ -132,6 +132,15 @@ public:
     bool run();
 };
 
+class SaveToVideo:public Base{
+public:
+    SaveToVideo(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
+    bool firstTime=true;
+    string SaveVideoName;
+    VideoWriter videoWriter;
+};
+
 
 }
 #endif // DATADRIVEFUNCTIONS_H

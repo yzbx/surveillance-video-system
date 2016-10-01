@@ -1196,4 +1196,43 @@ bool RestOverLapAssignment::run()
 
 }
 
+bool SaveToVideo::run()
+{
+    if(data->img_fg.empty()) return false;
+
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    Mat img_input=data->img_input.clone();
+    Mat img_fg;
+    cvtColor(data->img_fg,img_fg,CV_GRAY2BGR);
+    for(int i=0;i<fv.size();i++){
+        Rect_t r=fv[i].rect;
+        string idxstr=boost::lexical_cast<string>(i);
+//        string title="index="+idxstr;
+        string title=idxstr;
+        yzbxlib::annotation(img_input,r,title);
+        rectangle(img_input,r,Scalar(0,0,255),3,8);
+        rectangle(img_fg,r,Scalar(0,0,255),3,8);
+    }
+    hconcat(img_input,img_fg,data->imgToSave);
+    namedWindow("Save To Video",WINDOW_NORMAL);
+    imshow("Save To Video",data->imgToSave);
+    waitKey(30);
+
+    if(firstTime){
+        QString fullpath=data->videoFilePath;
+        QFileInfo info(fullpath);
+        QString filename=info.baseName()+".avi";
+        SaveVideoName=data->globalPt.get<std::string>("SaveToVideo.SaveVideoNamePrefix")+filename.toStdString();
+        cout<<"save video to "<<SaveVideoName<<endl;
+        cv::Size s=data->imgToSave.size();
+        assert(videoWriter.open(SaveVideoName,CV_FOURCC('D', 'I', 'V', 'X'),50,s,true));
+        firstTime=false;
+    }
+
+    assert(videoWriter.isOpened());
+    videoWriter<<data->imgToSave;
+
+    return true;
+}
+
 }

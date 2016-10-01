@@ -82,6 +82,8 @@ public:
 
     TrackingAlgorithmParamter param;
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;
+
+    Mat imgToSave;
 };
 
 #endif // DATADRIVEMAIN_H

@@ -22,7 +22,7 @@ int CVHOGDetector::main(int argc, char** argv)
     if( argc == 1 )
     {
         printf("Usage: peopledetect video_filename\n");
-//        filename="/mnt/hgfs/I/Win7/dataset/大王卡口全景东向西_大王卡口全景东向西/大王卡口全景东向西_大王卡口全景东向西_20150318090325.mp4";
+        //        filename="/mnt/hgfs/I/Win7/dataset/大王卡口全景东向西_大王卡口全景东向西/大王卡口全景东向西_大王卡口全景东向西_20150318090325.mp4";
         filename="/media/yzbx/15311446439/测试视频/12.wmv";
     }
     else if(argc ==2){
@@ -51,7 +51,7 @@ int CVHOGDetector::main(int argc, char** argv)
             std::cout<<"empty image"<<endl;
             break;
         }
-//        cv::resize(img,img,Size(0,0),0.5,0.5);
+        //        cv::resize(img,img,Size(0,0),0.5,0.5);
 
         vector<Rect> found, found_filtered;
         double t = (double)getTickCount();
@@ -83,6 +83,8 @@ int CVHOGDetector::main(int argc, char** argv)
             rectangle(img, r.tl(), r.br(), cv::Scalar(0,255,0), 3);
         }
 
+        imshow("people detector", img);
+        int c = waitKey(30) & 255;
         if(argc>2){
             if(firstTimeToOpen){
                 cv::Size s=img.size();
@@ -94,8 +96,6 @@ int CVHOGDetector::main(int argc, char** argv)
             videoWriter<<img;
         }
         else{
-            imshow("people detector", img);
-            int c = waitKey(30) & 255;
             if( c == 'q' || c == 'Q')
                 break;
         }
