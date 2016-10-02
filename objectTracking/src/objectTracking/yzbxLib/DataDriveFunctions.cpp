@@ -588,7 +588,9 @@ bool SplitAndMerge::run()
         ///update mOneToOneMap mNToOneMap mOneToNMap
         auto &mObjectToBlobMap=data->trackToBlobSet;
         auto &mBlobToObjectMap=data->blobToTrackSet;
+
         ///remove M-N, do 0-1, 1-0, 1-1, 1-N, N-1
+        bool firstTime=true;
         for(auto ia=mObjectToBlobMap.begin();ia!=mObjectToBlobMap.end();ia++){
             Index_t trackIdx=ia->first;
             if(ia->second.size()>1){
@@ -596,6 +598,15 @@ bool SplitAndMerge::run()
                 for(auto ib=blobset.begin();ib!=blobset.end();){
                     Index_t blobIdx=*ib;
                     if(mBlobToObjectMap[blobIdx].size()>1){
+                        if(firstTime){
+                            qWarning()<<"before remove M-N ...........................";
+                            cout<<"object -> blobset"<<endl;
+                            yzbxlib::dumpMap(mObjectToBlobMap);
+                            cout<<"blob -> objectset"<<endl;
+                            yzbxlib::dumpMap(mBlobToObjectMap);
+                            firstTime=false;
+                        }
+
                         qDebug()<<"remove M-N: "<<trackIdx<<","<<blobIdx;
 
                         auto it=mBlobToObjectMap[blobIdx].find(trackIdx);
@@ -609,6 +620,14 @@ bool SplitAndMerge::run()
                 }
             }
         }
+
+        if(firstTime=false){
+            qWarning()<<"after remove M-N .............................";
+            cout<<"object -> blobset"<<endl;
+            yzbxlib::dumpMap(mObjectToBlobMap);
+            cout<<"blob -> objectset"<<endl;
+            yzbxlib::dumpMap(mBlobToObjectMap);
+        }
         for(auto ia=mObjectToBlobMap.begin();ia!=mObjectToBlobMap.end();ia++){
             //tracksIdx
             Index_t trackIdx=ia->first;
@@ -621,7 +640,7 @@ bool SplitAndMerge::run()
                     data->mNToOneMap[fvIdx]=mBlobToObjectMap[fvIdx];
                 }
             }
-            else{
+            else if(ia->second.size()>1){
                 data->mOneToNMap[trackIdx]=ia->second;
 
                 std::set<Index_t> &blobset=ia->second;

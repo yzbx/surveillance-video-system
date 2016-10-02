@@ -1081,4 +1081,19 @@ bool rectOnBoundary(Rect r, Mat &img)
     }
 }
 
+void dumpMap(std::map<Index_t, std::set<Index_t> > &m)
+{
+    for(auto it=m.begin();it!=m.end();it++){
+        Index_t key=it->first;
+        cout<<"key= "<<key;
+        set<Index_t> value=it->second;
+        cout<<", value= [";
+        for(auto v=value.begin();v!=value.end();v++){
+            Index_t element=*v;
+            cout<<v<<",";
+        }
+        cout<<"]"<<endl;
+    }
+}
+
 }

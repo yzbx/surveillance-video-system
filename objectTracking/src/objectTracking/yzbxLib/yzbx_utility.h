@@ -55,6 +55,7 @@ void getGrayMat(const cv::Mat &input,cv::Mat &output);
 void csvToTrajectory(QString line,int &frameNum,int &id,Rect &r);
 
 bool rectOnBoundary(Rect r, Mat &img);
+void dumpMap(std::map<Index_t,std::set<Index_t>> &m);
 }
 
 //set qt sync with file.
