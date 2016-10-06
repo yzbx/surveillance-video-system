@@ -154,7 +154,7 @@ bool MeanShiftTracker::run()
     local_hue.create(local_hsv.size(), local_hsv.depth());
     mixChannels(&local_hsv, 1, &local_hue, 1, ch, 1);
 
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Rect_t rect=fv[i].rect;
         Rect trackWindow=Rect((int)rect.x,(int)rect.y,(int)rect.width,(int)rect.height);
         if(key=='n'||fv.empty()){
@@ -224,7 +224,7 @@ bool CamShiftTracker::run()
     local_hue.create(local_hsv.size(), local_hsv.depth());
     mixChannels(&local_hsv, 1, &local_hue, 1, ch, 1);
 
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Rect_t rect=fv[i].rect;
         Rect trackWindow=Rect((int)rect.x,(int)rect.y,(int)rect.width,(int)rect.height);
         RotatedRect trackBox;
@@ -282,7 +282,7 @@ bool KLTAssignment::run()
     {
         std::map<Index_t,Index_t> prevBlobToTrack;
         std::map<Index_t,Index_t> trackToPrevBlob;
-        for(int i=0;i<data->tracks.size();i++){
+        for(uint i=0;i<data->tracks.size();i++){
             //KLT will use previous image and current image.
             if(data->tracks[i]->status!=MISSING_STATUS){
                 prev_fv.push_back(*(data->tracks[i]->feature));
@@ -316,7 +316,7 @@ bool KLTAssignment::run()
     Size subPixWinSize(10,10), winSize(31,31);
     const int MAX_COUNT = 500;
 
-    for(int i=0;i<2;i++){
+    for(uint i=0;i<2;i++){
         if(!data->points[i].empty()) data->points[i].clear();
         if(!data->pointIdxToBlobSet[i].empty()) data->pointIdxToBlobSet[i].clear();
         if(!data->blobIdxToPointSet[i].empty()) data->blobIdxToPointSet[i].clear();
@@ -347,7 +347,7 @@ bool KLTAssignment::run()
     Mat mergeImage;
     cv::hconcat(prev_image,image,mergeImage);
 
-    //NOTE for matchNum > 255
+    // for matchNum > 255
     cv::Mat matchMat(prev_fv.size(),fv.size(),CV_8UC1);
     matchMat=Scalar::all(0);
 
@@ -364,7 +364,7 @@ bool KLTAssignment::run()
         Point2i p=points[1][i];
         Point2i prev_p=points[0][i];
         int matchMat_x=-1,matchMat_y=-1;
-        for(int i=0;i<prev_fv.size();i++){
+        for(uint i=0;i<prev_fv.size();i++){
             cv::Mat mask=prev_fv[i].mask;
 
             assert(!mask.empty());
@@ -373,7 +373,7 @@ bool KLTAssignment::run()
                 break;
             }
         }
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             cv::Mat mask=fv[i].mask;
 
             assert(!mask.empty());
@@ -392,8 +392,8 @@ bool KLTAssignment::run()
             Index_t blobIdx=matchMat_x;
             Index_t trackIdx=data->prevBlobToTrack[prev_blobIdx];
             int lifetime=data->tracks[trackIdx]->get_lifetime();
-            if(lifetime<data->param.MaxFreshObjectLifeTime||
-                    data->tracks[trackIdx]->status!=NORMAL_STATUS) continue;
+            if(lifetime<data->param.MaxFreshObjectLifeTime)
+                continue;
 
             matchMat.at<uchar>(matchMat_y,matchMat_x)+=((uchar)1);
             pointIdxToBlobSet[0][pointIdx].insert(prev_blobIdx);
@@ -416,8 +416,8 @@ bool KLTAssignment::run()
         int m=matchMat.rows;
         int n=matchMat.cols;
         const uint MatchNumThreshold=data->param.MatchNumThreshold;
-        for(int i=0;i<m;i++){
-            for(int j=0;j<n;j++){
+        for(uint i=0;i<m;i++){
+            for(uint j=0;j<n;j++){
                 if(matchMat.at<uchar>(i,j)>MatchNumThreshold){
                     int blobIdx=j;
                     int objIdx=data->prevBlobToTrack[i];
@@ -432,7 +432,7 @@ bool KLTAssignment::run()
     points[0].resize(k);
     points[1].resize(k);
 
-    for(int i=0;i<2;i++){
+    for(uint i=0;i<2;i++){
         data->points[i] =points[i];
         data->pointIdxToBlobSet[i] =pointIdxToBlobSet[i];
         data->blobIdxToPointSet[i] =blobIdxToPointSet[i];
@@ -447,9 +447,9 @@ bool KLTAssignment::run()
     dump();
     waitKey(30);
 
-//    gray.release();
-//    prev_gray.release();
-//    image.release();
+    //    gray.release();
+    //    prev_gray.release();
+    //    image.release();
     return true;
 }
 
@@ -466,10 +466,10 @@ void KLTAssignment::dump()
     prev_input=prev_imgIt->first.clone();
     prev_mask=prev_imgIt->second.clone();
     //blob
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Rect_t r=fv[i].rect;
         string idxstr=boost::lexical_cast<string>(i);
-//        string title="index="+idxstr;
+        //        string title="index="+idxstr;
         string title=idxstr;
         yzbxlib::annotation(input,r,title);
         rectangle(input,r,Scalar(0,0,255),3,8);
@@ -477,7 +477,7 @@ void KLTAssignment::dump()
     }
 
     //object
-    for(int i=0;i<data->tracks.size();i++){
+    for(uint i=0;i<data->tracks.size();i++){
         Rect_t r=data->tracks[i]->feature->rect;
         Index_t trackIdx=data->tracks[i]->track_id;
         string idxstr=boost::lexical_cast<string>(trackIdx);
@@ -512,17 +512,17 @@ void KLTAssignment::dump()
         cout<<endl;
     }
 
-//    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
-//        Index_t trackIdx=it->first;
-//        Id_t trackId=data->tracks[trackIdx]->track_id;
-//        set<Index_t> &blobset=it->second;
-//        cout<<"trackIdx="<<trackId<<" match :";
-//        for(auto b=blobset.begin();b!=blobset.end();b++){
-//            Index_t blobIdx=*b;
-//            cout<<blobIdx<<",";
-//        }
-//        cout<<endl;
-//    }
+    //    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
+    //        Index_t trackIdx=it->first;
+    //        Id_t trackId=data->tracks[trackIdx]->track_id;
+    //        set<Index_t> &blobset=it->second;
+    //        cout<<"trackIdx="<<trackId<<" match :";
+    //        for(auto b=blobset.begin();b!=blobset.end();b++){
+    //            Index_t blobIdx=*b;
+    //            cout<<blobIdx<<",";
+    //        }
+    //        cout<<endl;
+    //    }
 
 }
 
@@ -572,14 +572,14 @@ bool SplitAndMerge::run()
     }
     else if(emptyBlobs){
         //handle missed object
-        for(int i=0;i<data->tracks.size();i++){
+        for(uint i=0;i<data->tracks.size();i++){
             data->mOneToZeroSet.insert(i);
         }
         handleMissedObjects();
     }
     else if(emptyObjects){
         //handle new object
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             data->mZeroToOneSet.insert(i);
         }
         handleNewObjects();
@@ -621,7 +621,7 @@ bool SplitAndMerge::run()
             }
         }
 
-        if(firstTime=false){
+        if(firstTime==false){
             qWarning()<<"after remove M-N .............................";
             cout<<"object -> blobset"<<endl;
             yzbxlib::dumpMap(mObjectToBlobMap);
@@ -654,28 +654,59 @@ bool SplitAndMerge::run()
 
         auto &mMatchedObjectSet=data->matchedTrackSet;
         ///handle missed object, not change tracks.size()
-        for(int i=0;i<data->tracks.size();i++){
+        for(uint i=0;i<data->tracks.size();i++){
             if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
                 data->mOneToZeroSet.insert(i);
             }
         }
+
+        bool output;
+        output=!data->mOneToZeroSet.empty();
+        qDebug()<<"before miss handle";
+        DataDrive::dumpObjects(data->tracks,output);
         handleMissedObjects();
+        qDebug()<<"after miss handle";
+        DataDrive::dumpObjects(data->tracks,output);
+
 
         auto &mMatchedBlobSet=data->matchedBlobSet;
         //handle new object, will change tracks.size()
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             if(mMatchedBlobSet.find(i)==mMatchedBlobSet.end()){
                 data->mZeroToOneSet.insert(i);
             }
         }
-        handleNewObjects();
 
+        output=!data->mZeroToOneSet.empty();
+        qDebug()<<"before new handle";
+        DataDrive::dumpObjects(data->tracks,output);
+        handleNewObjects();
+        qDebug()<<"after miss handle";
+        DataDrive::dumpObjects(data->tracks,output);
+
+        output=!data->mOneToOneMap.empty();
         //handle one to one object
+        qDebug()<<"before one to one handle";
+        DataDrive::dumpObjects(data->tracks,output);
         handleOneToOneObjects();
+        qDebug()<<"after one to one handle";
+        DataDrive::dumpObjects(data->tracks,output);
+
+        output=!data->mOneToNMap.empty();
         //handle split object
+        qDebug()<<"before ont to N handle";
+        DataDrive::dumpObjects(data->tracks,output);
         handleOneToNObjects();
+        qDebug()<<"after one to N handle";
+        DataDrive::dumpObjects(data->tracks,output);
+
+        output=!data->mNToOneMap.empty();
         //handle merged object
+        qDebug()<<"before N to one handle";
+        DataDrive::dumpObjects(data->tracks,output);
         handleNToOneObjects();
+        qDebug()<<"after N to one handle";
+        DataDrive::dumpObjects(data->tracks,output);
     }
 
     //    waitKey(0);
@@ -698,7 +729,7 @@ void SplitAndMerge::handleNewObjects()
     auto &param=data->param;
     for(auto newit=data->mZeroToOneSet.begin();newit!=data->mZeroToOneSet.end();newit++){
         data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit],
-                               param.dt, param.Accel_noise_mag, data->NextTrackID++,data->frameNum));
+                               param.dt, param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
     }
 }
 
@@ -754,7 +785,7 @@ void SplitAndMerge::handleOneToNObjects()
         for(auto blob=blobset.begin();blob!=blobset.end();blob++){
             if(*blob!=maxAreaBlobIdx){
                 data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[*blob],param.dt,
-                                       param.Accel_noise_mag,data->NextTrackID++,data->frameNum));
+                                       param.Accel_noise_mag,data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
                 data->tracks.back()->OneToNUpdateForNewBlob();
             }
         }
@@ -766,33 +797,27 @@ void SplitAndMerge::handleNToOneObjects()
     vector<trackingObjectFeature> &fv=data->fvlist.back();
 
     auto &mNToOneMap=data->mNToOneMap;
-    auto &param=data->param;
+
+    bool splitBlob=false;
     for(auto it=mNToOneMap.begin();it!=mNToOneMap.end();it++){
+        if(!splitBlob){
+            qDebug()<<"dump rect before split blob";
+            DataDrive::dumpRectInTracker(data->tracks);
+            DataDrive::drawRectInTracker(data->tracks,data->img_input,"NToOne before");
+            splitBlob=true;
+        }
         Index_t blobIdx=it->first;
         std::set<Index_t> &trackset=it->second;
 
         Rect_t rb=fv[blobIdx].rect;
         bool firstTime=true;
         for(auto track=trackset.begin();track!=trackset.end();track++){
-
-            if(data->tracks[*track]->status==PREUPDATE_STATUS){
-                assert(data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
-                qDebug()<<"PREUPDATE_STATUS";
-            }
-            else if(data->tracks[*track]->status==NEW_STATUS){
-                qDebug()<<"NEW_STATUS";
-            }
-            else{
-                assert(data->tracks[*track]->status==NORMAL_STATUS);
-                assert(data->tracks[*track]->get_lifetime()>=param.MaxFreshObjectLifeTime);
-            }
-
             int trackIdx=*track;
 
             trackingObjectFeature of;
             of.copy(*(data->tracks[trackIdx]->feature));
             Rect_t r_before=of.rect;
-//            bool flag=AffineTransform(blobIdx,trackIdx,of);
+            //            bool flag=AffineTransform(blobIdx,trackIdx,of);
             bool flag=false;
 
             //use KLT transform
@@ -811,8 +836,18 @@ void SplitAndMerge::handleNToOneObjects()
                 of.pos=data->tracks[*track]->KF.GetPrediction();
                 Rect_t predict_rect=data->tracks[*track]->GetPredictRect();
                 Rect_t subRect=yzbxlib::getSubRect(rb,predict_rect);
-                of.rect=subRect;
-                of.pos+=(of.rect.tl()-predict_rect.tl());
+                DataDrive::dumpRect(r_before);
+                DataDrive::dumpRect(subRect);
+                Point_t speed=of.pos-data->tracks[trackIdx]->feature->pos;
+                Point_t adjustSpeed=subRect.tl()-of.rect.tl();
+
+                if(speed.x*adjustSpeed.x>0&&speed.y*adjustSpeed.y>0){
+                    of.rect=subRect;
+                    of.pos+=(of.rect.tl()-predict_rect.tl());
+                }
+                else{
+                    of.rect=predict_rect;
+                }
 
                 data->tracks[*track]->NToOneUpdate(of,data->frameNum);
                 if(firstTime){
@@ -826,6 +861,42 @@ void SplitAndMerge::handleNToOneObjects()
             }
 
         }
+    }
+
+    //remove common area
+    //    for(auto it=mNToOneMap.begin();it!=mNToOneMap.end();it++){
+    //        std::set<Index_t> &trackset=it->second;
+
+    //        bool firstTime=true;
+    //        Mat commonArea;//{0,1,>1} common area for >1;
+    //        for(auto track=trackset.begin();track!=trackset.end();track++){
+    //            int trackIdx=*track;
+    //            Mat m=data->tracks[trackIdx]->feature->mask;
+    //            Mat m1;
+    //            cv::threshold(m,m1,0,1,THRESH_BINARY);
+    //            if(firstTime){
+    //                commonArea=m1;
+    //            }
+    //            else{
+    //                commonArea+=m1;
+    //            }
+    //        }
+
+    //        for(auto track=trackset.begin();track!=trackset.end();track++){
+    //            int trackIdx=*track;
+    //            Mat m=data->tracks[trackIdx]->feature->mask;
+    //            m=m&(commonArea==1);
+    //        }
+
+
+    //        yzbxlib::showImageInWindow("commonArea",commonArea);
+    //    }
+
+    if(splitBlob){
+        qDebug()<<"dump rect after split blob";
+        DataDrive::dumpRectInTracker(data->tracks);
+        DataDrive::drawRectInTracker(data->tracks,data->img_input,"NToOne after");
+        waitKey(0);
     }
 }
 
@@ -856,7 +927,7 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
 
     int psize=points[0].size();
     Point_KLT dif_sum(0,0);
-    for(int i=0;i<psize;i++){
+    for(uint i=0;i<psize;i++){
         Point_KLT dif=points[0][i]-points[1][i];
         dif_sum+=dif;
     }
@@ -881,7 +952,7 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
     //    cv::Mat T=cv::getAffineTransform(points[0],points[1]);
     cv::Mat T=cv::estimateRigidTransform(points[0],points[1],false);
     string type=getImgType(T.type());
-//    qDebug()<<"type="<<QString::fromStdString(type);
+    //    qDebug()<<"type="<<QString::fromStdString(type);
     assert(T.type()==CV_64F);
     cv::Mat pointMat(3,1,CV_64FC1);
     cv::Mat newPointMat;
@@ -890,7 +961,7 @@ bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackId
     srcPt.push_back(of.rect.tl());
     srcPt.push_back(of.rect.br());
     srcPt.push_back(of.pos);
-    for(int i=0;i<3;i++){
+    for(uint i=0;i<3;i++){
         pointMat.at<double>(0,0)=srcPt[i].x;
         pointMat.at<double>(1,0)=srcPt[i].y;
         pointMat.at<double>(2,0)=1.0f;
@@ -920,10 +991,10 @@ void SplitAndMerge::dump()
     prev_input=prev_imgIt->first.clone();
     prev_mask=prev_imgIt->second.clone();
     //blob
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Rect_t r=fv[i].rect;
         string idxstr=boost::lexical_cast<string>(i);
-//        string title="index="+idxstr;
+        //        string title="index="+idxstr;
         string title=idxstr;
         yzbxlib::annotation(input,r,title);
         rectangle(input,r,Scalar(0,0,255),3,8);
@@ -931,7 +1002,7 @@ void SplitAndMerge::dump()
     }
 
     //object
-    for(int i=0;i<data->tracks.size();i++){
+    for(uint i=0;i<data->tracks.size();i++){
         Rect_t r=data->tracks[i]->feature->rect;
         Index_t trackIdx=data->tracks[i]->track_id;
         string idxstr=boost::lexical_cast<string>(trackIdx);
@@ -1021,12 +1092,12 @@ bool HungarianAssignment::run()
         //vector<featureVectorIdx>
         vector<Index_t> unMatchedBlobs;
 
-        for(int i=0;i<m;i++){
+        for(uint i=0;i<m;i++){
             if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
                 unMatchedObjects.push_back(i);
             }
         }
-        for(int j=0;j<n;j++){
+        for(uint j=0;j<n;j++){
             if(mMatchedBlobSet.find(j)==mMatchedBlobSet.end()){
                 unMatchedBlobs.push_back(j);
             }
@@ -1037,8 +1108,8 @@ bool HungarianAssignment::run()
         assert(N>0&&M>0);
 
         distMatrix_t Cost(N * M);
-        for(int i=0;i<unMatchedObjects.size();i++){
-            for(int j=0;j<unMatchedBlobs.size();j++){
+        for(uint i=0;i<unMatchedObjects.size();i++){
+            for(uint j=0;j<unMatchedBlobs.size();j++){
                 Cost[i+j*N]=calcDist(std::make_shared<trackingObjectFeature>(*(data->tracks[unMatchedObjects[i]]->feature)),
                         std::make_shared<trackingObjectFeature>(fv[unMatchedBlobs[j]]),RectDist);
             }
@@ -1082,7 +1153,7 @@ bool ShowAssignment::run()
     Mat showImg=data->img_input.clone();
     //show track
     {
-        for(int i=0;i<data->tracks.size();i++){
+        for(uint i=0;i<data->tracks.size();i++){
             Rect rect=data->tracks[i]->feature->rect;
             int id=data->tracks[i]->track_id;
             string title=boost::lexical_cast<string>(id);
@@ -1093,7 +1164,7 @@ bool ShowAssignment::run()
 
     //show blob
     {
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             Rect rect=fv[i].rect;
             //            string title=boost::lexical_cast<string>(i);
             //            yzbxlib::annotation(showImg,rect,title);
@@ -1129,13 +1200,13 @@ bool OverLapAssignment::run()
 
     map<Index_t,set<Index_t>> &trackToBlobMap=data->trackToBlobSet;
     map<Index_t,set<Index_t>> &blobToTrackMap=data->blobToTrackSet;
-    for(int i=0;i<data->tracks.size();i++){
+    for(uint i=0;i<data->tracks.size();i++){
         Rect_t ra=data->tracks[i]->GetPredictRect();
         int lifetime=data->tracks[i]->get_lifetime();
         if(lifetime<data->param.MaxFreshObjectLifeTime||
                 data->tracks[i]->status!=NORMAL_STATUS) continue;
 
-        for(int j=0;j<fv.size();j++){
+        for(uint j=0;j<fv.size();j++){
             Rect_t rb=fv[j].rect;
 
             //TODO add some check
@@ -1192,7 +1263,7 @@ void FilterDeleteObjectToDump::dumpTracjectoryAfterFilter(int trackIdx)
             assert(false);
         }
         QTextStream out(&file);
-        for(int i=0;i<n;i++){
+        for(uint i=0;i<n;i++){
             if(vec_status[i]!=MISSING_STATUS){
                 QStringList line;
                 int x=(int)rects[i].x;
@@ -1212,7 +1283,7 @@ void FilterDeleteObjectToDump::dumpTracjectoryAfterFilter(int trackIdx)
 
 bool RestOverLapAssignment::run()
 {
-
+    return true;
 }
 
 bool SaveToVideo::run()
@@ -1223,10 +1294,10 @@ bool SaveToVideo::run()
     Mat img_input=data->img_input.clone();
     Mat img_fg;
     cvtColor(data->img_fg,img_fg,CV_GRAY2BGR);
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Rect_t r=fv[i].rect;
         string idxstr=boost::lexical_cast<string>(i);
-//        string title="index="+idxstr;
+        //        string title="index="+idxstr;
         string title=idxstr;
         yzbxlib::annotation(img_input,r,title);
         rectangle(img_input,r,Scalar(0,0,255),3,8);
@@ -1252,6 +1323,227 @@ bool SaveToVideo::run()
     videoWriter<<data->imgToSave;
 
     return true;
+}
+
+bool Countor::run()
+{
+    if(data->fvlist.size()<2){
+        return false;
+    }
+
+    initLine();
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    vector<trackingObjectFeature> &prev_fv=*(std::prev(data->fvlist.end(),2));
+
+    if(fv.empty()||prev_fv.empty())
+    {
+        return true;
+    }
+
+    cv::Mat gray,prev_gray;
+    {
+        auto it=std::prev(data->imglist.end(),2);
+        cv::cvtColor(data->img_input,gray,CV_BGR2GRAY);
+        cv::cvtColor(it->first,prev_gray,CV_BGR2GRAY);
+    }
+
+    TermCriteria termcrit(CV_TERMCRIT_ITER|CV_TERMCRIT_EPS, 20, 0.03);
+    Size subPixWinSize(10,10), winSize(31,31);
+    const int MAX_COUNT = 500;
+    vector<Point_KLT> points[2];
+
+    goodFeaturesToTrack(prev_gray, points[0], MAX_COUNT, 0.01, 10, Mat(), 3, 0, 0.04);
+    cornerSubPix(prev_gray, points[0], subPixWinSize, Size(-1,-1), termcrit);
+
+    vector<uchar> status;
+    vector<float> err;
+    calcOpticalFlowPyrLK(prev_gray, gray, points[0], points[1], status, err, winSize,
+            3, termcrit, 0, 0.001);
+    uint k=0;
+    Mat image=data->img_input.clone();
+    for(int i=0; i < points[1].size(); i++ )
+    {
+        circle(image, points[1][i], 5, Scalar(255,255,255), -1, 8);
+        if( !status[i] )
+            continue;
+
+        points[0][k]=points[0][i];
+        points[1][k++] = points[1][i];
+
+        circle(image,points[1][i], 3, Scalar(0,255,0), -1, 8);
+        line(image,points[0][i],points[1][i],Scalar(0,0,255),3,8);
+    }
+    points[0].resize(k);
+    points[1].resize(k);
+
+    // for matchNum > 255
+    cv::Mat matchMat(prev_fv.size(),fv.size(),CV_8UC1);
+    matchMat=Scalar::all(0);
+    for(int i=0;i<k;i++){
+        Point2i p=points[1][i];
+        Point2i prev_p=points[0][i];
+        int matchMat_x=-1,matchMat_y=-1;
+        for(uint i=0;i<prev_fv.size();i++){
+            cv::Mat mask=prev_fv[i].mask;
+
+            assert(!mask.empty());
+            if(mask.at<uchar>(prev_p.y,prev_p.x)==255){
+                matchMat_y=i;
+                break;
+            }
+        }
+        for(uint i=0;i<fv.size();i++){
+            cv::Mat mask=fv[i].mask;
+
+            assert(!mask.empty());
+            if(mask.at<uchar>(p.y,p.x)==255){
+                matchMat_x=i;
+                break;
+            }
+        }
+
+        if(matchMat_x==-1||matchMat_y==-1){
+            //out of mask
+        }
+        else{
+            //            Index_t prev_blobIdx=matchMat_y;
+            //            Index_t blobIdx=matchMat_x;
+
+            matchMat.at<uchar>(matchMat_y,matchMat_x)+=((uchar)1);
+        }
+    }
+
+    for(int i=0;i<matchMat.rows;i++){
+        for(int j=0;j<matchMat.cols;j++){
+            uchar m=matchMat.at<uchar>(i,j);
+            if(m>data->param.MatchNumThreshold){
+                Point_t p=fv[j].pos;
+                Point_t prev_p=prev_fv[i].pos;
+                double A,B,C;
+                A=B=C=0.0;
+                getABC(A,B,C);
+                if(yzbxlib::isLineCrossed(p,prev_p,A,B,C)){
+                    count++;
+                }
+            }
+        }
+    }
+    return true;
+}
+
+void Countor::initLine()
+{
+    if(isLineInited){
+        return;
+    }
+
+    center.y=data->img_input.rows*0.5f;
+    center.x=data->img_input.cols*0.5f;
+    angle=0.0;
+
+    bool loop=true;
+    while(loop){
+        dump();
+        int key=waitKey(0);
+        switch (key) {
+        case 'r':
+            angle=angle-1;
+            cout<<"angle ="<<angle;
+            break;
+        case 'R':
+            angle=angle+1;
+            cout<<"angle ="<<angle;
+            break;
+        case 'q':
+        case 'Q':
+            loop=false;
+            break;
+        default:
+            cout<<"press key is "<<key<<endl;
+            cout<<"press r/R to rotate line"<<endl;
+            cout<<"press q/Q to save and quit line"<<endl;
+            break;
+        }
+    }
+
+    isLineInited=true;
+}
+
+void Countor::getABC(double &A, double &B, double &C)
+{
+    if((int)angle==0||(int)angle==180){
+        A=0;
+        B=1;
+        C=-center.y;
+    }
+    else if((int)angle==90||(int)angle==270){
+        A=1;
+        B=0;
+        C=-center.x;
+    }
+    else{
+        double radian=angle*M_PI/180.0;
+        A=std::tan(radian);
+        B=1;
+        C=-center.y-A*center.x;
+    }
+}
+
+void Countor::getBoundaryPoint(Point &p1, Point &p2)
+{
+    if((int)angle==0||(int)angle==180){
+        p1.x=0;
+        p1.y=center.y;
+
+        p2.x=data->img_input.cols;
+        p2.y=center.y;
+    }
+    else if( ((int)angle==90) || ((int)angle==270) ){
+        p1.x=center.x;
+        p1.y=0;
+
+        p2.x=center.x;
+        p2.y=data->img_input.rows;
+    }
+    else{
+        double row=data->img_input.rows;
+        double col=data->img_input.cols;
+        //        double rad1=atan2(center.y,cols-center.x);
+        //        double rad2=M_PI-atan2(center.y,-center.x);
+        //        double rad3=2*M_PI-rad2;
+        //        double rad4=2*M_PI-rad1;
+
+        double radian=angle*M_PI/180.0;
+        double A=std::tan(radian);
+        //        if(radian<rad1){
+        //            p1.x=cols;
+        //        }
+
+        if(2*center.x>col){
+            Point_t p(0,center.y+A*center.x);
+            Point p1((int)round(center.x),(int)round(center.y));
+            Point p2((int)round(p.x),(int)round(p.y));
+            clipLine(Rect(0,0,row,col),p1,p2);
+        }
+        else{
+            Point_t p(col,center.y+A*(center.x-col));
+            Point p1((int)round(center.x),(int)round(center.y));
+            Point p2((int)round(p.x),(int)round(p.y));
+            clipLine(Rect(0,0,row,col),p1,p2);
+        }
+    }
+}
+
+void Countor::dump()
+{
+    Point p1,p2;
+    getBoundaryPoint(p1,p2);
+    Mat img=data->img_input.clone();
+    cv::line(img,p1,p2,Scalar(0,0,255),3,8);
+
+    string text="#"+boost::lexical_cast<string>(count);
+    yzbxlib::annotation(img,Rect(20,20,10,10),text);
+    yzbxlib::showImageInWindow("countor",img);
 }
 
 }

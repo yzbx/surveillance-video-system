@@ -15,7 +15,7 @@ void BGSDetector::run()
     bool gameover=false;
     while(!gameover){
         cout<<"frameNum= "<<mainData->frameNum<<endl;
-        for(int i=0;i<pipeline.size();i++){
+        for(uint i=0;i<pipeline.size();i++){
 
             bool flag=pipeline[i]->run();
 
@@ -28,7 +28,7 @@ void BGSDetector::run()
 
 void BGSDetector::runAll()
 {
-    for(int i=0;i<mainData->globalVideoList.size();i++){
+    for(uint i=0;i<mainData->globalVideoList.size();i++){
         QString currentVideo=mainData->globalVideoList[i];
         mainData->setCurrentVideo(currentVideo);
         pipeline.clear();

@@ -102,7 +102,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
 
         double area = moms.m00;
         of.size=area;
-//BUG bad for bgs error.
+// bad for bgs error.
 //        if(area>maxObjectSize){
 //            maxObjectSize=area;
 //            params.minArea=std::max(params.minArea,(float)maxObjectSize/20);
@@ -195,7 +195,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
 
             ObjectLocalFeatureMatch match;
             match.getLIFMat(of.LIFMat,of.LIFPos,image,mask_i);
-            for(int i=0;i<of.LIFPos.size();i++){
+            for(uint i=0;i<of.LIFPos.size();i++){
                 Point_t p=of.LIFPos[i];
                 int x=(int)p.x;
                 int y=(int)p.y;
@@ -208,7 +208,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         }
 
         if(UseKLT){
-            for(int i=0;i<KLTPoints.size();i++){
+            for(uint i=0;i<KLTPoints.size();i++){
                 Point p=KLTPoints[i];
                 if(mask_i.at<uchar>(p.y,p.x)==255){
                     of.KLTPos.push_back(p);
@@ -240,7 +240,7 @@ void BlobDetector::showBlobFeature(const Mat &input, const Mat &mask, const trac
     const vector<Point_t> &ps=of.LIFPos;
     rectangle(showIn,of.rect,Scalar(0,0,255),3);
     rectangle(showFg,of.rect,Scalar(255),3);
-    for(int i=0;i<ps.size();i++){
+    for(uint i=0;i<ps.size();i++){
         circle(showIn,ps[i],3,Scalar(255,0,0),3);
     }
 

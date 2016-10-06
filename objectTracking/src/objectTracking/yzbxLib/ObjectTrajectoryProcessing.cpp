@@ -42,7 +42,7 @@ void ObjectTrajectoryProcessing::loadObjects(QString inputFile)
         int id=numstrList[1].toInt();
 
         track_t rect[4];
-        for(int i=2;i<6;i++){
+        for(uint i=2;i<6;i++){
             rect[i-2]=numstrList[i].toFloat();
         }
 
@@ -65,7 +65,7 @@ void ObjectTrajectoryProcessing::filterObjects()
 
 void ObjectTrajectoryProcessing::dumpObjects(QString outputFile)
 {
-
+    (void)outputFile;
 }
 
 

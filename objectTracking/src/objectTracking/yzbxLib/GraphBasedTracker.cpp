@@ -15,7 +15,7 @@ void GraphBasedTracker::tracking(const Mat &img_input, const Mat &img_fg)
 //    start();
     //run in the same thread
     imageList.push_back(std::make_pair(img_input,img_fg));
-    if(imageList.size()>maxlistLength){
+    if((int)imageList.size()>maxlistLength){
         imageList.erase(imageList.begin());
     }
 
@@ -26,8 +26,8 @@ void GraphBasedTracker::tracking(const Mat &img_input, const Mat &img_fg)
 
 //    qDebug()<<"imageList.size()="<<imageList.size();
 //    qDebug()<<"featureGraph.size()="<<featureGraph.size();
-    assert(imageList.size()==featureGraph.size());
-    assert(featureGraph.size()==featureGraph.graph.size());
+    assert((int)imageList.size()==featureGraph.size());
+    assert(featureGraph.size()==(int)featureGraph.graph.size());
     //if img_input donot contain foreground, empty featureVector need be allowed
     //deal with the miss/disappear
     if(featureGraph.size()>=2){
@@ -46,7 +46,7 @@ void GraphBasedTracker::tracking(const Mat &img_input, const Mat &img_fg)
 void GraphBasedTracker::run()
 {
     imageList.push_back(std::make_pair(img_input,img_fg));
-    if(imageList.size()>maxlistLength){
+    if((int)imageList.size()>maxlistLength){
         imageList.erase(imageList.begin());
     }
 
@@ -57,8 +57,8 @@ void GraphBasedTracker::run()
 
     qDebug()<<"imageList.size()="<<imageList.size();
     qDebug()<<"featureGraph.size()="<<featureGraph.size();
-    assert(imageList.size()==featureGraph.size());
-    assert(featureGraph.size()==featureGraph.graph.size());
+    assert((int)imageList.size()==featureGraph.size());
+    assert(featureGraph.size()==(int)featureGraph.graph.size());
     //if img_input donot contain foreground, empty featureVector need be allowed
     //deal with the miss/disappear
     if(featureGraph.size()>=2){
@@ -115,13 +115,13 @@ void GraphBasedTracker::updateGraphAssociation(){
 
             if(sortedWeights[0]<dist_thres){
                 int index=std::find(weights.begin(),weights.end(),sortedWeights[0])-weights.begin();
-                assert(index<posVector.size());
+                assert(index<(int)posVector.size());
                 auto edge=std::make_pair(posVector[index],sortedWeights[0]);
                 node2->edges.push_back(edge);
             }
             if(sortedWeights[1]<dist_thres){
                 int index=std::find(weights.begin(),weights.end(),sortedWeights[1])-weights.begin();
-                assert(index<posVector.size());
+                assert(index<(int)posVector.size());
                 auto edge=std::make_pair(posVector[index],sortedWeights[1]);
                 node2->edges.push_back(edge);
             }
@@ -234,8 +234,8 @@ track_t GraphBasedTracker::calcMatchedFeatureNum(std::shared_ptr<trackingObjectF
     track_t pathWeight=0.0;
     vector<DMatch> &good_matches=matcher.global_good_matches;
     for(auto match=good_matches.begin();match!=good_matches.end();match++){
-        assert(match->queryIdx<matcher.global_keypoints_1.size());
-        assert(match->trainIdx<matcher.global_keypoints_2.size());
+        assert(match->queryIdx<(int)matcher.global_keypoints_1.size());
+        assert(match->trainIdx<(int)matcher.global_keypoints_2.size());
         KeyPoint &kp1=matcher.global_keypoints_1[match->queryIdx];
         KeyPoint &kp2=matcher.global_keypoints_2[match->trainIdx];
 
@@ -323,6 +323,7 @@ bool GraphBasedTracker::splitOrNewTrackId(pNode nextHeadNode){
 }
 
 void GraphBasedTracker::dumpSplitInformation(pNode headNode,pNode nextNode){
-
+    (void)headNode;
+    (void)nextNode;
 }
 

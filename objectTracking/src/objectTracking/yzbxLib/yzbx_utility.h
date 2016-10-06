@@ -18,6 +18,8 @@
     auto endTime = cv::getTickCount();   \
     std::cout << #x << " " << (endTime - startTime) * cv::getTickFrequency() << std::endl; }
 
+#define GET_CLASS_NAME string getClassName(){return (string)typeid(this).name();}
+
 namespace yzbxlib
 {
 QString getAbsoluteFilePath(QString currentPathOrFile, QString fileName);
@@ -46,6 +48,7 @@ Rect_t getSubRect(Rect_t mergedRect,Rect_t subRect);
 
 //return rect distance
 track_t getOverlapDist(Rect_t ra,Rect_t rb);
+Point_t rectCenter(Rect_t r);
 
 //from input to output
 QString getOutputFileName(QString inputFileName);
@@ -56,6 +59,13 @@ void csvToTrajectory(QString line,int &frameNum,int &id,Rect &r);
 
 bool rectOnBoundary(Rect r, Mat &img);
 void dumpMap(std::map<Index_t,std::set<Index_t>> &m);
+void moveMaskAndFitRect(cv::Mat &mask,Point2i displace,Rect_t rect);
+
+/*
+ * input: p,prev_p, line f(x,y)=Ax+By+C=0;
+ * method: f(p)*f(prev_p)>0 || f(p)==0&&f(prev_p)!=0
+ */
+bool isLineCrossed(Point_t p,Point_t prev_p,double A,double B,double C);
 }
 
 //set qt sync with file.
@@ -121,4 +131,5 @@ void doubleThresholdConnect(const Mat &highThresholdMask,const Mat &lowThreshold
 #else
 #define LOG_MESSAGE(x)
 #endif
+
 #endif // UTILITY_HPP

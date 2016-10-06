@@ -7,6 +7,7 @@ QYzbxTrackingFeature::QYzbxTrackingFeature()
 
 void QYzbxTrackingFeature::getObjects(const Mat &img_input, const Mat &fgMask, FrameFeature &frameFeatures)
 {
+    (void)img_input;
     cv::Mat labelImg,binFgMask;
     vector<int> labelVector;
 

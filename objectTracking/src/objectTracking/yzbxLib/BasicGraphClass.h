@@ -58,7 +58,6 @@ public:
                         continue;
                     }
                     else if(node->graph_pos.blob_id==pos.blob_id){
-                        //FIXME from iterator to shared_ptr
                         return std::make_shared<BasicGraphNode>(*node);
                     }
                     else{
@@ -99,7 +98,7 @@ public:
         graph.push_back(nodeVector);
     }
 
-    void maintainGraphSize(int maxLength){
+    void maintainGraphSize(uint maxLength){
         if(graph.size()>maxLength){
             graph.erase(graph.begin());
         }
@@ -202,7 +201,7 @@ public:
             index++;
         }
 
-        for(int i=0;i<edgeStrList.size();i++){
+        for(uint i=0;i<edgeStrList.size();i++){
             in<<edgeStrList[i];
         }
 

@@ -3,7 +3,7 @@
 #include "yzbx_utility.h"
 #include "DataDrivePipeLine.h"
 
-class ObjectCount : DataDrivePipeLine
+class ObjectCount : public DataDrivePipeLine
 {
 public:
     ObjectCount(QString configFile);

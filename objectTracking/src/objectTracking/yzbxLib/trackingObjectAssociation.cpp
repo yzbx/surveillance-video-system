@@ -8,7 +8,6 @@ TrackingObjectAssociation::TrackingObjectAssociation()
 void TrackingObjectAssociation::process(TrackingStatus *status)
 {
     DirectedGraph g;
-    float missCost=0.7;
     int vertexId=0;
 
     std::list<FrameFeature>::iterator it=status->frameFeatureList.begin();
@@ -26,17 +25,16 @@ void TrackingObjectAssociation::process(TrackingStatus *status)
 void TrackingObjectAssociation::adjecentObjectAssociation(FFIter it, FFIter next,DirectedGraph &g, int vertexId)
 {
     int m=it->features.size();
-    int n=next->features.size();
-    for(int i=0;i<it->features.size();i++){
+    for(uint i=0;i<it->features.size();i++){
 
         vector<float> weights;
-        for(int j=0;j<next->features.size();j++){
+        for(uint j=0;j<next->features.size();j++){
             float weight=getObjectAssociationWeight(it->features[i],next->features[j]);
             weights.push_back(weight);
         }
 
         vector<bool> filter=weightFilter(weights);
-        for(int j=0;j<filter.size();j++){
+        for(uint j=0;j<filter.size();j++){
             if(filter[j]){
                 boost::add_edge(vertexId+i,vertexId+m+j,weights[j],g);
             }

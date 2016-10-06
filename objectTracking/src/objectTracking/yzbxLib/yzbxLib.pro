@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 CONFIG +=c++14
-QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3"
+QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3 -Wall -Wextra -Wno-sign-compare -Wno-reorder -Wtype-limits"
 QMAKE_LFLAGS +="-lgcov --coverage"
 
 QT       += widgets sql svg
@@ -53,7 +53,8 @@ SOURCES += qyzbxlib.cpp \
     CamShiftTrackingDemo.cpp \
     DataDriveTracker.cpp \
     ObjectRecord.cpp \
-    ObjectCount.cpp
+    ObjectCount.cpp \
+    DataDriveFunction001.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -97,7 +98,8 @@ HEADERS += qyzbxlib.h\
     CamShiftTrackingDemo.h \
     DataDriveTracker.h \
     ObjectRecord.h \
-    ObjectCount.h
+    ObjectCount.h \
+    DataDriveFunction001.h
 
 unix {
     target.path = /usr/lib

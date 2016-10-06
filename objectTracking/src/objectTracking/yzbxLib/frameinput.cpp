@@ -79,7 +79,7 @@ void FrameInput::initBgs(IBGS *ibgs, int initFrameNum)
     }
 
     cv::Mat inputFrame,img_foreground,img_background;
-    for(int i=0;i<initFrameNum;i++){
+    for(uint i=0;i<initFrameNum;i++){
         getNextFrame(this->videoFilePath,inputFrame);
         ibgs->process(inputFrame,img_foreground,img_background);
     }

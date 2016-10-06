@@ -28,9 +28,9 @@ public:
         vector<KeyPoint> keypoints;
         detector->detect(img, keypoints,mask);
         kps.swap(keypoints);
-        //NOTE detect(img,keypoints,mask) failed, keypoints out of mask!!!
+        // detect(img,keypoints,mask) failed, keypoints out of mask!!!
 //        assert(mask.channels()==1);
-//        for(int i=0;i<keypoints.size();i++){
+//        for(uint i=0;i<keypoints.size();i++){
 //            Point2f p=keypoints[i].pt;
 ////            assert(mask.at<uchar>(p.y,p.x)==255);
 //            if(mask.at<uchar>(p.y,p.x)!=255){
@@ -52,7 +52,7 @@ public:
 //            assert(keypoints[0].response>=keypoints[1].response);
 
 //            const int n=keypoints.size();
-//            for(int i=0;i<MaxFeaturePointNum;i++){
+//            for(uint i=0;i<MaxFeaturePointNum;i++){
 //                kps.push_back(keypoints[i]);
 //            }
 //        }
@@ -74,7 +74,7 @@ public:
         matcher->knnMatch(descriptors_1,descriptors_2,knn_matchesA,2);
         matcher->knnMatch(descriptors_2,descriptors_1,knn_matchesB,2);
 
-        for(int i=0;i<knn_matchesA.size();i++){
+        for(uint i=0;i<knn_matchesA.size();i++){
             if(knn_matchesA[i].size()>1){
                 assert(knn_matchesA[i][0].distance<=knn_matchesA[i][1].distance);
                 if(knn_matchesA[i][0].distance/knn_matchesA[i][1].distance<0.8){
@@ -83,7 +83,7 @@ public:
             }
         }
 
-        for(int i=0;i<knn_matchesB.size();i++){
+        for(uint i=0;i<knn_matchesB.size();i++){
             if(knn_matchesB[i].size()>1){
                 if(knn_matchesB[i][0].distance/knn_matchesB[i][1].distance<0.8){
                     sym_matchesB.push_back(knn_matchesB[i][0]);
@@ -91,8 +91,8 @@ public:
             }
         }
 
-        for(int i=0;i<sym_matchesA.size();i++){
-            for(int j=0;j<sym_matchesB.size();j++){
+        for(uint i=0;i<sym_matchesA.size();i++){
+            for(uint j=0;j<sym_matchesB.size();j++){
                 if(sym_matchesA[i].queryIdx==sym_matchesB[j].trainIdx&&
                         sym_matchesA[i].trainIdx==sym_matchesB[j].queryIdx){
                     good_matches.push_back(sym_matchesA[i]);
@@ -174,10 +174,10 @@ public:
         if(!LIFMat.empty()) LIFMat.release();
         getDescriptorMat_Step2(img1,keypoints_1,LIFMat);
         if(!LIFPos.empty()) LIFPos.clear();
-        for(int i=0;i<keypoints_1.size();i++){
+        for(uint i=0;i<keypoints_1.size();i++){
             LIFPos.push_back(keypoints_1[i].pt);
         }
-        assert(LIFPos.size()==LIFMat.rows);
+        assert((int)LIFPos.size()==LIFMat.rows);
     }
 
     double global_match_ratio=0.8;

@@ -8,15 +8,6 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 
-#include <dlib/svm_threaded.h>
-#include <dlib/gui_widgets.h>
-#include <dlib/image_processing.h>
-#include <dlib/data_io.h>
-#include <dlib/opencv.h>
-#include <dlib/image_processing/frontal_face_detector.h>
-#include <dlib/image_processing/render_face_detections.h>
-typedef dlib::scan_fhog_pyramid<dlib::pyramid_down<6> > image_scanner_type;
-
 namespace Ui {
 class MainWindow;
 }

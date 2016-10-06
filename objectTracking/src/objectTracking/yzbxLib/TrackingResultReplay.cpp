@@ -37,7 +37,7 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
         QString line = in.readLine();
         QStringList strlist=line.split(",",QString::SkipEmptyParts);
         float numbers[6];
-        for(int i=0;i<strlist.size();i++){
+        for(uint i=0;i<strlist.size();i++){
             QString numstr=strlist.at(i);
             bool okay;
             numbers[i]=numstr.toFloat(&okay);
@@ -72,12 +72,12 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
         if(img_input.empty()){
             break;
         }
-        //NOTE must show here, otherwise there will have some error!
+        // must show here, otherwise there will have some error!
         cv::imshow("img_input",img_input);
 
         Rect_t r(numbers[2],numbers[3],numbers[4],numbers[5]);
 
-        //NOTE objectID should be continuously
+        // objectID should be continuously
         int readToObjectID=boost::lexical_cast<int>(numbers[1]);
         if(idSet.find(readToObjectID)==idSet.end()){
             object ob(readToFrameNum,r,readToObjectID);
@@ -85,7 +85,7 @@ void TrackingResultReplay::process(QString videoFilePath, QString recordFilePath
             idSet.insert(readToObjectID);
         }
         else{
-            for(int i=0;i<objects.size();i++){
+            for(uint i=0;i<objects.size();i++){
                 if(readToObjectID==objects[i].ID){
                     objects[i].add(readToFrameNum,r);
                     break;
@@ -135,7 +135,7 @@ void TrackingResultReplay::replay(const cv::Mat &img_input,std::vector<object> &
             img_fg=global_img_fg.clone();
         }
     }
-    for(int i=0;i<objects.size();i++){
+    for(uint i=0;i<objects.size();i++){
         if(readToFrameNum==objects[i].frameNum){
             //void rectangle(Mat& img, Rect rec, const Scalar& color, int thickness=1, int lineType=LINE_8, int shift=0 )
             Rect_t r=objects[i].trace.back();

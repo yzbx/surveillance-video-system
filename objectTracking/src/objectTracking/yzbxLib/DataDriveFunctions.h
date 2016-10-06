@@ -1,13 +1,17 @@
 #ifndef DATADRIVEFUNCTIONS_H
 #define DATADRIVEFUNCTIONS_H
 
+#include "DataDriveFunction001.h"
 #include "DataDriveMain.h"
 #include "yzbx_config.h"
 #include <memory>
+
 namespace DataDrive {
+
 class Base
 {
 public:
+    GET_CLASS_NAME
     Base(std::shared_ptr<DataDriveMain> data){
         this->data=data;
     }
@@ -23,30 +27,35 @@ public:
 
 class Input:public Base{
 public:
+    GET_CLASS_NAME
     Input(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class Bgs:public Base{
 public:
+    GET_CLASS_NAME
     Bgs(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class BlobFeature:public Base{
 public:
+    GET_CLASS_NAME
     BlobFeature(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class Tracker:public Base{
 public:
+    GET_CLASS_NAME
     Tracker(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class KLTTracker:public Base{
 public:
+    GET_CLASS_NAME
     KLTTracker(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
@@ -54,18 +63,21 @@ public:
 
 class MeanShiftTracker:public Base{
 public:
+    GET_CLASS_NAME
     MeanShiftTracker(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class CamShiftTracker:public Base{
 public:
+    GET_CLASS_NAME
     CamShiftTracker(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class KLTAssignment:public Base{
 public:
+    GET_CLASS_NAME
     KLTAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
     void dump();
@@ -73,18 +85,21 @@ public:
 
 class OverLapAssignment:public Base{
 public:
+    GET_CLASS_NAME
     OverLapAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class RestOverLapAssignment:public Base{
 public:
+    GET_CLASS_NAME
     RestOverLapAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class HungarianAssignment:public Base{
 public:
+    GET_CLASS_NAME
     HungarianAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     track_t calcDist(std::shared_ptr<trackingObjectFeature> of1,
                      std::shared_ptr<trackingObjectFeature> of2,int costType=PosDist);
@@ -94,6 +109,7 @@ public:
 
 class ShowAssignment:public Base{
 public:
+    GET_CLASS_NAME
     ShowAssignment(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
@@ -101,14 +117,15 @@ public:
 
 class SplitAndMerge:public Base{
 public:
+    GET_CLASS_NAME
     SplitAndMerge(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
     void handleOneToOneObjects();
     void handleNewObjects();
     void handleMissedObjects();
-    //NOTE split first, then merge!!!
+    // split first, then merge!!!
     void handleOneToNObjects();
-    //NOTE merge later, split first!!!
+    // merge later, split first!!!
     void handleNToOneObjects();
     //transform of.rect and of.pos, return true; else do nothing and return false.
     bool AffineTransform(const Index_t blobIdx,const Index_t trackIdx,trackingObjectFeature &of);
@@ -117,10 +134,12 @@ public:
 
 class FilterDeleteObjectToDump:public Base{
 public:
+    GET_CLASS_NAME
     FilterDeleteObjectToDump(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 private:
     bool isGoodObject(Id_t id){
+        (void)id;
         return true;
     }
     void dumpTracjectoryAfterFilter(int trackIdx);
@@ -128,12 +147,14 @@ private:
 
 class FilterBadTrack:public Base{
 public:
+    GET_CLASS_NAME
     FilterBadTrack(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class SaveToVideo:public Base{
 public:
+    GET_CLASS_NAME
     SaveToVideo(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
     bool firstTime=true;
@@ -141,6 +162,22 @@ public:
     VideoWriter videoWriter;
 };
 
+class Countor:public Base{
+public:
+    GET_CLASS_NAME
+    Countor(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
+
+    Point_t center;
+    double angle=0;
+
+    bool isLineInited=false;
+    void initLine();
+    void getABC(double &A,double &B,double &C);
+    void getBoundaryPoint(Point &p1, Point &p2);
+    void dump();
+    int count=0;
+};
 
 }
 #endif // DATADRIVEFUNCTIONS_H

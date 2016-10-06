@@ -1,6 +1,6 @@
 #include "singleobjecttracker.h"
 
-singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID, int frameNum):
+singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID, int frameNum, int img_width, int img_height):
     track_id(trackID),
     skipped_frames(0),
     catch_frames(1),
@@ -11,6 +11,8 @@ singleObjectTracker::singleObjectTracker(const trackingObjectFeature &of, track_
     firstSeePos(of.pos),
     lastSeePos(of.pos),
     prediction(of.pos),
+    img_width(img_width),
+    img_height(img_height),
     KF(of.pos, dt, Accel_noise_mag)
 {
     feature=std::make_unique<trackingObjectFeature>(trackingObjectFeature());
@@ -87,8 +89,14 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
         Rect_t lastRect=rects.back();
         Point_t rectCenter(lastRect.x+lastRect.width/2,lastRect.y+lastRect.height/2);
         Point_t diff=prediction-rectCenter;
-        //BUG may out of image range!
-        rects.push_back(Rect_t(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height));
+        // may out of image range!
+        Rect_t newRect(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height);
+        if(newRect.x<0) newRect.x=0;
+        else if(newRect.x>=img_width) newRect.x=img_width-1;
+
+        if(newRect.y<0) newRect.y=0;
+        else if(newRect.y>=img_height) newRect.y=img_height-1;
+        rects.push_back(newRect);
     }
 
     if (trace.size() > max_trace_length)
@@ -141,7 +149,7 @@ void singleObjectTracker::MissUpdate(int frameNum)
     skipped_frames++;
     Rect_t lastRect=rects.back();
     Point_t diff=prediction-feature->pos;
-    //BUG may out of image range!
+    // may out of image range!
     rects.push_back(Rect_t(lastRect.x+diff.x,lastRect.y+diff.y,lastRect.width,lastRect.height));
 
     trace.push_back(prediction);
@@ -192,6 +200,20 @@ void singleObjectTracker::NToOneUpdate(trackingObjectFeature &of, int frameNum)
     status=NToOne_STATUS;
     vec_status.push_back(status);
     frames.push_back(frameNum);
+    Rect_t old_rect=feature->rect;
+    Point_t p=yzbxlib::rectCenter(of.rect)-yzbxlib::rectCenter(old_rect);
+    Point2i displace((int)round(p.x),(int)round(p.y));
+
+    //move mask to new position by displace and fit in size for of.rect
+//    yzbxlib::moveMaskAndFitRect(of.mask,displace,of.rect);
+//    Mat showMat;
+//    cvtColor(of.mask,showMat,CV_GRAY2BGR);
+//    rectangle(showMat,old_rect,Scalar(255,0,0),2,8);
+//    rectangle(showMat,of.rect,Scalar(0,0,255),2,8);
+//    yzbxlib::showImageInWindow("move mask",showMat);
+
+//    waitKey(0);
+
     feature->copy(of);
     rects.push_back(of.rect);
     catch_frames+=(1+skipped_frames);

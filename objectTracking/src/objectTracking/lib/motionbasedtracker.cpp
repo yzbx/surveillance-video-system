@@ -8,9 +8,7 @@ MotionBasedTracker::MotionBasedTracker()
 void MotionBasedTracker::process(QString configFile, QString videoFile, TrackingStatus *status)
 {
     qDebug()<<"MotionBasedTracking .................";
-    IBGS *ibgs;
-    QYzbxTrackingFeature *maskFeature=new QYzbxTrackingFeature;
-    maskFeature=new QYzbxTrackingFeature;
+//    maskFeature=new QYzbxTrackingFeature;
 
     boost::property_tree::ptree pt;
     boost::property_tree::ini_parser::read_ini(configFile.toStdString(),pt);
@@ -62,7 +60,7 @@ void MotionBasedTracker::processOne(const Mat &img_input, Mat &img_foreground, M
         //        toa.process(status);
 
         qDebug()<<"dump frameFeature *********************************";
-        for(int i=0;i<frameFeature.features.size();i++){
+        for(uint i=0;i<frameFeature.features.size();i++){
             std::cout<<"["<<frameFeature.features[i].pos<<" "<<frameFeature.features[i].size<<"],";
         }
         std::cout<<std::endl;
@@ -70,17 +68,17 @@ void MotionBasedTracker::processOne(const Mat &img_input, Mat &img_foreground, M
         singleFrameTracking(frameFeature);
 
         cv::Mat img_tracking=img_input.clone();
-        for (int i=0;i<frameFeature.features.size();i++)
+        for (uint i=0;i<frameFeature.features.size();i++)
         {
             cv::circle(img_tracking, frameFeature.features[i].pos, 3, cv::Scalar(0, 255, 0), 1, CV_AA);
         }
 
 
-        for (int i = 0; i < tracks.size(); i++)
+        for (uint i = 0; i < tracks.size(); i++)
         {
             if (tracks[i]->trace.size() > 1)
             {
-                for (int j = 0; j < tracks[i]->trace.size() - 1; j++)
+                for (uint j = 0; j < tracks[i]->trace.size() - 1; j++)
                 {
                     cv::line(img_tracking, tracks[i]->trace[j], tracks[i]->trace[j + 1], Colors[tracks[i]->TrackID % 9], 2, CV_AA);
                 }
@@ -94,7 +92,7 @@ void MotionBasedTracker::processOne(const Mat &img_input, Mat &img_foreground, M
 
 void MotionBasedTracker::objectTracking(DirectedGraph &g)
 {
-
+    (void)g;
 }
 
 void MotionBasedTracker::singleFrameTracking(FrameFeature &ff)
@@ -187,7 +185,7 @@ void MotionBasedTracker::singleFrameTracking(FrameFeature &ff)
 
     // Update Kalman Filters state
     if(ff.features.empty()){
-        for(int i=0;i<tracks.size();i++){
+        for(uint i=0;i<tracks.size();i++){
             assignment.push_back(-1);
         }
     }

@@ -10,7 +10,10 @@
 class singleObjectTracker
 {
 public:
-    singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID,int frameNum=0);
+    singleObjectTracker(const trackingObjectFeature &of, track_t dt, track_t Accel_noise_mag, size_t trackID,int frameNum=0,
+    int img_width=std::numeric_limits<int>::max(),int img_height=std::numeric_limits<int>::max());
+    int img_width;
+    int img_height;
     TKalmanFilter KF;
     int track_id;
     std::vector<Point_t> trace;
@@ -80,7 +83,7 @@ public:
         cout<<", status="<<statusStr[status];
 
 //        cout<<", frames=(";
-//        for(int i=0;i<frames.size();i++){
+//        for(uint i=0;i<frames.size();i++){
 //            cout<<frames[i]<<",";
 //        }
 //        cout<<")";

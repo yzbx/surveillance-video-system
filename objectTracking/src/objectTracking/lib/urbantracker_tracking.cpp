@@ -7,6 +7,7 @@ UrbanTracker_tracking::UrbanTracker_tracking()
 
 void UrbanTracker_tracking::process(QString configFile, QString videoFile, TrackingStatus *status)
 {
+    (void)status;
     boost::property_tree::ptree pt;
     boost::property_tree::ini_parser::read_ini(configFile.toStdString(),pt);
     QString cmd;

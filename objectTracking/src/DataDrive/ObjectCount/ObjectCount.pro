@@ -19,12 +19,11 @@ HEADERS  += MainWindow.h
 
 FORMS    += MainWindow.ui
 
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/release/ -lyzbxLib
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/debug/ -lyzbxLib
-else:unix: LIBS += -L$$OUT_PWD/../yzbxLib/ -lyzbxLib
-
-INCLUDEPATH += $$PWD/../yzbxLib
-DEPENDPATH += $$PWD/../yzbxLib
-
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += opencv bgslibrary
+
+YZBXLIB=/home/yzbx/build/build-objectTracking-Desktop_Qt_5_6_0_GCC_64bit-Debug
+YZBX_INCLUDE=/home/yzbx/git/surveillance-video-system/objectTracking/src/objectTracking
+LIBS += -L$$YZBXLIB/yzbxLib/ -lyzbxLib
+INCLUDEPATH += $$YZBX_INCLUDE/yzbxLib
+DEPENDPATH += $$YZBX_INCLUDE/yzbxLib

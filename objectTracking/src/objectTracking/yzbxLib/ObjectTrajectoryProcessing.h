@@ -27,7 +27,7 @@ private:
         auto itb=b.rects.begin();
 
         //use kalman to find weather object a in object b
-        float frameNumDif=a.rects.size()-b.rects.size();
+//        float frameNumDif=a.rects.size()-b.rects.size();
         int frameNumSame=0;
         float rectsDif=0.0;
         while(ita!=a.rects.end()&&itb!=b.rects.end()){

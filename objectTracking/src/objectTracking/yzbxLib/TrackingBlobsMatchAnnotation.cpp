@@ -35,7 +35,7 @@ void TrackingBlobsMatchAnnotation::process(int frameNum,track_t dist_thres,std::
 
         int id=numstr[1].toInt();
         track_t rect[4];
-        for(int i=0;i<4;i++){
+        for(uint i=0;i<4;i++){
             rect[i]=numstr[2+i].toFloat();
         }
         Rect_t r(rect[0],rect[1],rect[2],rect[3]);

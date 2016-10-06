@@ -21,11 +21,11 @@ void RectFloatTracker::process(const Mat &img_input, const Mat &img_fg,vector<tr
     assert(img_fg.channels()==1);
 
     imageList.push_back(std::make_pair(img_input,img_fg));
-    if(imageList.size()>maxListLength){
+    if((int)imageList.size()>maxListLength){
         imageList.pop_front();
     }
     featureVectorList.push_back(fv);
-    if(featureVectorList.size()>maxListLength){
+    if((int)featureVectorList.size()>maxListLength){
         featureVectorList.pop_front();
     }
     showKalmanFeature();
@@ -120,7 +120,7 @@ void RectFloatTracker::showKalmanFeature(){
     Mat input=imageList.back().first.clone();
     Mat fg=imageList.back().second.clone();
 
-    for(int i=0;i<tracks.size();i++){
+    for(uint i=0;i<tracks.size();i++){
         Point_t p=tracks[i]->feature->pos;
         Rect_t r=tracks[i]->feature->rect;
         //        Point_t predict_p=tracks[i]->KF.LastResult;
@@ -134,7 +134,7 @@ void RectFloatTracker::showKalmanFeature(){
         cv::rectangle(fg,r,Scalar::all(255),5);
     }
 
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         Point_t p=fv[i].pos;
         Rect_t r=fv[i].rect;
 
@@ -170,7 +170,7 @@ void RectFloatTracker::getRectOverlapAssignment_step1(){
     }
     else{
         //use kalman to predict rect
-        for(int i=0;i<tracks.size();i++){
+        for(uint i=0;i<tracks.size();i++){
             Point_t p=tracks[i]->feature->pos;
             Rect_t &r=tracks[i]->feature->rect;
             //        Point_t predict_p=tracks[i]->KF.LastResult;
@@ -180,13 +180,13 @@ void RectFloatTracker::getRectOverlapAssignment_step1(){
             r.y+=predict_p.y-p.y;
         }
 
-        for(int i=0;i<tracks.size();i++){
+        for(uint i=0;i<tracks.size();i++){
             Rect_t ra=tracks[i]->feature->rect;
             int lifetime=tracks[i]->get_lifetime();
-            if(lifetime<MaxFreshObjectLifeTime||
+            if(lifetime<(int)MaxFreshObjectLifeTime||
                     tracks[i]->status!=NORMAL_STATUS) continue;
 
-            for(int j=0;j<fv.size();j++){
+            for(uint j=0;j<fv.size();j++){
                 Rect_t rb=fv[j].rect;
 
                 //TODO add some check
@@ -200,7 +200,7 @@ void RectFloatTracker::getRectOverlapAssignment_step1(){
 
         //trackId, blobId1,blobId2
         std::map<Index_t,std::set<Index_t>> trackToSplitLater;
-        for(int i=0;i<trackToBlobMap.size();i++){
+        for(uint i=0;i<trackToBlobMap.size();i++){
             std::set<Index_t> &blobSet=trackToBlobMap[i];
             std::set<Index_t> blobToOneTrackSet;
             for(auto blob=blobSet.begin();blob!=blobSet.end();blob++){
@@ -210,14 +210,14 @@ void RectFloatTracker::getRectOverlapAssignment_step1(){
                 }
             }
             //do split and only split into two or more rects
-            //BUG split as soon as possible
+            // split as soon as possible
             if(blobToOneTrackSet.size()>=2){
                 trackToSplitLater[i]=blobToOneTrackSet;
             }
         }
 
         std::map<Index_t,std::set<Index_t>> blobToSplitLater;
-        for(int i=0;i<blobToTrackMap.size();i++){
+        for(uint i=0;i<blobToTrackMap.size();i++){
             std::set<Index_t> &trackSet=blobToTrackMap[i];
             std::set<Index_t> trackToOneBlobSet;
             for(auto track=trackSet.begin();track!=trackSet.end();track++){
@@ -228,32 +228,32 @@ void RectFloatTracker::getRectOverlapAssignment_step1(){
             }
 
             //do split and only split into two or more rects
-            //BUG split as soon as possible
+            // split as soon as possible
             if(trackToOneBlobSet.size()>=2){
                 blobToSplitLater[i]=trackToOneBlobSet;
             }
         }
 
         //split track
-        for(int i=0;i<trackToSplitLater.size();i++){
+        for(uint i=0;i<trackToSplitLater.size();i++){
             if(!trackToSplitLater[i].empty()){
                 doRectOverlap_splitTrack(i,trackToSplitLater[i]);
             }
         }
         //split blob
-        for(int i=0;i<blobToSplitLater.size();i++){
+        for(uint i=0;i<blobToSplitLater.size();i++){
             if(!blobToSplitLater[i].empty()){
                 doRectOverlap_splitBlob(i,blobToSplitLater[i]);
             }
         }
         //        //delete track
-        //        for(int i=0;i<trackToSplitLater.size();i++){
+        //        for(uint i=0;i<trackToSplitLater.size();i++){
         //            if(!trackToSplitLater[i].empty()){
         //                doRectOverlap_deleteTrack(i);
         //            }
         //        }
         //        //delete blob
-        //        for(int i=0;i<blobToSplitLater.size();i++){
+        //        for(uint i=0;i<blobToSplitLater.size();i++){
         //            if(!blobToSplitLater[i].empty()){
         //                doRectOverlap_deleteBlob(i);
         //            }
@@ -325,7 +325,7 @@ void RectFloatTracker::doRectOverlap_splitBlob(Index_t blobIdx,std::set<Index_t>
             of1.LIFColor.clear();
             of2.LIFColor.clear();
 
-            for(int i=0;i<LIFPos.size();i++){
+            for(uint i=0;i<LIFPos.size();i++){
 
                 bool flag1=yzbxlib::isPointInRect(LIFPos[i],rt1);
                 bool flag2=yzbxlib::isPointInRect(LIFPos[i],rt2);
@@ -377,7 +377,7 @@ void RectFloatTracker::doRectOverlap_splitBlob(Index_t blobIdx,std::set<Index_t>
         Rect_t rb=fv[blobIdx].rect;
         for(auto track=trackset.begin();track!=trackset.end();track++){
             assert(tracks[*track]->status==PREUPDATE_STATUS||
-                    tracks[*track]->get_lifetime()>=MaxFreshObjectLifeTime);
+                    tracks[*track]->get_lifetime()>=(int)MaxFreshObjectLifeTime);
 
             trackingObjectFeature of;
             of.copy(fv[blobIdx]);
@@ -406,11 +406,11 @@ void RectFloatTracker::showBlobFeature(){
     Mat input=imageList.back().first.clone();
     Mat fg=imageList.back().second.clone();
 
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         trackingObjectFeature &of=fv[i];
         rectangle(input,of.rect,Scalar(0,0,255),2);
         rectangle(fg,of.rect,Scalar::all(255),2);
-        for(int j=0;j<of.LIFPos.size();j++){
+        for(uint j=0;j<of.LIFPos.size();j++){
             circle(input,of.LIFPos[j],3,Scalar(255,0,0),2);
         }
     }
@@ -428,11 +428,11 @@ void RectFloatTracker::showNewBlobFeature(){
     Mat input=imageList.back().first.clone();
     Mat fg=imageList.back().second.clone();
 
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         trackingObjectFeature &of=fv[i];
         rectangle(input,of.rect,Scalar(0,0,255),2);
         rectangle(fg,of.rect,Scalar::all(255),2);
-        for(int j=0;j<of.LIFPos.size();j++){
+        for(uint j=0;j<of.LIFPos.size();j++){
             circle(input,of.LIFPos[j],3,Scalar(255,0,0),2);
         }
     }
@@ -466,8 +466,8 @@ void RectFloatTracker::getUnmatchedHungarainAssignment_step3(cv::Mat matchMat){
         assert(tracks.size()==m);
         assert(fv.size()==n);
 
-        for(int i=0;i<m;i++){
-            for(int j=0;j<n;j++){
+        for(uint i=0;i<m;i++){
+            for(uint j=0;j<n;j++){
                 uchar featureNum=matchMat.at<uchar>(i,j);
                 //local feature point for stable match!
                 if(featureNum>StableFeatureNumber){
@@ -490,12 +490,12 @@ void RectFloatTracker::getUnmatchedHungarainAssignment_step3(cv::Mat matchMat){
             vector<Index_t> unMatchedObjects;
             //vector<featureVectorIdx>
             vector<Index_t> unMatchedBlobs;
-            for(int i=0;i<m;i++){
+            for(uint i=0;i<m;i++){
                 if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
                     unMatchedObjects.push_back(i);
                 }
             }
-            for(int j=0;j<n;j++){
+            for(uint j=0;j<n;j++){
                 if(mMatchedBlobSet.find(j)==mMatchedBlobSet.end()){
                     unMatchedBlobs.push_back(j);
                 }
@@ -506,8 +506,8 @@ void RectFloatTracker::getUnmatchedHungarainAssignment_step3(cv::Mat matchMat){
             assert(N>0&&M>0);
 
             distMatrix_t Cost(N * M);
-            for(int i=0;i<unMatchedObjects.size();i++){
-                for(int j=0;j<unMatchedBlobs.size();j++){
+            for(uint i=0;i<unMatchedObjects.size();i++){
+                for(uint j=0;j<unMatchedBlobs.size();j++){
                     Cost[i+j*N]=calcCost(std::make_shared<trackingObjectFeature>(*(tracks[unMatchedObjects[i]]->feature)),
                             std::make_shared<trackingObjectFeature>(fv[unMatchedBlobs[j]]),RectDist);
                 }
@@ -568,14 +568,14 @@ void RectFloatTracker::doAssignment_step4(){
     }
     else if(emptyBlobs){
         //handle missed object
-        for(int i=0;i<tracks.size();i++){
+        for(uint i=0;i<tracks.size();i++){
             mOneToZeroSet.insert(i);
         }
         handleMissedObjects();
     }
     else if(emptyObjects){
         //handle new object
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             mZeroToOneSet.insert(i);
         }
         handleNewObjects();
@@ -600,7 +600,7 @@ void RectFloatTracker::doAssignment_step4(){
         }
 
         ///handle missed object, not change tracks.size()
-        for(int i=0;i<tracks.size();i++){
+        for(uint i=0;i<tracks.size();i++){
             if(mMatchedObjectSet.find(i)==mMatchedObjectSet.end()){
                 mOneToZeroSet.insert(i);
             }
@@ -608,7 +608,7 @@ void RectFloatTracker::doAssignment_step4(){
         handleMissedObjects();
 
         //handle new object, will change tracks.size()
-        for(int i=0;i<fv.size();i++){
+        for(uint i=0;i<fv.size();i++){
             if(mMatchedBlobSet.find(i)==mMatchedBlobSet.end()){
                 mZeroToOneSet.insert(i);
             }
@@ -671,7 +671,7 @@ void RectFloatTracker::dumpDeleteObject(Index_t trackIdx){
             assert(false);
         }
         QTextStream out(&file);
-        for(int i=0;i<n;i++){
+        for(uint i=0;i<n;i++){
             if(vec_status[i]!=MISSING_STATUS){
                 QStringList line;
                 int x=(int)rects[i].x;
@@ -881,11 +881,11 @@ void RectFloatTracker::handleOneToNObjects(){
                 vconcat(unSplitLIF,fv[*ia].LIFMat,unSplitLIF);
             }
 
-            for(int i=0;i<fv[*ia].LIFPos.size();i++){
+            for(uint i=0;i<fv[*ia].LIFPos.size();i++){
                 unSplitPos.push_back(fv[*ia].LIFPos[i]);
             }
 
-            for(int i=0;i<fv[*ia].LIFColor.size();i++){
+            for(uint i=0;i<fv[*ia].LIFColor.size();i++){
                 unSplitColor.push_back(fv[*ia].LIFColor[i]);
             }
         }
@@ -946,8 +946,6 @@ void RectFloatTracker::handleNToOneObjects(){
                         }
                         else{
                             int mergeTimes=msetIt->second+1;
-                            ///FIXME how to modify read-only object!!!
-                            /// change set<pair<>> to map!
                             msetIt->second=mergeTimes;
                             if(mergeTimes>MaxProvocationTimesForMerge){
                                 qDebug()<<"merge them later";
@@ -1127,12 +1125,12 @@ void RectFloatTracker::showMatchedFeature(const cv::Mat matchMat){
     cv::Mat showImgInput,showImgFg;
 
     //step 1, draw rect
-    for(int i=0;i<tracks.size();i++){
+    for(uint i=0;i<tracks.size();i++){
         std::shared_ptr<trackingObjectFeature> of1=std::make_shared<trackingObjectFeature>(*(tracks[i]->feature));
         cv::rectangle(input1,of1->rect,Scalar(255,0,0),3);
         cv::rectangle(fg1,of1->rect,Scalar::all(255),3);
     }
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         std::shared_ptr<trackingObjectFeature> of2=std::make_shared<trackingObjectFeature>(fv[i]);
         cv::rectangle(input2,of2->rect,Scalar(0,0,255),3);
         cv::rectangle(fg2,of2->rect,Scalar::all(255),3);
@@ -1143,8 +1141,8 @@ void RectFloatTracker::showMatchedFeature(const cv::Mat matchMat){
     //step 2, draw match number, match line
     int m=matchMat.rows;
     int n=matchMat.cols;
-    for(int i=0;i<m;i++){
-        for(int j=0;j<n;j++){
+    for(uint i=0;i<m;i++){
+        for(uint j=0;j<n;j++){
 
             Point_t p1=tracks[i]->feature->pos;
             Point_t p2=fv[j].pos;
@@ -1216,9 +1214,9 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
 
     std::map<int,int> trackIdxToidMap;
     int offset=0;
-    for(int i=0;i<m;i++){
+    for(uint i=0;i<m;i++){
         int newOffset=offset+tracks[i]->feature->LIFPos.size();
-        for(int k=offset;k<newOffset;k++){
+        for(uint k=offset;k<newOffset;k++){
             trackIdxToidMap[k]=i;
         }
         offset=newOffset;
@@ -1227,7 +1225,7 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
     vector<Point_t> trackPos;
     vector<Point3i> trackColor;
     Mat trackMat;
-    for(int i=0;i<m;i++){
+    for(uint i=0;i<m;i++){
         Mat &mat=tracks[i]->feature->LIFMat;
 
         if(mat.empty()) continue;
@@ -1242,12 +1240,12 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
 
         vector<Point_t> &ps=tracks[i]->feature->LIFPos;
         assert(!ps.empty());
-        for(int i=0;i<ps.size();i++){
+        for(uint i=0;i<ps.size();i++){
             trackPos.push_back(ps[i]);
         }
         vector<Point3i> &color=tracks[i]->feature->LIFColor;
         assert(ps.size()==color.size());
-        for(int i=0;i<color.size();i++){
+        for(uint i=0;i<color.size();i++){
             trackColor.push_back(color[i]);
         }
         //        std::copy(ps.begin(),ps.end(),trackPos.end());
@@ -1255,9 +1253,9 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
 
     std::map<int,int> fvIdxToIdMap;
     offset=0;
-    for(int j=0;j<n;j++){
+    for(uint j=0;j<n;j++){
         int newOffset=offset+fv[j].LIFPos.size();
-        for(int k=offset;k<newOffset;k++){
+        for(uint k=offset;k<newOffset;k++){
             fvIdxToIdMap[k]=j;
         }
         offset=newOffset;
@@ -1266,7 +1264,7 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
     Mat fvMat;
     vector<Point_t> fvPos;
     vector<Point3i> fvColor;
-    for(int j=0;j<n;j++){
+    for(uint j=0;j<n;j++){
         Mat mat=fv[j].LIFMat;
         if(mat.empty()) continue;
 
@@ -1279,12 +1277,12 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
 
         vector<Point_t> &ps=fv[j].LIFPos;
         assert(!ps.empty());
-        for(int i=0;i<ps.size();i++){
+        for(uint i=0;i<ps.size();i++){
             fvPos.push_back(ps[i]);
         }
         vector<Point3i> &color=fv[j].LIFColor;
         assert(ps.size()==color.size());
-        for(int i=0;i<color.size();i++){
+        for(uint i=0;i<color.size();i++){
             fvColor.push_back(color[i]);
         }
     }
@@ -1300,7 +1298,7 @@ void RectFloatTracker::getLocalFeatureAssignment_step2(cv::Mat &matchMat){
     //    ObjectLocalFeatureMatch::getGoodMatches_Step4(good_matches,trackPos,fvPos,trackColor,fvColor);
 
 
-    for(int m=0;m<good_matches.size();m++){
+    for(uint m=0;m<good_matches.size();m++){
         int queryIdx=good_matches[m].queryIdx;
         int trainIdx=good_matches[m].trainIdx;
 

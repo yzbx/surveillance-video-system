@@ -67,7 +67,7 @@ private:
     uint NextTrackID;
 
     ///Long history status, when detete objects, merge objects, split objects, we need update them!!!
-    //NOTE must use objectId here, because trackIdx will be invalid when remove some object
+    // must use objectId here, because trackIdx will be invalid when remove some object
     //std::map<objectId,std::pair<provocation times,displacement>>
     std::map<Id_t,std::pair<uint,Point_t>> splitProvocationMap;
     //std::map<objectIdA,std::map<objectIdB,mergedTimes>>, objectIdA < objectIdB
@@ -82,9 +82,9 @@ private:
 
     void handleNewObjects();
     void handleMissedObjects();
-    //NOTE split first, then merge!!!
+    // split first, then merge!!!
     void handleOneToNObjects();
-    //NOTE merge later, split first!!!
+    // merge later, split first!!!
     void handleNToOneObjects();
 
     bool isTraceMergable(vector<Point_t> &traceA, vector<Point_t> &traceB);

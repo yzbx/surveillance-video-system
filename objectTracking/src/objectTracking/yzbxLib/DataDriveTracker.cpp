@@ -21,10 +21,10 @@ void DataDriveTracker::run()
 
     bool gameover=false;
     while(!gameover){
-        for(int i=0;i<pipeline.size();i++){
+        for(uint i=0;i<pipeline.size();i++){
 
             bool flag;
-            cout<<"i="<<i<<" *********************************"<<endl;
+            cout<<"i="<<i<<": "<<pipeline[i]->getClassName()<<endl;
             MEASURE_TIME(flag=pipeline[i]->run());
 
             if(i==0&&flag==false) gameover=true;
@@ -35,7 +35,7 @@ void DataDriveTracker::run()
 }
 
 void DataDriveTracker::runAll(){
-    for(int i=0;i<mainData->globalVideoList.size();i++){
+    for(uint i=0;i<mainData->globalVideoList.size();i++){
         QString currentVideo=mainData->globalVideoList[i];
         mainData->setCurrentVideo(currentVideo);
         pipeline.clear();

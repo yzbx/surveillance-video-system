@@ -27,7 +27,7 @@ public:
         else{
             assert(!of.LIFPos.empty());
             assert(!of.LIFColor.empty());
-            assert(of.LIFMat.rows==of.LIFColor.size());
+            assert(of.LIFMat.rows==(int)of.LIFColor.size());
             LIFMat=of.LIFMat.clone();
             LIFPos=of.LIFPos;
             LIFColor=of.LIFColor;

@@ -80,7 +80,7 @@ void MainWindow::on_pushButton_bgs_clicked()
     else{
         int n=globalVideosList.length();
 
-        for(int i=0;i<n;i++){
+        for(uint i=0;i<n;i++){
             QString inputPath=globalVideoHome+"/"+globalVideosList.at(i);
             bgsFac.process(bgsType,inputPath);
         }
@@ -295,7 +295,7 @@ void MainWindow::on_pushButton_tracking_clicked()
     else{
         int n=globalVideosList.length();
 
-        for(int i=0;i<n;i++){
+        for(uint i=0;i<n;i++){
             QString inputPath=globalVideoHome+"/"+globalVideosList.at(i);
             if(trackType.compare("default",Qt::CaseInsensitive)==0||trackType.compare("UrbanTracker",Qt::CaseInsensitive)==0){
                 tracker->process(configFile,inputPath);
@@ -422,35 +422,13 @@ void MainWindow::on_pushButton_stopTracking_clicked()
 void MainWindow::on_pushButton_detect_clicked()
 {
     QString model=ui->comboBox_detection->currentText();
-    dlib::object_detector<image_scanner_type> detector;
-    //    deserialize("face_detector.svm") >> detector2;
-    dlib::deserialize(model.toStdString()) >>detector;
-    dlib::array<dlib::array2d<unsigned char> > images_test;
-
-    QString videoFile=globalVideoHome+"/"+ui->comboBox_video->currentText();
-    FrameInput frameinput;
-    cv::Mat img_input;
-    frameinput.getNextFrame(videoFile,img_input);
-    dlib::image_window win;
-
-    while(!img_input.empty()){
-        dlib::cv_image<dlib::bgr_pixel> dimg(img_input);
-        std::vector<dlib::rectangle> faces = detector(dimg);
-        win.clear_overlay();
-        win.set_image(dimg);
-        win.add_overlay(faces, dlib::rgb_pixel(255,0,0));
-
-        img_input.release();
-        frameinput.getNextFrame(videoFile,img_input);
-    }
-
 }
 
 void MainWindow::on_pushButton_pureTracking_clicked()
 {
     QString video=ui->comboBox_video->currentText();
     if(video.compare("all")==0){
-        for(int i=0;i<globalVideosList.size();i++){
+        for(uint i=0;i<globalVideosList.size();i++){
             QString videoFile=globalVideosList[i];
             pureTrackingInit(videoFile);
             pureTrackingOne(videoFile);
@@ -614,13 +592,6 @@ void MainWindow::on_pushButton_test_clicked()
         Mat img1=img_pre;
         Mat img2=img_input;
 
-        //        Ptr<FeatureDetector> detector=FeatureDetector::create("FAST");
-        int minFeatureNum=50;
-        int maxFeatureNum=1000;
-        int maxIters=10;
-        //        Ptr<FeatureDetector> detector=new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), minFeatureNum, maxFeatureNum, maxIters);
-        //        Ptr<FeatureDetector> detector=FeatureDetector::create("BRISK");
-        //        Ptr<FeatureDetector> detector = new DynamicAdaptedFeatureDetector ( new FastAdjuster(10,true), 50, 100, 10);
         Ptr<FeatureDetector> detector=new BRISK(100);
         vector<KeyPoint> keypoints_1,keypoints_2;
 
@@ -656,24 +627,7 @@ void MainWindow::on_pushButton_test_clicked()
 
         vector< vector<DMatch> > matches;
         vector<DMatch> good_matches;
-        int global_match_ratio=0.8;
-        //        Ptr<DescriptorMatcher> matcher = DescriptorMatcher::create("BruteForce-Hamming");
         Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
-        //        matcher->knnMatch( descriptors_1, descriptors_2, matches, 2 );
-
-        //        for(size_t i = 0; i < matches.size(); i++) {
-        //            DMatch first = matches[i][0];
-        //            if(matches[i].size()>1){
-        //                float dist1 = matches[i][0].distance;
-        //                float dist2 = matches[i][1].distance;
-        //                if(dist1 < global_match_ratio * dist2) {
-        //                    good_matches.push_back(first);
-        //                }
-        //            }
-        //            else{
-        //                good_matches.push_back(first);
-        //            }
-        //        }
         matcher->match(descriptors_1,descriptors_2,good_matches);
         Mat outimg;
         cv::drawMatches(gray1,keypoints_1,gray2,keypoints_2,good_matches,outimg,Scalar(0,0,255),Scalar(0,255,255));
@@ -868,7 +822,7 @@ void MainWindow::on_pushButton_vibeBasedTracking_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
     if(videoFile=="all"){
-        for(int i=0;i<globalVideosList.size();i++){
+        for(uint i=0;i<globalVideosList.size();i++){
             cv::destroyAllWindows();
             videoFile=globalVideosList[i];
             QString videoFilePath=globalVideoHome+"/"+videoFile;

@@ -222,7 +222,7 @@ void MainWindow::on_listWidget_doubleClicked(const QModelIndex &index)
     fin.setStartFrameNum(record.videoPath,record.frameNum);
     int frameNum=record.frameNum;
     Mat image;
-    for(int i=0;i<record.frameTrace.size();i++){
+    for(uint i=0;i<record.frameTrace.size();i++){
         int record_frameNum=record.frameTrace[i];
         Rect r=record.rectTrace[i];
         while(record_frameNum>=frameNum){

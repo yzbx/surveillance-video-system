@@ -3,7 +3,6 @@ TEMPLATE = subdirs
 SUBDIRS += \
     main \
     benchmark \
-    yzbxLib \
-    ObjectCount
+    yzbxLib
 
 

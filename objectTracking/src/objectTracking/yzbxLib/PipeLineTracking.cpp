@@ -144,7 +144,7 @@ void PipeLineTracking::PipeLine_DumpFV(int frameNum,const vector<int> &ids,vecto
 
 
     QTextStream out(&file);
-    for(int i=0;i<fv.size();i++){
+    for(uint i=0;i<fv.size();i++){
         if(ids[i]==-1){
             continue;
         }

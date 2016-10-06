@@ -14,15 +14,10 @@ CONFIG -= app_bundle
 TEMPLATE = app
 
 SOURCES += main.cpp \
-#    dlibhogdetector.cpp \
     cvhogdetector.cpp
 
 unix: CONFIG += link_pkgconfig
-#unix: PKGCONFIG += dlib-1 opencv
 unix: PKGCONFIG += opencv
 
-#LIBS += -L/home/yzbx/linux/miniconda2/lib -lmkl_rt
-
 HEADERS += \
-#    dlibhogdetector.h \
     cvhogdetector.h

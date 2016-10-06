@@ -69,6 +69,9 @@ double lbp::chi_square(const Mat& histogram0, const Mat& histogram1) {
 		case CV_16UC1: return chi_square_<unsigned short>(histogram0,histogram1); break;
 		case CV_32SC1: return chi_square_<int>(histogram0,histogram1); break;
 	}
+
+    assert(false);
+    return 0.0;
 }
 
 void lbp::spatial_histogram(const Mat& src, Mat& dst, int numPatterns, int gridx, int gridy, int overlap) {
@@ -95,5 +98,6 @@ Mat lbp::spatial_histogram(const Mat& src, int numPatterns, const Size& window, 
 Mat lbp::spatial_histogram(const Mat& src, int numPatterns, int gridx, int gridy, int overlap) {
 	Mat hist;
 	spatial_histogram(src, hist, numPatterns, gridx, gridy);
+    (void)overlap;
 	return hist;
 }

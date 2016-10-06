@@ -19,7 +19,7 @@ void Benchmark::on_pushButton_analyse_clicked()
 {
     QString video=ui->comboBox_video->currentText();
     if(video.compare("all")==0){
-        for(int i=0;i<globalVideosList.size();i++){
+        for(uint i=0;i<globalVideosList.size();i++){
             QString videoFile=globalVideosList[i];
             processOne(videoFile);
         }

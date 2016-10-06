@@ -80,7 +80,7 @@ void MainWindow::on_pushButton_clicked()
 {
     QString videoFile=ui->comboBox_video->currentText();
     QString configFile=ui->lineEdit_inputPath->text();
-    tracker=std::make_unique<DataDriveTracker>(DataDriveTracker(configFile));
+    tracker=std::make_unique<ObjectCount>(ObjectCount(configFile));
 
     if(videoFile=="all"){
         tracker->runAll();

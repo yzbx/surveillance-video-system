@@ -56,7 +56,7 @@ void yzbx_imfill(Mat &input){
     size_t img_rows=input.rows,img_cols=input.cols;
     for(x=0;x<img_rows;x++){
         //holes.at<uchar>(x,y)==FLOODED or FG, will not be flooded again or flooded.
-        //NOTE: Mat(x,y) vs Point(y,x)
+        //Mat(x,y) vs Point(y,x)
         y=0;
         if(holes.at<uchar>(x,y)==0){
             cv::floodFill(holes,cv::Point2i(y,x),cv::Scalar(FLOODED));
@@ -80,7 +80,7 @@ void yzbx_imfill(Mat &input){
     }
 
     input=input|(holes==0);
-    //    for(int i=0; i<input.rows*input.cols; i++)
+    //    for(uint i=0; i<input.rows*input.cols; i++)
     //    {
     //        if(holes.data[i]==0)
     //            input.data[i]=255;
@@ -107,8 +107,8 @@ void yzbx_lbp(const Mat &input, Mat &output,int lbp_operator){
         lbp::OLBP(dst, lbpMat); // use the original operator
 
         output=Mat::zeros(input.size(),CV_8UC1);
-        for(int i=0;i<lbpMat.rows;i++){
-            for(int j=0;j<lbpMat.cols;j++){
+        for(uint i=0;i<lbpMat.rows;i++){
+            for( int j=0;j<lbpMat.cols;j++){
                 output.at<uchar>(i+radius,j+radius)=lbpMat.at<uchar>(i,j);
             }
         }
@@ -118,8 +118,8 @@ void yzbx_lbp(const Mat &input, Mat &output,int lbp_operator){
         neighbors=16;
         lbp::ELBP(dst, lbpMat, 2, 16); // use the extended operator
         output=Mat::zeros(input.size(),CV_16UC1);
-        for(int i=0;i<lbpMat.rows;i++){
-            for(int j=0;j<lbpMat.cols;j++){
+        for(uint i=0;i<lbpMat.rows;i++){
+            for( int j=0;j<lbpMat.cols;j++){
                 output.at<unsigned short>(i+radius,j+radius)=lbpMat.at<unsigned short>(i,j);
             }
         }
@@ -127,8 +127,8 @@ void yzbx_lbp(const Mat &input, Mat &output,int lbp_operator){
     case LBP32UC1:
         lbp::ELBP(dst, lbpMat, radius, neighbors); // use the extended operator
         output=Mat::zeros(input.size(),CV_32SC1);
-        for(int i=0;i<lbpMat.rows;i++){
-            for(int j=0;j<lbpMat.cols;j++){
+        for(uint i=0;i<lbpMat.rows;i++){
+            for( int j=0;j<lbpMat.cols;j++){
                 output.at<unsigned int>(i+radius,j+radius)=lbpMat.at<unsigned int>(i,j);
             }
         }
@@ -182,12 +182,12 @@ void yzbx_match(Mat &descriptor1, Mat &descriptor2, vector<DMatch> &matches, int
 unsigned yzbx_distance_Vec3b(Vec3b x, Vec3b y, int distance_type, int color_space){
     unsigned distance=0;
     if(color_space==yzbx_colorSpace_BGR||color_space==yzbx_colorSpace_LAB){
-        for(int i=0;i<3;i++){
+        for(uint i=0;i<3;i++){
             distance+=yzbx_distance(x[i],y[i],distance_type);
         }
     }
     else if(color_space==yzbx_colorSpace_AB){
-        for(int i=1;i<3;i++){
+        for(uint i=1;i<3;i++){
             distance+=yzbx_distance(x[i],y[i],distance_type);
         }
     }
@@ -198,7 +198,7 @@ unsigned yzbx_distance_Vec3b(Vec3b x, Vec3b y, int distance_type, int color_spac
             distance=(int)(distance*0.7);
         }
 
-        for(int i=1;i<3;i++){
+        for(uint i=1;i<3;i++){
             distance+=yzbx_distance(x[i],y[i],distance_type);
         }
     }
@@ -440,7 +440,7 @@ void connectedComponentSplit (Mat &nextFGMask, Mat &labelImg8UC1){
     //    Mat colorLabelImg;
     //input mat must be 32SC1 in this label function
     //    icvprLabelColor (labelImg32SC1,colorLabelImg);
-    //BUG empty mat!!
+    // empty mat!!
     //    imshow("color label img",colorLabelImg);
 }
 
@@ -464,7 +464,7 @@ string getImgType(int imgTypeInt)
                              "CV_32F", "CV_32FC1", "CV_32FC2", "CV_32FC3", "CV_32FC4",
                              "CV_64F", "CV_64FC1", "CV_64FC2", "CV_64FC3", "CV_64FC4"};
 
-    for(int i=0; i<numImgTypes; i++)
+    for(uint i=0; i<numImgTypes; i++)
     {
         if(imgTypeInt == enum_ints[i]) return enum_strings[i];
     }
@@ -501,8 +501,8 @@ void cvt2CV_8U(const cv::Mat input,cv::Mat &output){
         output.create(input.size(),CV_8UC3);
         int img_rows=input.rows;
         int img_cols=input.cols;
-        for(int i=0;i<img_rows;i++){
-            for(int j=0;j<img_cols;j++){
+        for(uint i=0;i<img_rows;i++){
+            for( int j=0;j<img_cols;j++){
                 float f=input.at<float>(i,j);
                 int iv=(int)f;
                 int R=iv/(256*256);
@@ -520,8 +520,8 @@ void cvt2CV_8U(const cv::Mat input,cv::Mat &output){
         output.create(input.size(),CV_8UC3);
         int img_rows=input.rows;
         int img_cols=input.cols;
-        for(int i=0;i<img_rows;i++){
-            for(int j=0;j<img_cols;j++){
+        for(uint i=0;i<img_rows;i++){
+            for( int j=0;j<img_cols;j++){
                 double f=input.at<double>(i,j);
                 int iv=(int)f;
                 int R=iv/(256*256);
@@ -700,8 +700,8 @@ void doubleThresholdConnect(const Mat &highThresholdMask,const Mat &lowThreshold
     int img_rows=highThresholdMask.rows,img_cols=highThresholdMask.cols;
     int count=0;
     Rect rect;
-    for(int i=0;i<img_rows;i++){
-        for(int j=0;j<img_cols;j++){
+    for(uint i=0;i<img_rows;i++){
+        for( int j=0;j<img_cols;j++){
             Point p(j,i);
             if(highThresholdMask.at<uchar>(i,j)>0&&outputMask.at<uchar>(i+1,j+1)==0){
                 count++;
@@ -838,7 +838,7 @@ void moveWindows(std::vector<string> &windowNames, int colNum)
 {
     int n=windowNames.size();
     int width=100,height=100;
-    for(int i=0;i<n;i++){
+    for(uint i=0;i<n;i++){
         int row=n/colNum;
         int col=n%colNum;
         int y=row*height;
@@ -934,9 +934,6 @@ bool splitRect(const Rect_t &mergedRect, Rect_t &r1, Rect_t &r2)
 
 void annotation(Mat showImg, Rect_t r, const string title, Scalar color)
 {
-    int rows=showImg.rows;
-    int cols=showImg.cols;
-
     cv::rectangle(showImg,r,color,5);
     if(r.y<20){
         cv::putText(showImg,title,Point(r.x,20),FONT_HERSHEY_COMPLEX,1,color,2,8);
@@ -984,7 +981,7 @@ Rect_t getSubRect(Rect_t mergedRect, Rect_t subRect)
 
     track_t minCost=0;
     int minIdx;
-    for(int i=0;i<ps.size();i++){
+    for(uint i=0;i<ps.size();i++){
         track_t dist=cv::norm(ps[i]-subPs[i]);
         if(i==0||minCost>dist){
             minCost=dist;
@@ -1060,7 +1057,7 @@ void csvToTrajectory(QString line, int &frameNum, int &id, Rect &r)
     assert(flag);
 
     int a[4];
-    for(int i=0;i<4;i++){
+    for(uint i=0;i<4;i++){
         str=strlist[2+i];
         a[i]=(int)str.toFloat(&flag);
         assert(flag);
@@ -1090,10 +1087,57 @@ void dumpMap(std::map<Index_t, std::set<Index_t> > &m)
         cout<<", value= [";
         for(auto v=value.begin();v!=value.end();v++){
             Index_t element=*v;
-            cout<<v<<",";
+            cout<<element<<",";
         }
         cout<<"]"<<endl;
     }
+}
+
+Point_t rectCenter(Rect_t r)
+{
+    return 0.5f*(r.tl()+r.br());
+}
+
+void moveMaskAndFitRect(Mat &mask, Point2i displace, Rect_t rect)
+{
+    assert(!mask.empty());
+    Mat newMask=Mat::zeros(mask.size(),mask.type());
+    int row=mask.rows;
+    int col=mask.cols;
+    for(int i=0;i<row;i++){
+        for(int j=0;j<col;j++){
+            if(mask.at<uchar>(i,j)!=0){
+                Point2i p(j+displace.x,i+displace.y);
+                assert(p.x==j+displace.x);
+                Point2f pf(p.x,p.y);
+                bool flag=yzbxlib::isPointInRect(pf,rect);
+
+                //if in rect, then in mask, so wont out of mat boundary.
+                if(flag){
+                    newMask.at<uchar>(p.y,p.x)=255;
+                }
+            }
+        }
+    }
+
+    mask=newMask;
+}
+
+bool isLineCrossed(Point_t p, Point_t prev_p, double A, double B, double C)
+{
+    double x,y;
+    x=p.x;
+    y=p.y;
+    double a=A*x+B*y+C;
+
+    x=prev_p.x;
+    y=prev_p.y;
+
+    double b=A*x+B*y+C;
+
+    if(a==0&&b!=0) return true;
+    else if(a*b<0) return true;
+    else return false;
 }
 
 }

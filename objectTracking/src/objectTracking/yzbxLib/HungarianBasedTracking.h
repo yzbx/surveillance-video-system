@@ -105,7 +105,7 @@ private:
                      <<"rect.x"<<"rect.y"<<"rect.width"<<"rect.height";
             out<<formatList.join(",")<<"\n";
         }
-        int n=tracks[index]->rects.size();
+        uint n=tracks[index]->rects.size();
         for(uint i;i<n;i++){
             QStringList dumpList;
             dumpList<<QString::number(tracks[index]->rects[i].x)<<QString::number(tracks[index]->rects[i].y)<<
