@@ -1140,4 +1140,14 @@ bool isLineCrossed(Point_t p, Point_t prev_p, double A, double B, double C)
     else return false;
 }
 
+void annotation(Mat showImg, Point p, const string title, Scalar color)
+{
+    cv::putText(showImg,title,p,FONT_HERSHEY_COMPLEX,1,color,2,8);
+}
+
+void getMaskedRGB(Mat &RGB, const Mat &mask, Scalar value)
+{
+    cv::add(RGB,value,RGB,mask);
+}
+
 }

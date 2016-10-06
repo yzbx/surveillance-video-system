@@ -21,5 +21,7 @@ void ObjectCount::run()
 
             if(!flag) break;
         }
+        int key=waitKey(30);
+        if(key>0) cout<<"press key is "<<key<<endl;
     }
 }

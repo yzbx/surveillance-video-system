@@ -34,6 +34,7 @@ track_t getRectGap(Rect_t ra,Rect_t rb);
 void drawMatch(cv::Mat &img,Point_t p1,Point_t p2,cv::Scalar color=cv::Scalar(0,0,255),int thickness=3);
 Rect_t getMergedRect(Rect_t ra,Rect_t rb);
 bool splitRect(const Rect_t &mergedRect,Rect_t &r1,Rect_t &r2);
+void annotation(cv::Mat showImg, Point p, const string title, cv::Scalar color=cv::Scalar(0.0,255));
 void annotation(cv::Mat showImg,Rect_t r,const string title="",cv::Scalar color=cv::Scalar(0,0,255));
 
 //return the overlap area.
@@ -61,11 +62,13 @@ bool rectOnBoundary(Rect r, Mat &img);
 void dumpMap(std::map<Index_t,std::set<Index_t>> &m);
 void moveMaskAndFitRect(cv::Mat &mask,Point2i displace,Rect_t rect);
 
-/*
- * input: p,prev_p, line f(x,y)=Ax+By+C=0;
- * method: f(p)*f(prev_p)>0 || f(p)==0&&f(prev_p)!=0
- */
+///input: p,prev_p, line f(x,y)=Ax+By+C=0;
+/// method: f(p)*f(prev_p)>0 || f(p)==0&&f(prev_p)!=0
 bool isLineCrossed(Point_t p,Point_t prev_p,double A,double B,double C);
+
+///input RGB, mask, value
+/// method: RGB(mask)=value.
+void getMaskedRGB(cv::Mat &RGB,const cv::Mat &mask,Scalar value=Scalar(0,0,255));
 }
 
 //set qt sync with file.

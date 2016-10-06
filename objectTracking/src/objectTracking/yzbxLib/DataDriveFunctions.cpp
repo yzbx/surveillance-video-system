@@ -1423,11 +1423,19 @@ bool Countor::run()
                 A=B=C=0.0;
                 getABC(A,B,C);
                 if(yzbxlib::isLineCrossed(p,prev_p,A,B,C)){
+                    Mat objectImg=data->img_input(fv[j].rect);
+                    string filename=boost::lexical_cast<string>(count)+".jpg";
+                    imwrite(filename,objectImg);
+                    yzbxlib::showImageInWindow("object",objectImg);
+
                     count++;
                 }
             }
         }
     }
+
+    dump();
+
     return true;
 }
 
@@ -1445,23 +1453,58 @@ void Countor::initLine()
     while(loop){
         dump();
         int key=waitKey(0);
+        const int left=1113937;
+        const int up=1113938;
+        const int right=up+1;
+        const int down=right+1;
+        const int r=1048690;
+        const int R=1114194;
+        const int q=1048689;
+        const int Q=1114193;
+        const int esc=1048603;
+
+
         switch (key) {
-        case 'r':
+        case r:
             angle=angle-1;
-            cout<<"angle ="<<angle;
+            if(angle<0) angle+=360;
+            cout<<"angle ="<<angle<<endl;
             break;
-        case 'R':
+        case R:
             angle=angle+1;
-            cout<<"angle ="<<angle;
+            if(angle>=360) angle-=360;
+            cout<<"angle ="<<angle<<endl;
             break;
-        case 'q':
-        case 'Q':
+        case q:
+        case Q:
+        case esc:
             loop=false;
+            break;
+        case left:
+            center.x--;
+            if(center.x<0) center.x=0;
+            cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
+            break;
+        case right:
+            center.x++;
+            if(center.x>=data->img_input.cols) center.x=data->img_input.cols-1;
+            cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
+            break;
+        case up:
+            center.y--;
+            if(center.y<0) center.y=0;
+            cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
+            break;
+        case down:
+            center.y++;
+            if(center.y>=data->img_input.rows) center.y=data->img_input.rows-1;
+            cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
             break;
         default:
             cout<<"press key is "<<key<<endl;
-            cout<<"press r/R to rotate line"<<endl;
+            cout<<"press r/R/Esc to rotate line"<<endl;
             cout<<"press q/Q to save and quit line"<<endl;
+            cout<<"press left/right/up/down to move center point"<<endl;
             break;
         }
     }
@@ -1508,29 +1551,14 @@ void Countor::getBoundaryPoint(Point &p1, Point &p2)
     else{
         double row=data->img_input.rows;
         double col=data->img_input.cols;
-        //        double rad1=atan2(center.y,cols-center.x);
-        //        double rad2=M_PI-atan2(center.y,-center.x);
-        //        double rad3=2*M_PI-rad2;
-        //        double rad4=2*M_PI-rad1;
 
         double radian=angle*M_PI/180.0;
         double A=std::tan(radian);
-        //        if(radian<rad1){
-        //            p1.x=cols;
-        //        }
 
-        if(2*center.x>col){
-            Point_t p(0,center.y+A*center.x);
-            Point p1((int)round(center.x),(int)round(center.y));
-            Point p2((int)round(p.x),(int)round(p.y));
-            clipLine(Rect(0,0,row,col),p1,p2);
-        }
-        else{
-            Point_t p(col,center.y+A*(center.x-col));
-            Point p1((int)round(center.x),(int)round(center.y));
-            Point p2((int)round(p.x),(int)round(p.y));
-            clipLine(Rect(0,0,row,col),p1,p2);
-        }
+        p1.x=0;
+        p1.y=(int)round(center.y+A*center.x);
+        p2.x=col;
+        p2.y=(int)round(center.y+A*(center.x-col));
     }
 }
 
@@ -1540,9 +1568,20 @@ void Countor::dump()
     getBoundaryPoint(p1,p2);
     Mat img=data->img_input.clone();
     cv::line(img,p1,p2,Scalar(0,0,255),3,8);
+    cv::circle(img,center,3,Scalar(0,255,255),-1,8);
+    string text="id="+boost::lexical_cast<string>(count);
+    yzbxlib::annotation(img,Point(20,20),text);
+    string frameStr="N="+boost::lexical_cast<string>(data->frameNum);
+    yzbxlib::annotation(img,Point(data->img_input.cols-200,20),frameStr);
 
-    string text="#"+boost::lexical_cast<string>(count);
-    yzbxlib::annotation(img,Rect(20,20,10,10),text);
+    //draw fv pos
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    for(int i=0;i<fv.size();i++){
+        cv::circle(img,fv[i].pos,3,Scalar(255,0,255),-1,8);
+    }
+
+    //draw mask
+    yzbxlib::getMaskedRGB(img,data->img_fg);
     yzbxlib::showImageInWindow("countor",img);
 }
 
