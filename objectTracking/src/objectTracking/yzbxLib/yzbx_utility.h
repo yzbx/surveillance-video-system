@@ -7,6 +7,7 @@
 //#include "lib/LBP1/LBP1.hpp"
 #include "yzbx_config.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/chrono.hpp>
 #include <QString>
 #include <QStringList>
 #include <fstream>
@@ -16,9 +17,29 @@
 { auto startTime = cv::getTickCount(); \
     x;                                   \
     auto endTime = cv::getTickCount();   \
-    std::cout << #x << " " << (endTime - startTime) * cv::getTickFrequency() << std::endl; }
+    std::cout << #x << " " << (endTime - startTime)<< std::endl; }
 
 #define GET_CLASS_NAME string getClassName(){return (string)typeid(this).name();}
+
+#define MEASURE_TIME_MS(x) \
+{ \
+    boost::chrono::nanoseconds start; \
+    x; \
+    boost::chrono::nanoseconds end; \
+    typedef boost::chrono::milliseconds ms; \
+    ms d = boost::chrono::duration_cast<ms>(end - start); \
+    std::cout << #x << " " << d.count() <<"ms"<< std::endl; \
+}
+
+#define MEASURE_TIME_NS(x) \
+{ \
+    boost::chrono::nanoseconds start; \
+    x; \
+    boost::chrono::nanoseconds end; \
+    typedef boost::chrono::nanoseconds ns; \
+    ns d = boost::chrono::duration_cast<ns>(end - start); \
+    std::cout << #x << " " << d.count() <<"ns"<< std::endl; \
+}
 
 namespace yzbxlib
 {

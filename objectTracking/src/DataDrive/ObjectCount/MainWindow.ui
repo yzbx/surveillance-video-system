@@ -18,7 +18,7 @@
     <property name="geometry">
      <rect>
       <x>260</x>
-      <y>120</y>
+      <y>150</y>
       <width>89</width>
       <height>25</height>
      </rect>
@@ -27,13 +27,13 @@
      <string>run</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>20</x>
       <y>30</y>
       <width>329</width>
-      <height>62</height>
+      <height>95</height>
      </rect>
     </property>
     <layout class="QVBoxLayout" name="verticalLayout">
@@ -53,6 +53,27 @@
         <widget class="QPushButton" name="pushButton_inputPath">
          <property name="text">
           <string>browse</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>PipeLine</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="comboBox_pipeline"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="pushButton_pipeline">
+         <property name="text">
+          <string>load and run</string>
          </property>
         </widget>
        </item>

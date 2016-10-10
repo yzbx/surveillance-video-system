@@ -54,7 +54,8 @@ SOURCES += qyzbxlib.cpp \
     DataDriveTracker.cpp \
     ObjectRecord.cpp \
     ObjectCount.cpp \
-    DataDriveFunction001.cpp
+    DataDriveFunction001.cpp \
+    PipeLineFactory.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -99,7 +100,8 @@ HEADERS += qyzbxlib.h\
     DataDriveTracker.h \
     ObjectRecord.h \
     ObjectCount.h \
-    DataDriveFunction001.h
+    DataDriveFunction001.h \
+    PipeLineFactory.h
 
 unix {
     target.path = /usr/lib

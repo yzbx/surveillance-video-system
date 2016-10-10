@@ -17,6 +17,7 @@ public:
     QString videoFilePath;
     QString recordFile;
     cv::Mat img_input,img_fg,img_background;
+    QString pipeLineConfigFile;
     int frameNum=0;
     uint NextTrackID=0;
 

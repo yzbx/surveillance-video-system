@@ -6,10 +6,12 @@ DataDriveMain::DataDriveMain(QString configFile)
     QString Dataset=QString::fromStdString(globalPt.get<std::string>("General.Dataset"));
     QString VideoHome=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoHome"));
     QString VideoTxt=QString::fromStdString(globalPt.get<std::string>(Dataset.toStdString()+".VideoTxt"));
+    pipeLineConfigFile=QString::fromStdString(globalPt.get<std::string>("DataDrive.PipeLineConfigFile"));
+
 
     VideoHome=yzbxlib::getAbsoluteFilePath(configFile,VideoHome);
     VideoTxt=yzbxlib::getAbsoluteFilePath(configFile,VideoTxt);
-
+    pipeLineConfigFile=yzbxlib::getAbsoluteFilePath(configFile,pipeLineConfigFile);
     QString filedata;
     QFile file;
     file.setFileName(VideoTxt);
