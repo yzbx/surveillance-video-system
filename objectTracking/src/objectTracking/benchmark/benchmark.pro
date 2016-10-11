@@ -32,3 +32,8 @@ else:unix: LIBS += -L$$OUT_PWD/../yzbxLib/ -lyzbxLib
 
 INCLUDEPATH += $$PWD/../yzbxLib
 DEPENDPATH += $$PWD/../yzbxLib
+
+LIBS += \
+    -lboost_system \
+    -lboost_program_options \
+    -lboost_filesystem \

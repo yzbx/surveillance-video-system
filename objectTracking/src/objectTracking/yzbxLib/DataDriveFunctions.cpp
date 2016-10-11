@@ -1453,6 +1453,7 @@ void Countor::initLine()
     while(loop){
         dump();
         int key=waitKey(0);
+
         const int left=1113937;
         const int up=1113938;
         const int right=up+1;
@@ -1464,46 +1465,60 @@ void Countor::initLine()
         const int esc=1048603;
 
 
+
         switch (key) {
         case r:
+        case 'r':
             angle=angle-1;
             if(angle<0) angle+=360;
             cout<<"angle ="<<angle<<endl;
             break;
         case R:
+        case 'R':
             angle=angle+1;
             if(angle>=360) angle-=360;
             cout<<"angle ="<<angle<<endl;
             break;
         case q:
+        case 'q':
         case Q:
+        case 'Q':
         case esc:
+        case 27:
             loop=false;
             break;
         case left:
+        case 'a':
+        case 'A':
             center.x--;
             if(center.x<0) center.x=0;
             cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
             break;
         case right:
+        case 'D':
+        case 'd':
             center.x++;
             if(center.x>=data->img_input.cols) center.x=data->img_input.cols-1;
             cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
             break;
         case up:
+        case 'w':
+        case 'W':
             center.y--;
             if(center.y<0) center.y=0;
             cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
             break;
         case down:
+        case 's':
+        case 'S':
             center.y++;
             if(center.y>=data->img_input.rows) center.y=data->img_input.rows-1;
             cout<<"center=("<<center.x<<","<<center.y<<")"<<endl;
             break;
         default:
             cout<<"press key is "<<key<<endl;
-            cout<<"press r/R/Esc to rotate line"<<endl;
-            cout<<"press q/Q to save and quit line"<<endl;
+            cout<<"press r/R to rotate line"<<endl;
+            cout<<"press q/Q/Esc to save and quit line"<<endl;
             cout<<"press left/right/up/down to move center point"<<endl;
             break;
         }

@@ -24,3 +24,8 @@ YZBX_INCLUDE=/home/yzbx/git/surveillance-video-system/objectTracking/src/objectT
 LIBS += -L$$YZBXLIB/yzbxLib/ -lyzbxLib
 INCLUDEPATH += $$YZBX_INCLUDE/yzbxLib
 DEPENDPATH += $$YZBX_INCLUDE/yzbxLib
+
+LIBS += \
+    -lboost_system \
+    -lboost_program_options \
+    -lboost_filesystem \
