@@ -1,0 +1,5 @@
+atrium_video.avi
+rene_video.mov
+rouen_video.avi
+sherbrooke_video.avi
+stmarc_video.avi

@@ -1,0 +1,5 @@
+atrium_video.csv
+rene_video.csv
+rouen_video.csv
+sherbrooke_video.csv
+stmarc_video.csv

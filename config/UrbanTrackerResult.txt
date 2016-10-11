@@ -1,0 +1,5 @@
+atrium_video.txt
+rene_video.txt
+rouen_video.txt
+sherbrooke_video.txt
+stmarc_video.txt

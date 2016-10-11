@@ -1,0 +1,6 @@
+baseline/highway/groundtruth
+baseline/pedestrians/groundtruth
+baseline/PETS2006/groundtruth
+shadow/backdoor/groundtruth
+shadow/busStation/groundtruth
+shadow/peopleInShade/groundtruth
