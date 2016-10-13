@@ -951,10 +951,18 @@ bool SplitAndMerge::redetection(Index_t newBlobIdx)
         cvtColor(histDistMask,histDistMask,CV_GRAY2BGR);
         yzbxlib::MyVconcat(histDistImg,histDistMask,histDistShow);
         yzbxlib::showImageInWindow("histDistShow",histDistShow);
-        waitKey(0);
 
         double histDist=RR.myCompareHist(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
         qDebug()<<"histDist="<<histDist;
+        double surfDist=RR.myCompareLocalFeature(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
+        qCritical()<<"["<<data->frameNum<<","<<trackIdx<<","<<newBlobIdx<<"],"
+                  <<"hist="<<histDist<<",surfDist="<<surfDist;
+
+        string basename=data->getBaseFileName().toStdString();
+        string saveImgName=basename+boost::lexical_cast<string>(data->frameNum)+
+                "_"+boost::lexical_cast<string>((int)trackIdx)+
+                "_"+boost::lexical_cast<string>((int)newBlobIdx)+".jpg";
+        imwrite(saveImgName,histDistShow);
 
         if(histDist<0.3){
             //erase iter here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

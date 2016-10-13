@@ -50,6 +50,11 @@ public:
         firstLine<<"frameNum"<<"objectId"<<"x"<<"y"<<"width"<<"height";
         out<<firstLine.join(",")<<"\n";
     }
+    QString getBaseFileName(){
+        QString basename=recordFile;
+        basename.remove(".txt");
+        return basename;
+    }
 
     ///KLT Assignment
     //prevblob match current blob
