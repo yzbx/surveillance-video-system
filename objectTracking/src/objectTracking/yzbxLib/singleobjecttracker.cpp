@@ -109,7 +109,7 @@ void singleObjectTracker::Update(const trackingObjectFeature &of, bool dataCorre
     assert(lifetime==(catch_frames+skipped_frames));
 }
 
-void singleObjectTracker::NormalUpdate(const trackingObjectFeature &of, int frameNum)
+void singleObjectTracker::NormalUpdate(const trackingObjectFeature &of, int frameNum,const cv::Mat &img_normal)
 {
 
     KF.GetPrediction();
@@ -130,6 +130,10 @@ void singleObjectTracker::NormalUpdate(const trackingObjectFeature &of, int fram
     trace.push_back(prediction);
     lifetime++;
     lastSeePos=of.pos;
+
+    img_last_normal=img_normal.clone();
+    mask_last_normal=of.mask.clone();
+    rect_last_normal=of.rect;
     assert(lifetime==1+frameNum-frames[0]);
     assert(lifetime==(catch_frames+skipped_frames));
 }
@@ -211,8 +215,6 @@ void singleObjectTracker::NToOneUpdate(trackingObjectFeature &of, int frameNum)
 //    rectangle(showMat,old_rect,Scalar(255,0,0),2,8);
 //    rectangle(showMat,of.rect,Scalar(0,0,255),2,8);
 //    yzbxlib::showImageInWindow("move mask",showMat);
-
-//    waitKey(0);
 
     feature->copy(of);
     rects.push_back(of.rect);

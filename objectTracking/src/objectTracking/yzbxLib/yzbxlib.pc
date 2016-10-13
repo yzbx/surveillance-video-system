@@ -1,0 +1,14 @@
+# Package Information for pkg-config
+
+prefix=/home/yzbx
+exec_prefix=${prefix}
+libdir=${exec_prefix}/build/build-objectTracking-Desktop_Qt_5_6_0_GCC_64bit-Debug/yzbxLib
+includedir_old=${prefix}/git/surveillance-video-system/objectTracking/src/objectTracking
+includedir_new=${prefix}/git/surveillance-video-system/objectTracking/src/objectTracking/yzbxLib
+
+Name: yzbxLib
+Description: Open Source Computer Vision Library
+Version: 2016.10.12
+Libs: -L${libdir} -lyzbxLib
+Cflags: -I${includedir_old} -I${includedir_new}
+

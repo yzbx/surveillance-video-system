@@ -90,6 +90,9 @@ bool isLineCrossed(Point_t p,Point_t prev_p,double A,double B,double C);
 ///input RGB, mask, value
 /// method: RGB(mask)=value.
 void getMaskedRGB(cv::Mat &RGB,const cv::Mat &mask,Scalar value=Scalar(0,0,255));
+
+void MyHconcat(const Mat& A,const Mat &B, Mat &AB);
+void MyVconcat(const Mat& A,const Mat &B, Mat &AB);
 }
 
 //set qt sync with file.

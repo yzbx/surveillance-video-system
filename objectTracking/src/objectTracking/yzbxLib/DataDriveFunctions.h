@@ -4,6 +4,7 @@
 #include "DataDriveFunction001.h"
 #include "DataDriveMain.h"
 #include "yzbx_config.h"
+#include <SVS-plugin/ReDetection.h>
 #include <memory>
 
 namespace DataDrive {
@@ -127,6 +128,9 @@ public:
     void handleOneToNObjects();
     // merge later, split first!!!
     void handleNToOneObjects();
+    //if find correspond track A, erase A from missed track set, normal update track A.
+    //else do nothing
+    bool redetection(Index_t newBlobIdx);
     //transform of.rect and of.pos, return true; else do nothing and return false.
     bool AffineTransform(const Index_t blobIdx,const Index_t trackIdx,trackingObjectFeature &of);
     void dump();

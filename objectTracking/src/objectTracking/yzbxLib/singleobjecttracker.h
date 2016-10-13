@@ -26,6 +26,10 @@ public:
     Point_t firstSeePos;
     Point_t lastSeePos;
     SplitMergeType splitMergeType;
+    //update when use normal update!!!
+    cv::Mat img_last_normal;
+    cv::Mat mask_last_normal;
+    Rect_t rect_last_normal;
 private:
     int skipped_frames;
     int catch_frames;
@@ -54,7 +58,7 @@ public:
 
     track_t CalcDist(trackingObjectFeature &of);
     void Update(const trackingObjectFeature &of, bool dataCorrect, size_t max_trace_length);
-    void NormalUpdate(const trackingObjectFeature &of, int frameNum);
+    void NormalUpdate(const trackingObjectFeature &of, int frameNum, const Mat &img_normal=cv::Mat());
     void MissUpdate(int frameNum);
     void OneToNUpdateForBiggestBlob(const trackingObjectFeature &of,int frameNum);
     void OneToNUpdateForNewBlob();

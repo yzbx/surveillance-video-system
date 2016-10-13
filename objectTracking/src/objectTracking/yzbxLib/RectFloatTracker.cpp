@@ -898,9 +898,6 @@ void RectFloatTracker::handleOneToNObjects(){
         tracks[trackIdx]->feature->pos=unSplitCenter;
         tracks[trackIdx]->feature->rect=unSplitRect;
         tracks[trackIdx]->feature->size=unSplitRect.area();
-
-        //        tracks[trackIdx]->Update(*of, true, param.max_trace_length);
-//        tracks[trackIdx]->NormalUpdate(*of,frameNum);
     }
 }
 

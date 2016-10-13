@@ -709,16 +709,6 @@ void doubleThresholdConnect(const Mat &highThresholdMask,const Mat &lowThreshold
                 floodFill(lowThresholdMask,mask,p,Scalar(255),&rect,Scalar(1),Scalar(1),8|FLOODFILL_FIXED_RANGE);
                 CV_Assert(mask.at<uchar>(i+1,j+1)!=0);
                 outputMask|=mask;
-
-//                imshow("lowThresholdMask",lowThresholdMask);
-//                imshow("highThresholdMask",highThresholdMask);
-//                imshow("tmpMask",mask>0);
-//                imshow("outputMask",outputMask>0);
-
-//                int key=waitKey(30);
-//                if(key=='s'){
-//                    waitKey(0);
-//                }
             }
         }
     }
@@ -1148,6 +1138,36 @@ void annotation(Mat showImg, Point p, const string title, Scalar color)
 void getMaskedRGB(Mat &RGB, const Mat &mask, Scalar value)
 {
     cv::add(RGB,value,RGB,mask);
+}
+
+void MyHconcat(const Mat &A, const Mat &B, Mat &AB)
+{
+    assert(A.type()==B.type());
+    assert(A.channels()==B.channels());
+    int rows=max(A.rows,B.rows);
+    int cols=A.cols+B.cols;
+    if(!AB.empty()) AB.release();
+    AB.create(rows,cols,A.type());
+
+    Mat subA=AB.rowRange(0,A.rows).colRange(0,A.cols);
+    A.copyTo(subA);
+    Mat subB=AB.rowRange(0,B.rows).colRange(A.cols,cols);
+    B.copyTo(subB);
+}
+
+void MyVconcat(const Mat &A, const Mat &B, Mat &AB)
+{
+    assert(A.type()==B.type());
+    assert(A.channels()==B.channels());
+    int rows=A.rows+B.rows;
+    int cols=max(A.cols,B.cols);
+    if(!AB.empty()) AB.release();
+    AB.create(rows,cols,A.type());
+
+    Mat subA=AB.rowRange(0,A.rows).colRange(0,A.cols);
+    A.copyTo(subA);
+    Mat subB=AB.rowRange(A.rows,rows).colRange(0,B.cols);
+    B.copyTo(subB);
 }
 
 }

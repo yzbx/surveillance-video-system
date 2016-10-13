@@ -28,6 +28,7 @@
 #include "ObjectRecord.h"
 #include "ObjectCount.h"
 #include "DataDrivePipeLine.h"
+#include <SVS-plugin/ReDetection.h>
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

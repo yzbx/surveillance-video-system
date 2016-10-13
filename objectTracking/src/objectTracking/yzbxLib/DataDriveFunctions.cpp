@@ -661,13 +661,6 @@ bool SplitAndMerge::run()
         }
 
         bool output;
-        output=!data->mOneToZeroSet.empty();
-        qDebug()<<"before miss handle";
-        DataDrive::dumpObjects(data->tracks,output);
-        handleMissedObjects();
-        qDebug()<<"after miss handle";
-        DataDrive::dumpObjects(data->tracks,output);
-
 
         auto &mMatchedBlobSet=data->matchedBlobSet;
         //handle new object, will change tracks.size()
@@ -676,13 +669,6 @@ bool SplitAndMerge::run()
                 data->mZeroToOneSet.insert(i);
             }
         }
-
-        output=!data->mZeroToOneSet.empty();
-        qDebug()<<"before new handle";
-        DataDrive::dumpObjects(data->tracks,output);
-        handleNewObjects();
-        qDebug()<<"after miss handle";
-        DataDrive::dumpObjects(data->tracks,output);
 
         output=!data->mOneToOneMap.empty();
         //handle one to one object
@@ -707,6 +693,20 @@ bool SplitAndMerge::run()
         handleNToOneObjects();
         qDebug()<<"after N to one handle";
         DataDrive::dumpObjects(data->tracks,output);
+
+        output=!data->mOneToZeroSet.empty();
+        qDebug()<<"before miss handle";
+        DataDrive::dumpObjects(data->tracks,output);
+        handleMissedObjects();
+        qDebug()<<"after miss handle";
+        DataDrive::dumpObjects(data->tracks,output);
+
+        output=!data->mZeroToOneSet.empty();
+        qDebug()<<"before new handle";
+        DataDrive::dumpObjects(data->tracks,output);
+        handleNewObjects();
+        qDebug()<<"after new handle";
+        DataDrive::dumpObjects(data->tracks,output);
     }
 
     //    waitKey(0);
@@ -719,7 +719,7 @@ void SplitAndMerge::handleOneToOneObjects()
     for(auto it=data->mOneToOneMap.begin();it!=data->mOneToOneMap.end();it++){
         int trackIdx=it->first;
         int fvIdx=it->second;
-        data->tracks[trackIdx]->NormalUpdate(fv[fvIdx],data->frameNum);
+        data->tracks[trackIdx]->NormalUpdate(fv[fvIdx],data->frameNum,data->img_input);
     }
 }
 
@@ -727,9 +727,16 @@ void SplitAndMerge::handleNewObjects()
 {
     vector<trackingObjectFeature> &fv=data->fvlist.back();
     auto &param=data->param;
-    for(auto newit=data->mZeroToOneSet.begin();newit!=data->mZeroToOneSet.end();newit++){
-        data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit],
-                               param.dt, param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
+    for(auto newit=data->mZeroToOneSet.begin();newit!=data->mZeroToOneSet.end();){
+        bool flag=redetection(*newit);
+        if(flag){
+            newit=data->mZeroToOneSet.erase(newit);
+        }
+        else{
+            data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[*newit],
+                                   param.dt, param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
+            newit++;
+        }
     }
 }
 
@@ -758,11 +765,28 @@ void SplitAndMerge::handleOneToNObjects()
 
     auto &mOneToNMap=data->mOneToNMap;
     auto &param=data->param;
+
     for(auto it=mOneToNMap.begin();it!=mOneToNMap.end();it++){
         Index_t trackIdx=it->first;
         std::set<Index_t> &blobset=(it->second);
         /// empty set will be remove, size()==1 is error status!
         assert(blobset.size()>1);
+
+        //assign blobs to missed object
+        for(auto blob=blobset.begin();blob!=blobset.end();){
+            Index_t blobIdx=*blob;
+
+            //input: new blobIdx, miss trackIdx
+            //output: find correspond track return true, else false
+            //modify: global missed track set, new blob set
+            bool flag=redetection(blobIdx);
+            if(flag){
+                blob=blobset.erase(blob);
+            }
+            else{
+                blob++;
+            }
+        }
 
         //get max blob, assign it to origin objectIdx
         float maxArea=0;
@@ -896,8 +920,51 @@ void SplitAndMerge::handleNToOneObjects()
         qDebug()<<"dump rect after split blob";
         DataDrive::dumpRectInTracker(data->tracks);
         DataDrive::drawRectInTracker(data->tracks,data->img_input,"NToOne after");
-        waitKey(0);
     }
+}
+
+bool SplitAndMerge::redetection(Index_t newBlobIdx)
+{
+    //check for boundary!!!
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    if(fv[newBlobIdx].onBoundary) return false;
+
+    set<Index_t> &missedTrackSet=data->mOneToZeroSet;
+    cv::Mat newBlobImg=data->img_input(fv[newBlobIdx].rect);
+    cv::Mat newBlobMask=fv[newBlobIdx].mask(fv[newBlobIdx].rect);
+    if(newBlobImg.empty()||newBlobMask.empty()) return false;
+
+    ReDetection RR;
+    for(auto track=missedTrackSet.begin();track!=missedTrackSet.end();track++){
+        Index_t trackIdx=*track;
+        Rect_t missTrackRect=data->tracks[trackIdx]->rect_last_normal;
+        cv::Mat missTrackImg=data->tracks[trackIdx]->img_last_normal(missTrackRect);
+        cv::Mat missTrackMask=data->tracks[trackIdx]->mask_last_normal(missTrackRect);
+        if(missTrackImg.empty()||missTrackMask.empty()) continue;
+
+        cv::Mat histDistImg,histDistMask;
+        cout<<"newBlobType="<<getImgType(newBlobImg.type())<<","<<getImgType(newBlobMask.type())<<endl;
+        cout<<"missTrackType="<<getImgType(missTrackImg.type())<<","<<getImgType(missTrackMask.type())<<endl;
+        yzbxlib::MyHconcat(newBlobImg,missTrackImg,histDistImg);
+        yzbxlib::MyHconcat(newBlobMask,missTrackMask,histDistMask);
+        cv::Mat histDistShow;
+        cvtColor(histDistMask,histDistMask,CV_GRAY2BGR);
+        yzbxlib::MyVconcat(histDistImg,histDistMask,histDistShow);
+        yzbxlib::showImageInWindow("histDistShow",histDistShow);
+        waitKey(0);
+
+        double histDist=RR.myCompareHist(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
+        qDebug()<<"histDist="<<histDist;
+
+        if(histDist<0.3){
+            //erase iter here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+            missedTrackSet.erase(track);
+            data->tracks[trackIdx]->NormalUpdate(fv[newBlobIdx],data->frameNum,data->img_input);
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool SplitAndMerge::AffineTransform(const Index_t blobIdx, const Index_t trackIdx, trackingObjectFeature &of)

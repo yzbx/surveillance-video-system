@@ -107,3 +107,6 @@ unix {
     target.path = /usr/lib
     INSTALLS += target
 }
+
+unix: CONFIG += link_pkgconfig
+unix: PKGCONFIG += bgslibrary opencv SVS-plugin
