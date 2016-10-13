@@ -37,6 +37,7 @@ public:
 
     void setCurrentVideo(QString filepath){
         videoFilePath=globalVideoHome+"/"+filepath;
+        qCritical()<<"processing "<<videoFilePath;
         recordFile=filepath;
 
         recordFile=yzbxlib::getOutputFileName(recordFile);
