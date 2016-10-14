@@ -397,7 +397,7 @@ void MainWindow::on_pushButton_stopTracking_clicked()
                 ui->pushButton_stopTracking->setText("continue");
             }
             else{
-                qWarning()<<"already stop!";
+                qDebug()<<"already stop!";
                 globalTracker->start();
             }
         }
@@ -408,7 +408,7 @@ void MainWindow::on_pushButton_stopTracking_clicked()
         }
         else{
             if(globalTracker->isRunning()){
-                qWarning()<<"still running";
+                qDebug()<<"still running";
                 globalTracker->stop();
             }
             else{
@@ -449,20 +449,20 @@ void MainWindow::pureTrackingInit(QString videoFile){
     QString pureTrackingType=ui->comboBox_pureTracking->currentText();
     if(pureTracker!=NULL){
         if(pureTracker->isRunning()){
-            qWarning()<<"still running!";
+            qDebug()<<"still running!";
         }
         else if(pureTracker->isFinished()){
-            qWarning()<<"finished!";
+            qDebug()<<"finished!";
         }
 
         //wait for 10s
-        qWarning()<<"wait for 10s";
+        qDebug()<<"wait for 10s";
         pureTracker->wait(10*1000);
         if(pureTracker->isRunning()){
-            qWarning()<<"still running!";
+            qDebug()<<"still running!";
         }
         else if(pureTracker->isFinished()){
-            qWarning()<<"finished!";
+            qDebug()<<"finished!";
         }
 
         pureTracker->deleteLater();
@@ -525,7 +525,7 @@ void MainWindow::pureTrackingOne(QString videoFile){
         frameInput.getNextFrame(videoFile,img_input);
         while(!img_input.empty()&&!img_before.empty()){
             if(yzbxlib::isSameImage(img_input,img_before)){
-                qWarning()<<"the same image find!";
+                qDebug()<<"the same image find!";
                 frameInput.getNextFrame(videoFile,img_input);
             }
             else{

@@ -542,7 +542,7 @@ void RectFloatTracker::getUnmatchedHungarainAssignment_step3(cv::Mat matchMat){
 
 void RectFloatTracker::runInSingleThread()
 {
-    qWarning()<<"wait to implement!";
+    qDebug()<<"wait to implement!";
 }
 
 void RectFloatTracker::run()

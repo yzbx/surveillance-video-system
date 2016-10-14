@@ -24,6 +24,7 @@ bool Bgs::run()
     assert(!data->img_input.empty());
     if(!data->img_fg.empty()) data->img_fg.release();
 
+    if(data->frameNum % 50 ==0) qDebug()<<"frameNum="<<data->frameNum;
     cv::Mat img_fg;
     data->bgs->process(data->img_input,img_fg,data->img_background);
     if(img_fg.empty()){
@@ -405,7 +406,7 @@ bool KLTAssignment::run()
         }
     }
     data->KLTMatchMat=matchMat;
-    yzbxlib::showImageInWindow("matchMat",matchMat);
+//    yzbxlib::showImageInWindow("matchMat",matchMat);
     //update blob track assignment
     {
         std::map<Index_t,std::set<Index_t>> &blobToTrackSet=data->blobToTrackSet;
@@ -498,19 +499,19 @@ void KLTAssignment::dump()
     namedWindow("KLT dump",WINDOW_NORMAL);
     imshow("KLT dump",klt);
 
-    qDebug()<<data->frameNum;
-    //assignment
-    for(auto it=data->blobToTrackSet.begin();it!=data->blobToTrackSet.end();it++){
-        Index_t blobIdx=it->first;
-        set<Index_t> &trackset=it->second;
-        cout<<"blobIdx="<<blobIdx<<" match :";
-        for(auto t=trackset.begin();t!=trackset.end();t++){
-            Index_t trackIdx=*t;
-            Id_t trackId=data->tracks[trackIdx]->track_id;
-            cout<<trackId<<",";
-        }
-        cout<<endl;
-    }
+    //    qDebug()<<data->frameNum;
+    //    //assignment
+    //    for(auto it=data->blobToTrackSet.begin();it!=data->blobToTrackSet.end();it++){
+    //        Index_t blobIdx=it->first;
+    //        set<Index_t> &trackset=it->second;
+    //        cout<<"blobIdx="<<blobIdx<<" match :";
+    //        for(auto t=trackset.begin();t!=trackset.end();t++){
+    //            Index_t trackIdx=*t;
+    //            Id_t trackId=data->tracks[trackIdx]->track_id;
+    //            cout<<trackId<<",";
+    //        }
+    //        cout<<endl;
+    //    }
 
     //    for(auto it=data->trackToBlobSet.begin();it!=data->trackToBlobSet.end();it++){
     //        Index_t trackIdx=it->first;
@@ -529,7 +530,7 @@ void KLTAssignment::dump()
 bool FilterBadTrack::run()
 {
     for(int i=data->tracks.size()-1;i>=0;i--){
-        data->tracks[i]->dumpToScreen();
+//        data->tracks[i]->dumpToScreen();
 
         if(data->tracks[i]->status==MISSING_STATUS){
             Point_t p1=data->tracks[i]->firstSeePos;
@@ -599,7 +600,7 @@ bool SplitAndMerge::run()
                     Index_t blobIdx=*ib;
                     if(mBlobToObjectMap[blobIdx].size()>1){
                         if(firstTime){
-                            qWarning()<<"before remove M-N ...........................";
+                            qDebug()<<"before remove M-N ...........................";
                             cout<<"object -> blobset"<<endl;
                             yzbxlib::dumpMap(mObjectToBlobMap);
                             cout<<"blob -> objectset"<<endl;
@@ -622,7 +623,7 @@ bool SplitAndMerge::run()
         }
 
         if(firstTime==false){
-            qWarning()<<"after remove M-N .............................";
+            qDebug()<<"after remove M-N .............................";
             cout<<"object -> blobset"<<endl;
             yzbxlib::dumpMap(mObjectToBlobMap);
             cout<<"blob -> objectset"<<endl;
@@ -672,41 +673,41 @@ bool SplitAndMerge::run()
 
         output=!data->mOneToOneMap.empty();
         //handle one to one object
-        qDebug()<<"before one to one handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"before one to one handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
         handleOneToOneObjects();
-        qDebug()<<"after one to one handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"after one to one handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
 
         output=!data->mOneToNMap.empty();
         //handle split object
-        qDebug()<<"before ont to N handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"before ont to N handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
         handleOneToNObjects();
-        qDebug()<<"after one to N handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"after one to N handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
 
         output=!data->mNToOneMap.empty();
         //handle merged object
-        qDebug()<<"before N to one handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"before N to one handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
         handleNToOneObjects();
-        qDebug()<<"after N to one handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"after N to one handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
 
         output=!data->mOneToZeroSet.empty();
-        qDebug()<<"before miss handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"before miss handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
         handleMissedObjects();
-        qDebug()<<"after miss handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"after miss handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
 
         output=!data->mZeroToOneSet.empty();
-        qDebug()<<"before new handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"before new handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
         handleNewObjects();
-        qDebug()<<"after new handle";
-        DataDrive::dumpObjects(data->tracks,output);
+        //        qDebug()<<"after new handle";
+        //        DataDrive::dumpObjects(data->tracks,output);
     }
 
     //    waitKey(0);
@@ -955,17 +956,22 @@ bool SplitAndMerge::redetection(Index_t newBlobIdx)
         double histDist=RR.myCompareHist(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
         qDebug()<<"histDist="<<histDist;
 
-        double surfDist=RR.myCompareLocalFeature(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
-        qCritical()<<"["<<data->frameNum<<","<<trackIdx<<","<<newBlobIdx<<"],"
-                  <<"hist="<<histDist<<",surfDist="<<surfDist;
-
+        //        double surfDist=RR.myCompareLocalFeature(newBlobImg,newBlobMask,missTrackImg,missTrackMask,3);
+        double surfDist=RR.myCompareLocalFeature(newBlobImg,missTrackImg,300,0.3);
+        QStringList outlist;
+        outlist<<QString::number(data->frameNum)
+              <<QString::number(trackIdx)
+             <<QString::number(newBlobIdx)
+            <<QString::number(histDist)
+           <<QString::number(surfDist);
+        qCritical()<<outlist.join('\t');
         string basename=data->getBaseFileName().toStdString();
         string saveImgName=basename+"_"+boost::lexical_cast<string>(data->frameNum)+
                 "_"+boost::lexical_cast<string>((int)trackIdx)+
                 "_"+boost::lexical_cast<string>((int)newBlobIdx)+".jpg";
         imwrite(saveImgName,histDistShow);
 
-        if(histDist<0.3){
+        if(histDist<0.5){
             //erase iter here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
             missedTrackSet.erase(track);
             data->tracks[trackIdx]->NormalUpdate(fv[newBlobIdx],data->frameNum,data->img_input);
@@ -1213,7 +1219,7 @@ bool HungarianAssignment::run()
             }
         }
 
-        dump(unMatchedAssignment,unMatchedObjects,unMatchedBlobs);
+        //        dump(unMatchedAssignment,unMatchedObjects,unMatchedBlobs);
     }
 
 

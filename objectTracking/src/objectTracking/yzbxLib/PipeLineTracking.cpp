@@ -29,7 +29,7 @@ void PipeLineTracking::process(QString sourceData,QString annTxt)
         }
         PipeLine_Bgs();
         if(img_fg.empty()){
-            qWarning()<<"empty img_fg for frameNum="<<frameNum;
+            qDebug()<<"empty img_fg for frameNum="<<frameNum;
         }
         else{
             std::vector<trackingObjectFeature> fv;
@@ -73,7 +73,7 @@ void PipeLineTracking::process(QString sourceData){
         }
         PipeLine_Bgs();
         if(img_fg.empty()){
-            qWarning()<<"empty img_fg for frameNum="<<frameNum;
+            qDebug()<<"empty img_fg for frameNum="<<frameNum;
         }
         else{
 

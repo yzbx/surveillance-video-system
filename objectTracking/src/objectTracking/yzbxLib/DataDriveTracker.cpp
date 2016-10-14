@@ -24,9 +24,9 @@ void DataDriveTracker::run()
         for(uint i=0;i<pipeline.size();i++){
 
             bool flag;
-            cout<<"i="<<i<<": "<<pipeline[i]->getClassName()<<endl;
-            MEASURE_TIME(flag=pipeline[i]->run());
-
+//            cout<<"i="<<i<<": "<<pipeline[i]->getClassName()<<endl;
+//            MEASURE_TIME(flag=pipeline[i]->run());
+            flag=pipeline[i]->run();
             if(i==0&&flag==false) gameover=true;
 
             if(!flag) break;

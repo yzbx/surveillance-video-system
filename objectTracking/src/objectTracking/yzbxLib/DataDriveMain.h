@@ -50,7 +50,10 @@ public:
         QStringList firstLine;
         firstLine<<"frameNum"<<"objectId"<<"x"<<"y"<<"width"<<"height";
         out<<firstLine.join(",")<<"\n";
+
+        init();
     }
+    void init();
     QString getBaseFileName(){
         QString basename=recordFile;
         basename.remove(".txt");
