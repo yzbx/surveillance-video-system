@@ -12,7 +12,8 @@ namespace DataDrive {
 class Base
 {
 public:
-    GET_CLASS_NAME
+//    GET_CLASS_NAME
+    virtual string getClassName(){return "Base";}
     Base(std::shared_ptr<DataDriveMain> data){
         this->data=data;
     }
@@ -28,21 +29,24 @@ public:
 
 class Input:public Base{
 public:
-    GET_CLASS_NAME
+//    GET_CLASS_NAME
+    string getClassName(){return "Input";}
     Input(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class Bgs:public Base{
 public:
-    GET_CLASS_NAME
+//    GET_CLASS_NAME
+    string getClassName(){return "Bgs";}
     Bgs(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };
 
 class BlobFeature:public Base{
 public:
-    GET_CLASS_NAME
+//    GET_CLASS_NAME
+    string getClassName(){return "BlobFeature";}
     BlobFeature(std::shared_ptr<DataDriveMain> data):Base(data){}
     bool run();
 };

@@ -20,6 +20,9 @@ public:
         MatchNumThreshold=pt.get("DataDrive.MatchNumThreshold",3);
         MaxFreshObjectLifeTime=pt.get("DataDrive.MaxFreshObjectLifeTime",3);
         MinDumpLifeTime=pt.get("DataDrive.MinDumpLifeTime",10);
+        whog=pt.get("ReDetection.HOG_Weight");
+        wcolor=pt.get("ReDetection.Color_Weight");
+        rr_threshold=pt.get("ReDetection.Threshold");
     }
 
     track_t dt=0.2f;
@@ -30,6 +33,7 @@ public:
     uint MatchNumThreshold=3;
     uint MaxFreshObjectLifeTime=3;
     uint MinDumpLifeTime=10;
+    double whog,wcolor,rr_threshold;
 };
 
 #endif // TRACKINGALGORITHMPARAMTER_H

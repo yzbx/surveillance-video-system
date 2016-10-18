@@ -204,9 +204,9 @@ void singleObjectTracker::NToOneUpdate(trackingObjectFeature &of, int frameNum)
     status=NToOne_STATUS;
     vec_status.push_back(status);
     frames.push_back(frameNum);
-    Rect_t old_rect=feature->rect;
-    Point_t p=yzbxlib::rectCenter(of.rect)-yzbxlib::rectCenter(old_rect);
-    Point2i displace((int)round(p.x),(int)round(p.y));
+//    Rect_t old_rect=feature->rect;
+//    Point_t p=yzbxlib::rectCenter(of.rect)-yzbxlib::rectCenter(old_rect);
+//    Point2i displace((int)round(p.x),(int)round(p.y));
 
     //move mask to new position by displace and fit in size for of.rect
 //    yzbxlib::moveMaskAndFitRect(of.mask,displace,of.rect);

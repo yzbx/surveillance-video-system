@@ -1,6 +1,6 @@
 #include "DataDriveMain.h"
 
-DataDriveMain::DataDriveMain(QString configFile)
+DataDriveMain::DataDriveMain(QString configFile):BlobToBlob("previous blob","current blob")
 {
     boost::property_tree::ini_parser::read_ini(configFile.toStdString(),globalPt);
     QString Dataset=QString::fromStdString(globalPt.get<std::string>("General.Dataset"));

@@ -841,7 +841,7 @@ void SplitAndMerge::handleNToOneObjects()
 
             trackingObjectFeature of;
             of.copy(*(data->tracks[trackIdx]->feature));
-            Rect_t r_before=of.rect;
+//            Rect_t r_before=of.rect;
             //            bool flag=AffineTransform(blobIdx,trackIdx,of);
             bool flag=false;
 
@@ -858,20 +858,29 @@ void SplitAndMerge::handleNToOneObjects()
                 }
             }
             else{
-                of.pos=data->tracks[*track]->KF.GetPrediction();
+                Point_t pos=data->tracks[trackIdx]->feature->pos;
+                Rect_t rect=data->tracks[trackIdx]->feature->rect;
+                Point_t predict_pos=data->tracks[*track]->KF.GetPrediction();
                 Rect_t predict_rect=data->tracks[*track]->GetPredictRect();
                 Rect_t subRect=yzbxlib::getSubRect(rb,predict_rect);
-                DataDrive::dumpRect(r_before);
-                DataDrive::dumpRect(subRect);
-                Point_t speed=of.pos-data->tracks[trackIdx]->feature->pos;
-                Point_t adjustSpeed=subRect.tl()-of.rect.tl();
+                //kalman speed v1
+                Point_t speed=predict_pos-pos;
+                //in rect adjust speed v2
+                Point_t adjustSpeed=subRect.tl()-rect.tl();
 
-                if(speed.x*adjustSpeed.x>0&&speed.y*adjustSpeed.y>0){
+                //v1 and v2 is close!!!
+                double vec_norm=cv::norm(speed)*cv::norm(adjustSpeed);
+                double cos_theta;
+                if(vec_norm==0) cos_theta=0;
+                else cos_theta=(speed.x*adjustSpeed.x+speed.y*adjustSpeed.y)/vec_norm;
+
+                if(cos_theta>0.7){
                     of.rect=subRect;
-                    of.pos+=(of.rect.tl()-predict_rect.tl());
+                    of.pos+=(subRect.tl()-rect.tl());
                 }
                 else{
                     of.rect=predict_rect;
+                    of.pos+=(predict_rect.tl()-rect.tl());
                 }
 
                 data->tracks[*track]->NToOneUpdate(of,data->frameNum);
@@ -887,35 +896,6 @@ void SplitAndMerge::handleNToOneObjects()
 
         }
     }
-
-    //remove common area
-    //    for(auto it=mNToOneMap.begin();it!=mNToOneMap.end();it++){
-    //        std::set<Index_t> &trackset=it->second;
-
-    //        bool firstTime=true;
-    //        Mat commonArea;//{0,1,>1} common area for >1;
-    //        for(auto track=trackset.begin();track!=trackset.end();track++){
-    //            int trackIdx=*track;
-    //            Mat m=data->tracks[trackIdx]->feature->mask;
-    //            Mat m1;
-    //            cv::threshold(m,m1,0,1,THRESH_BINARY);
-    //            if(firstTime){
-    //                commonArea=m1;
-    //            }
-    //            else{
-    //                commonArea+=m1;
-    //            }
-    //        }
-
-    //        for(auto track=trackset.begin();track!=trackset.end();track++){
-    //            int trackIdx=*track;
-    //            Mat m=data->tracks[trackIdx]->feature->mask;
-    //            m=m&(commonArea==1);
-    //        }
-
-
-    //        yzbxlib::showImageInWindow("commonArea",commonArea);
-    //    }
 
     if(splitBlob){
         qDebug()<<"dump rect after split blob";

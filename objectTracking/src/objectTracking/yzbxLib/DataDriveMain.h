@@ -7,6 +7,7 @@
 #include <memory>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include "AssignmentVecSetMap.h"
 
 class DataDriveMain
 {
@@ -93,6 +94,8 @@ public:
     TrackingAlgorithmParamter param;
     std::vector<std::unique_ptr<singleObjectTracker>> tracks;
 
+    //BlobToBlob
+    AssignmentVecSetMap BlobToBlob;
     Mat imgToSave;
 };
 

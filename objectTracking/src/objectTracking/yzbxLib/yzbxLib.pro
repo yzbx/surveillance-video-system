@@ -55,7 +55,8 @@ SOURCES += qyzbxlib.cpp \
     ObjectRecord.cpp \
     ObjectCount.cpp \
     DataDriveFunction001.cpp \
-    PipeLineFactory.cpp
+    PipeLineFactory.cpp \
+    AssignmentVecSetMap.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -101,7 +102,8 @@ HEADERS += qyzbxlib.h\
     ObjectRecord.h \
     ObjectCount.h \
     DataDriveFunction001.h \
-    PipeLineFactory.h
+    PipeLineFactory.h \
+    AssignmentVecSetMap.h
 
 unix {
     target.path = /usr/lib
