@@ -572,67 +572,16 @@ void MainWindow::on_pushButton_pureTrackingStop_clicked()
 
 void MainWindow::on_pushButton_test_clicked()
 {
-    qDebug()<<"test";
-    QString videoFile=globalVideoHome+"/"+ui->comboBox_video->currentText();
-    VideoCapture cap(videoFile.toStdString());
-    assert(cap.isOpened());
-    Mat img_pre;
-    while(1){
-        Mat img_input;
-        cap>>img_input;
-        if(img_input.empty()){
-            break;
-        }
+    QString videoFile=ui->comboBox_video->currentText();
+    QString configFile=ui->lineEdit_inputPath->text();
+    std::unique_ptr<DataDrivePipeLine> tracker=std::make_unique<B2BTrackingDemo>(B2BTrackingDemo(configFile));
 
-        img_pre=img_input;
-        if(img_pre.empty()){
-            continue;
-        }
-
-        Mat img1=img_pre;
-        Mat img2=img_input;
-
-        Ptr<FeatureDetector> detector=new BRISK(100);
-        vector<KeyPoint> keypoints_1,keypoints_2;
-
-        detector->detect(img1, keypoints_1);
-        detector->detect(img2, keypoints_2);
-        if(keypoints_1.empty()||keypoints_2.empty()){
-            return;
-        }
-
-        //        cv::initModule_contrib();
-        //        cv::initModule_features2d();
-        Mat descriptors_1, descriptors_2;
-        //        Ptr<DescriptorExtractor> extractor = new SurfDescriptorExtractor;
-        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("FREAK");
-        //        Ptr<DescriptorExtractor> extractor = DescriptorExtractor::create("SURF");
-        assert(!extractor.empty());
-
-        Mat gray1,gray2;
-        if(img1.channels()==3){
-            cvtColor(img1,gray1,CV_BGR2GRAY);
-            cvtColor(img2,gray2,CV_BGR2GRAY);
-        }
-        else{
-            gray1=img1;
-            gray2=img2;
-        }
-        imshow("gray1",gray1);
-        imshow("gray2",gray2);
-        qDebug()<<"keypoints_1: "<<keypoints_1.size();
-        qDebug()<<"keypoints_2: "<<keypoints_2.size();
-        extractor->compute( gray1, keypoints_1, descriptors_1 );
-        extractor->compute( gray2, keypoints_2, descriptors_2 );
-
-        vector< vector<DMatch> > matches;
-        vector<DMatch> good_matches;
-        Ptr<DescriptorMatcher> matcher=new BFMatcher(NORM_HAMMING,true);
-        matcher->match(descriptors_1,descriptors_2,good_matches);
-        Mat outimg;
-        cv::drawMatches(gray1,keypoints_1,gray2,keypoints_2,good_matches,outimg,Scalar(0,0,255),Scalar(0,255,255));
-        imshow("outimg",outimg);
-        waitKey(30);
+    if(videoFile=="all"){
+        tracker->runAll();
+    }
+    else{
+        tracker->mainData->setCurrentVideo(videoFile);
+        tracker->run();
     }
 }
 

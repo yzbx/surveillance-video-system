@@ -3,6 +3,7 @@
 #include "CamShiftTrackingDemo.h"
 #include "KLTTrackingDemo.h"
 #include "MeanShiftTrackingDemo.h"
+#include "B2BTrackingDemo.h"
 #include "DataDriveMain.h"
 #include "DataDriveTracker.h"
 #endif // DATADRIVE_H

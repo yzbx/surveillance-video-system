@@ -17,7 +17,8 @@ SOURCES += DataDriveFunction002.cpp \
     KLTTrackingDemo.cpp \
     MeanShiftTrackingDemo.cpp \
     ObjectCount.cpp \
-    PipeLineFactory.cpp
+    PipeLineFactory.cpp \
+    B2BTrackingDemo.cpp
 
 unix: CONFIG += link_pkgconfig
 unix: PKGCONFIG += SVS-plugin yzbxlib bgslibrary opencv boost
@@ -35,7 +36,8 @@ HEADERS += \
     MeanShiftTrackingDemo.h \
     ObjectCount.h \
     PipeLineFactory.h \
-    DataDrive.h
+    DataDrive.h \
+    B2BTrackingDemo.h
 
 unix {
     target.path = /usr/lib

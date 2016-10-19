@@ -316,7 +316,7 @@
    <widget class="QPushButton" name="pushButton_test">
     <property name="geometry">
      <rect>
-      <x>250</x>
+      <x>240</x>
       <y>350</y>
       <width>89</width>
       <height>25</height>
@@ -339,7 +339,7 @@
      <string>PipeLineTracking</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>30</x>

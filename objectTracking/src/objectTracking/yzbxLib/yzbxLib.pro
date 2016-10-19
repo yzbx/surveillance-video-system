@@ -81,8 +81,7 @@ HEADERS += qyzbxlib.h\
     TrackingBlobsMatchAnnotation.h \
     TrackingAlgorithmParamter.h \
     BlobDetector.h \
-    ObjectRecord.h \
-    ObjectCount.h
+    ObjectRecord.h
 
 unix {
     target.path = /usr/lib
