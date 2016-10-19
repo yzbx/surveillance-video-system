@@ -20,9 +20,9 @@ public:
         MatchNumThreshold=pt.get("DataDrive.MatchNumThreshold",3);
         MaxFreshObjectLifeTime=pt.get("DataDrive.MaxFreshObjectLifeTime",3);
         MinDumpLifeTime=pt.get("DataDrive.MinDumpLifeTime",10);
-        whog=pt.get("ReDetection.HOG_Weight");
-        wcolor=pt.get("ReDetection.Color_Weight");
-        rr_threshold=pt.get("ReDetection.Threshold");
+        whog=pt.get("ReDetection.HOG_Weight",0.5f);
+        wcolor=pt.get("ReDetection.Color_Weight",0.5f);
+        rr_threshold=pt.get("ReDetection.Threshold",5.0f);
     }
 
     track_t dt=0.2f;

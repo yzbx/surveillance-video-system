@@ -12,8 +12,8 @@ public:
     AssignmentVecSetMap(std::string a,std::string b);
     std::string nameA;
     std::string nameB;
-    std::map<Index_t,Index_t> AToB;
-    std::map<Index_t,Index_t> BToA;
+    std::map<Index_t,std::set<Index_t>> AToB;
+    std::map<Index_t,std::set<Index_t>> BToA;
     std::set<Index_t> matchedASet;
     std::set<Index_t> matchedBSet;
 

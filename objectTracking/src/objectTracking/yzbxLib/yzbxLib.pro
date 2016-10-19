@@ -45,18 +45,7 @@ SOURCES += qyzbxlib.cpp \
     TrackingBlobsMatchAnnotation.cpp \
     TrackingAlgorithmParamter.cpp \
     BlobDetector.cpp \
-    DataDriveMain.cpp \
-    DataDrivePipeLine.cpp \
-    KLTTrackingDemo.cpp \
-    DataDriveFunctions.cpp \
-    MeanShiftTrackingDemo.cpp \
-    CamShiftTrackingDemo.cpp \
-    DataDriveTracker.cpp \
-    ObjectRecord.cpp \
-    ObjectCount.cpp \
-    DataDriveFunction001.cpp \
-    PipeLineFactory.cpp \
-    AssignmentVecSetMap.cpp
+    ObjectRecord.cpp
 
 HEADERS += qyzbxlib.h\
         yzbxlib_global.h \
@@ -92,18 +81,8 @@ HEADERS += qyzbxlib.h\
     TrackingBlobsMatchAnnotation.h \
     TrackingAlgorithmParamter.h \
     BlobDetector.h \
-    DataDriveMain.h \
-    DataDrivePipeLine.h \
-    KLTTrackingDemo.h \
-    DataDriveFunctions.h \
-    MeanShiftTrackingDemo.h \
-    CamShiftTrackingDemo.h \
-    DataDriveTracker.h \
     ObjectRecord.h \
-    ObjectCount.h \
-    DataDriveFunction001.h \
-    PipeLineFactory.h \
-    AssignmentVecSetMap.h
+    ObjectCount.h
 
 unix {
     target.path = /usr/lib

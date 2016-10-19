@@ -37,7 +37,7 @@ public:
 private:
     unsigned int MinMatchThreshold;
     bool configLoaded=false;
-    void matchToMat(const cv::Mat &matchMat);
+    void matToAssignment(const Mat &matchMat);
 };
 
 class BlobToBlobAssignment_Hungarian:public Base{
@@ -63,7 +63,7 @@ private:
 class BlobToBlobAssignment_SplitMerge:public Base{
 public:
     string getClassName(){return "BlobToBlobAssignment_SplitMerge";}
-    BlobToBlobAssignment_SplitMerge(std::shared_ptr<DataDriveMain> data):Base(data){}
+    BlobToBlobAssignment_SplitMerge(std::shared_ptr<DataDriveMain> data):Base(data),t2b("track","blob"){}
     bool run();
     void loadConfig()
     {
@@ -82,6 +82,8 @@ private:
     double threshold;
     std::map<Index_t,std::set<Index_t>> prevT2B,prevB2T;
     std::map<Index_t,std::set<Index_t>> currT2B,currB2T;
+    std::set<Index_t> deleteTSet;
+    AssignmentVecSetMap t2b;
 
     void B2BDiscuss();
     void B2BNToOne();
@@ -93,14 +95,19 @@ private:
 
     void ReHungarian(const std::set<Index_t> trackSet, const std::set<Index_t> &currSet);
     double getDistCost(Index_t trackIdx,Index_t currIdx);
+    bool needReDetection(Index_t trackIdx);
+    bool needRemove(Index_t trackIdx);
 
     void T2BOneToN();
     void T2BNToOne(const std::set<Index_t> &trackSet,Index_t currIdx);
     void T2BOneToOne(Index_t trackIdx,Index_t currIdx);
     //please do redetection here!
-    void T2BOneToZero(Index_t trackIdx);
-    void T2BZeroToOne(Index_t currIdx);
+//    void T2BOneToZero(Index_t trackIdx);
+    void T2BOneToZero_Append(Index_t trackIdx);
+//    void T2BZeroToOne(Index_t currIdx);
+    void T2BZeroToOne_Append(Index_t currIdx);
     void T2BReDetection();
+    bool check();
 };
 
 
