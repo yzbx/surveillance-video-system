@@ -23,7 +23,9 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += opencv bgslibrary
+unix: PKGCONFIG += opencv bgslibrary yzbxlib DataDriveLib SVS-plugin
+
+INCLUDEPATH += `pkg-config --cflags yzbxlib DataDriveLib SVS-plugin`
 
 LIBS += \
     -lboost_system \
@@ -32,14 +34,6 @@ LIBS += \
 
 #unix: PKGCONFIG += dlib-1
 #LIBS += -L/home/yzbx/linux/miniconda2/lib -lmkl_rt
-
-
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/release/ -lyzbxLib
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/debug/ -lyzbxLib
-else:unix: LIBS += -L$$OUT_PWD/../yzbxLib/ -lyzbxLib
-
-INCLUDEPATH += $$PWD/../yzbxLib
-DEPENDPATH += $$PWD/../yzbxLib
 
 DISTFILES += \
     ConvertOutputFormat.py

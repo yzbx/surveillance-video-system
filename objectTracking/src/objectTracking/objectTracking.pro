@@ -4,7 +4,4 @@ SUBDIRS += \
     main \
     benchmark \
     yzbxLib \
-    DanamicDataDriveLib \
     DataDriveLib
-
-

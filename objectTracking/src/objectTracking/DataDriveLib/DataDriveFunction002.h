@@ -1,6 +1,6 @@
 #ifndef DATADRIVEFUNCTION002_H
 #define DATADRIVEFUNCTION002_H
-#include "../yzbxLib/DataDriveFunctions.h"
+#include "DataDriveFunctions.h"
 
 namespace DataDrive {
 //class Base

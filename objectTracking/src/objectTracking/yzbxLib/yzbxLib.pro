@@ -90,4 +90,4 @@ unix {
 }
 
 unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += bgslibrary opencv SVS-plugin
+unix: PKGCONFIG += bgslibrary opencv

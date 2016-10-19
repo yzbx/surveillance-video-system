@@ -4,7 +4,8 @@
 #include <QMainWindow>
 #include <QtCore>
 #include <QFileDialog>
-#include "../yzbxLib/qyzbxlib.h"
+#include <yzbxLib/qyzbxlib.h>
+#include <DataDriveLib/DataDrive.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 

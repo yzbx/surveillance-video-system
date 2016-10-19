@@ -1,13 +1,14 @@
 #ifndef DATADRIVEMAIN_H
 #define DATADRIVEMAIN_H
-#include "frameinput.h"
-#include "BlobDetector.h"
-#include "RectFloatTracker.h"
+#include "../yzbxLib/frameinput.h"
+#include "../yzbxLib/BlobDetector.h"
+#include "../yzbxLib/RectFloatTracker.h"
 #include <package_bgs/IBGS.h>
 #include <memory>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include "AssignmentVecSetMap.h"
+#include <SVS-plugin/ReDetection.h>
 
 class DataDriveMain
 {

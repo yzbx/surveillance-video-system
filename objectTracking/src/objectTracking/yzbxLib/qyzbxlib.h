@@ -21,14 +21,7 @@
 #include "../extern/vibe/vibe.hpp"
 #include "../extern/vibe/PBAS.h"
 #include "PipeLineTracking.h"
-#include "KLTTrackingDemo.h"
-#include "MeanShiftTrackingDemo.h"
-#include "CamShiftTrackingDemo.h"
-#include "DataDriveTracker.h"
 #include "ObjectRecord.h"
-#include "ObjectCount.h"
-#include "DataDrivePipeLine.h"
-#include <SVS-plugin/ReDetection.h>
 
 class YZBXLIBSHARED_EXPORT QYzbxLib
 {

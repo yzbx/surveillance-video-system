@@ -1,9 +1,10 @@
 QT       += core gui
 
-TARGET = DanamicDataDriveLib
+CONFIG +=c++14
+TARGET = DataDriveLib
 TEMPLATE = lib
 
-DEFINES += DANAMICDATADRIVELIB_LIBRARY
+DEFINES += DATADRIVELIB_LIBRARY
 
 SOURCES += DataDriveFunction002.cpp \
     AssignmentVecSetMap.cpp \
@@ -33,7 +34,8 @@ HEADERS += \
     KLTTrackingDemo.h \
     MeanShiftTrackingDemo.h \
     ObjectCount.h \
-    PipeLineFactory.h
+    PipeLineFactory.h \
+    DataDrive.h
 
 unix {
     target.path = /usr/lib

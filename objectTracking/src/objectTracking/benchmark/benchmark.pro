@@ -23,16 +23,9 @@ HEADERS  += benchmark.h
 FORMS    += benchmark.ui
 
 unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += opencv bgslibrary
+unix: PKGCONFIG += opencv bgslibrary yzbxlib
 
-
-win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/release/ -lyzbxLib
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../yzbxLib/debug/ -lyzbxLib
-else:unix: LIBS += -L$$OUT_PWD/../yzbxLib/ -lyzbxLib
-
-INCLUDEPATH += $$PWD/../yzbxLib
-DEPENDPATH += $$PWD/../yzbxLib
-
+INCLUDEPATH +=`pkg-config --cflags yzbxlib`
 LIBS += \
     -lboost_system \
     -lboost_program_options \
