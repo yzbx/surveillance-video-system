@@ -1248,8 +1248,11 @@ bool ShowAssignment::run()
         }
     }
 
+    string title=boost::lexical_cast<string>(data->frameNum);
+    yzbxlib::annotation(showImg,Point(20,20),title);
     namedWindow("assignment",WINDOW_NORMAL);
     imshow("assignment",showImg);
+    waitKey(300);
     return true;
 }
 

@@ -80,8 +80,8 @@ private:
     bool configLoaded=false;
     double weight_hog,weight_color;
     double threshold;
-    std::map<Index_t,std::set<Index_t>> prevT2B,prevB2T;
-    std::map<Index_t,std::set<Index_t>> currT2B,currB2T;
+    std::map<Index_t,std::set<Index_t>> prevB2T;
+    std::map<Index_t,std::set<Index_t>> currB2T;
     std::set<Index_t> deleteTSet;
     AssignmentVecSetMap t2b;
 
@@ -93,7 +93,7 @@ private:
     void B2BOneToZero();
     void B2BZeroToOne();
 
-    void ReHungarian(const std::set<Index_t> trackSet, const std::set<Index_t> &currSet);
+    void ReHungarian(const std::set<Index_t> trackSet, const std::set<Index_t> &currSet, bool isB2BOneToN=false);
     double getDistCost(Index_t trackIdx,Index_t currIdx);
     bool needReDetection(Index_t trackIdx);
     bool needRemove(Index_t trackIdx);
@@ -107,7 +107,16 @@ private:
 //    void T2BZeroToOne(Index_t currIdx);
     void T2BZeroToOne_Append(Index_t currIdx);
     void T2BReDetection();
+
+    void update();
     bool check();
+};
+
+class TrackingDump:public Base{
+public:
+    string getClassName(){return "TrackingDump";}
+    TrackingDump(std::shared_ptr<DataDriveMain> data):Base(data){}
+    bool run();
 };
 
 

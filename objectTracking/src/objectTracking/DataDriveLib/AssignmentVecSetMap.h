@@ -5,6 +5,7 @@
 #include <vector>
 #include <set>
 
+using namespace std;
 using Index_t=unsigned int;
 class AssignmentVecSetMap
 {
@@ -42,6 +43,29 @@ public:
         OneToNMap.clear();
         NToOneMap.clear();
         NToNMap.clear();
+    }
+
+    void dumpMatch(){
+        cout<<"AssignmentVecSetMap::dumpMatch: "<<nameA<<"->"<<nameB<<endl;
+        for(auto it=AToB.begin();it!=AToB.end();it++){
+            Index_t a=it->first;
+            set<Index_t> &set=it->second;
+            cout<<a<<"->";
+            for(auto it=set.begin();it!=set.end();it++){
+                cout<<*it<<",";
+            }
+            cout<<endl;
+        }
+        cout<<nameB<<"->"<<nameA<<endl;
+        for(auto it=BToA.begin();it!=BToA.end();it++){
+            Index_t a=it->first;
+            set<Index_t> &set=it->second;
+            cout<<a<<"->";
+            for(auto it=set.begin();it!=set.end();it++){
+                cout<<*it<<",";
+            }
+            cout<<endl;
+        }
     }
 };
 

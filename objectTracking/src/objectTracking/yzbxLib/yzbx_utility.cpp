@@ -922,7 +922,7 @@ bool splitRect(const Rect_t &mergedRect, Rect_t &r1, Rect_t &r2)
     return false;
 }
 
-void annotation(Mat showImg, Rect_t r, const string title, Scalar color)
+void annotation(Mat &showImg, Rect_t r, const string title, Scalar color)
 {
     cv::rectangle(showImg,r,color,5);
     if(r.y<20){
@@ -932,6 +932,11 @@ void annotation(Mat showImg, Rect_t r, const string title, Scalar color)
         cv::putText(showImg, title, r.tl(), FONT_HERSHEY_COMPLEX, 1,
                 color, 2, 8);
     }
+}
+
+void annotation(Mat &showImg,Point pos,const string title, Scalar color){
+    cv::putText(showImg, title, pos, FONT_HERSHEY_COMPLEX, 1,
+            color, 2, 8);
 }
 
 track_t getOverlapArea(Rect_t ra, Rect_t rb)
@@ -1128,11 +1133,6 @@ bool isLineCrossed(Point_t p, Point_t prev_p, double A, double B, double C)
     if(a==0&&b!=0) return true;
     else if(a*b<0) return true;
     else return false;
-}
-
-void annotation(Mat showImg, Point p, const string title, Scalar color)
-{
-    cv::putText(showImg,title,p,FONT_HERSHEY_COMPLEX,1,color,2,8);
 }
 
 void getMaskedRGB(Mat &RGB, const Mat &mask, Scalar value)

@@ -13,7 +13,7 @@ void B2BTrackingDemo::run()
     pipeline.push_back(std::make_shared<DataDrive::BlobToBlobAssignment_KLT>(DataDrive::BlobToBlobAssignment_KLT(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::BlobToBlobAssignment_Hungarian>(DataDrive::BlobToBlobAssignment_Hungarian(mainData)));
     pipeline.push_back(std::make_shared<DataDrive::BlobToBlobAssignment_SplitMerge>(DataDrive::BlobToBlobAssignment_SplitMerge(mainData)));
-    pipeline.push_back(std::make_shared<DataDrive::ShowAssignment>(DataDrive::ShowAssignment(mainData)));
+    pipeline.push_back(std::make_shared<DataDrive::TrackingDump>(DataDrive::TrackingDump(mainData)));
 
     bool gameover=false;
     while(!gameover){
@@ -27,6 +27,9 @@ void B2BTrackingDemo::run()
 
             if(!flag) break;
         }
+
+        int key=waitKey(30);
+        if(key=='q'||key=='Q') break;
     }
 }
 

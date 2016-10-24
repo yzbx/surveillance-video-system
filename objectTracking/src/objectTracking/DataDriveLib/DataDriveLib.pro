@@ -4,6 +4,8 @@ CONFIG +=c++14
 TARGET = DataDriveLib
 TEMPLATE = lib
 
+QMAKE_CXXFLAGS +="-ftest-coverage -fprofile-arcs -msse -msse2 -msse3 -Wno-sign-compare -Wno-reorder -Wtype-limits"
+
 DEFINES += DATADRIVELIB_LIBRARY
 
 SOURCES += DataDriveFunction002.cpp \

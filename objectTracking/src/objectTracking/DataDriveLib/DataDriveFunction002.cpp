@@ -9,13 +9,11 @@ bool DataDrive::BlobToBlobAssignment_KLT::run()
     b2b.clear();
 
 
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
-    auto fvlistIter=std::prev(data->fvlist.end(),1);
-    vector<trackingObjectFeature> &prev_fv=*fvlistIter;
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto fvlistIter=std::prev(data->fvlist.end(),2);
+    const vector<trackingObjectFeature> &prev_fv=*fvlistIter;
 
     if(fv.empty()||prev_fv.empty()){
-        if(!data->KLTMatchMat.empty()) data->KLTMatchMat.release();
-
         return true;
     }
 
@@ -84,12 +82,21 @@ bool DataDrive::BlobToBlobAssignment_KLT::run()
     }
 
     matToAssignment(matchMat);
+
+    dump();
+
+    return true;
 }
 
 
 void DataDrive::BlobToBlobAssignment_KLT::dump()
 {
-
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto fvlistIter=std::prev(data->fvlist.end(),2);
+    const vector<trackingObjectFeature> &prev_fv=*fvlistIter;
+    if(fv.size()>1||prev_fv.size()>1){
+        data->BlobToBlob.dumpMatch();
+    }
 }
 
 void DataDrive::BlobToBlobAssignment_KLT::matToAssignment(const Mat &matchMat)
@@ -117,9 +124,9 @@ bool DataDrive::BlobToBlobAssignment_Hungarian::run()
 
     if(data->fvlist.size()<2) return false;
 
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
-    auto fvlistIter=std::prev(data->fvlist.end(),1);
-    vector<trackingObjectFeature> &prev_fv=*fvlistIter;
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto fvlistIter=std::prev(data->fvlist.end(),2);
+    const vector<trackingObjectFeature> &prev_fv=*fvlistIter;
 
     std::set<Index_t> &mMatchedPrevSet=data->BlobToBlob.matchedASet;
     std::set<Index_t> &mMatchedCurrSet=data->BlobToBlob.matchedBSet;
@@ -183,12 +190,18 @@ bool DataDrive::BlobToBlobAssignment_Hungarian::run()
         }
     }
 
+    dump();
     return true;
 }
 
 void DataDrive::BlobToBlobAssignment_Hungarian::dump()
 {
-
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto fvlistIter=std::prev(data->fvlist.end(),2);
+    const vector<trackingObjectFeature> &prev_fv=*fvlistIter;
+    if(fv.size()>1||prev_fv.size()>1){
+        data->BlobToBlob.dumpMatch();
+    }
 }
 
 bool DataDrive::BlobToBlobAssignment_SplitMerge::run()
@@ -204,47 +217,29 @@ bool DataDrive::BlobToBlobAssignment_SplitMerge::run()
     if(!data->mOneToOneMap.empty())data->mOneToOneMap.clear();
     if(!data->mNToOneMap.empty())data->mNToOneMap.clear();
 
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
-    auto fvlistIter=std::prev(data->fvlist.end(),1);
-    vector<trackingObjectFeature> &prev_fv=*fvlistIter;
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto fvlistIter=std::prev(data->fvlist.end(),2);
+    const vector<trackingObjectFeature> &prev_fv=*fvlistIter;
     bool emptyPrevBlobs=prev_fv.empty();
     bool emptyCurrBlobs=fv.empty();
     bool emptyObjects=data->tracks.empty();
 
+    B2BDiscuss();
     if(emptyPrevBlobs&&emptyCurrBlobs&&emptyObjects){
 
     }
-    else if(emptyCurrBlobs){
-        //handle missed blob
-        for(uint i=0;i<prev_fv.size();i++){
-            data->BlobToBlob.OneToZeroSet.insert(i);
-        }
-        B2BOneToZero();
-    }
-    else if(emptyPrevBlobs){
-        //handle new blob
-        for(uint i=0;i<fv.size();i++){
-            data->BlobToBlob.ZeroToOneSet.insert(i);
-        }
-        B2BZeroToOne();
-    }
     else{
-        B2BDiscuss();
         B2BNToN();
         B2BNToOne();
         B2BOneToN();
+        B2BOneToOne();
         B2BOneToZero();
         B2BZeroToOne();
-
         T2BReDetection();
-        for(auto it=deleteTSet.begin();it!=deleteTSet.end();){
-            Index_t trackIdx=*it;
-            data->tracks.erase(data->tracks.begin()+trackIdx);
-            it=deleteTSet.erase(it);
-        }
-
-        assert(check());
+        update();
     }
+
+    assert(check());
     return true;
 }
 
@@ -297,7 +292,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BNToOne()
             currB2T[currIdx].insert(s.begin(),s.end());
             for(auto it=s.begin();it!=s.end();it++){
                 Index_t currTrack=*it;
-                currT2B[currTrack].insert(currIdx);
+                currB2T[currTrack].insert(currIdx);
             }
 
         }
@@ -308,7 +303,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BNToOne()
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::B2BNToN()
 {
-
+    qDebug()<<"NOTE: B2BNToN is ignored!!!";
 }
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::B2BOneToN()
@@ -330,6 +325,9 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BOneToOne()
         if(prevB2T[prevIdx].size()==1){
             Index_t trackIdx=*prevB2T[prevIdx].begin();
             T2BOneToOne(trackIdx,currIdx);
+        }
+        else if(prevB2T[prevIdx].size()>1){
+            T2BNToOne(prevB2T[prevIdx],currIdx);
         }
     }
 }
@@ -356,7 +354,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BZeroToOne()
     }
 }
 
-void DataDrive::BlobToBlobAssignment_SplitMerge::ReHungarian(const std::set<Index_t> trackSet, const std::set<Index_t> &currSet)
+void DataDrive::BlobToBlobAssignment_SplitMerge::ReHungarian(const std::set<Index_t> trackSet, const std::set<Index_t> &currSet,bool isB2BOneToN)
 {
     int N=trackSet.size(),M=currSet.size();
     distMatrix_t Cost(N*M);
@@ -389,14 +387,20 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::ReHungarian(const std::set<Inde
             }
         }
         else{
-            T2BOneToZero_Append(trackIdx);
+            if(isB2BOneToN)
+                T2BOneToZero_Append(trackIdx);
+            else
+                T2BOneToZero_Append(trackIdx);
         }
     }
 
     //BUG
     for(auto it=unmatched.begin();it!=unmatched.end();it++){
         Index_t currIdx=*it;
-        T2BZeroToOne_Append(currIdx);
+        if(isB2BOneToN)
+            T2BOneToZero_Append(currIdx);
+        else
+            T2BZeroToOne_Append(currIdx);
     }
 }
 
@@ -447,12 +451,10 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BOneToN()
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::T2BNToOne(const std::set<Index_t> &trackSet, Index_t currIdx)
 {
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
     Rect_t rb=fv[currIdx].rect;
     for(auto it=trackSet.begin();it!=trackSet.end();it++){
         Index_t trackIdx=*it;
-
-
         Point_t pos=data->tracks[trackIdx]->feature->pos;
         Rect_t rect=data->tracks[trackIdx]->feature->rect;
         Point_t predict_pos=data->tracks[trackIdx]->KF.GetPrediction();
@@ -482,12 +484,17 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BNToOne(const std::set<Index_
 
         data->tracks[trackIdx]->NToOneUpdate(of,data->frameNum);
     }
+
+    currB2T[currIdx].insert(trackSet.begin(),trackSet.end());
 }
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::T2BOneToOne(Index_t trackIdx, Index_t currIdx)
 {
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
     data->tracks[trackIdx]->NormalUpdate(fv[currIdx],data->frameNum,data->img_input);
+
+    currB2T[currIdx].insert(trackIdx);
+    assert(currB2T[currIdx].size()==1);
 }
 
 //void DataDrive::BlobToBlobAssignment_SplitMerge::T2BOneToZero(Index_t trackIdx)
@@ -529,7 +536,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BZeroToOne_Append(Index_t cur
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::T2BReDetection()
 {
-    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    const vector<trackingObjectFeature> &fv=data->fvlist.back();
     auto missSet=t2b.OneToZeroSet;
     auto currSet=t2b.ZeroToOneSet;
     std::set<Index_t> trackSet;
@@ -551,26 +558,92 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BReDetection()
     auto newSet=t2b.ZeroToOneSet;
     for(auto it=missSet.begin();it!=missSet.end();it++){
         Index_t trackIdx=*it;
-        if(!needRemove(trackIdx)){
-            data->tracks[trackIdx]->MissUpdate(data->frameNum);
-        }
-        else{
-            deleteTSet.insert(trackIdx);
-        }
+        data->tracks[trackIdx]->MissUpdate(data->frameNum);
     }
 
     for(auto it=newSet.begin();it!=newSet.end();it++){
         Index_t currIdx=*it;
         data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[currIdx],
-                               data->param.dt, data->param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
+                                                                     data->param.dt, data->param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
+
+        currB2T[currIdx].insert(data->NextTrackID-1);
+        assert(currB2T[currIdx].size()==1);
     }
+
+    t2b.OneToZeroSet.clear();
+    t2b.ZeroToOneSet.clear();
+
+    for(auto it=deleteTSet.begin();it!=deleteTSet.end();){
+        Index_t trackIdx=*it;
+        data->tracks.erase(data->tracks.begin()+trackIdx);
+        it=deleteTSet.erase(it);
+    }
+
+    deleteTSet.empty();
+}
+
+void DataDrive::BlobToBlobAssignment_SplitMerge::update()
+{
+    prevB2T.clear();
+    prevB2T.swap(currB2T);
 }
 
 bool DataDrive::BlobToBlobAssignment_SplitMerge::check()
 {
-    t2b.OneToZeroSet.clear();
-    t2b.ZeroToOneSet.clear();
+    assert(t2b.OneToZeroSet.empty());
+    assert(t2b.ZeroToOneSet.empty());
+    assert(deleteTSet.empty());
+    assert(currB2T.empty());
     return true;
 }
 
 
+
+bool DataDrive::TrackingDump::run()
+{
+    //output assignment result
+    vector<trackingObjectFeature> &fv=data->fvlist.back();
+    auto imgIt=std::prev(data->imglist.end(),1);
+    auto prev_imgIt=std::prev(data->imglist.end(),2);
+
+    Mat input,mask,prev_input,prev_mask;
+    input=imgIt->first.clone();
+    mask=imgIt->second.clone();
+    prev_input=prev_imgIt->first.clone();
+    prev_mask=prev_imgIt->second.clone();
+    //blob
+    for(uint i=0;i<fv.size();i++){
+        Rect_t r=fv[i].rect;
+        string idxstr=boost::lexical_cast<string>(i);
+        //        string title="index="+idxstr;
+        string title=idxstr;
+        yzbxlib::annotation(input,r,title);
+        rectangle(input,r,Scalar(0,0,255),3,8);
+        rectangle(mask,r,Scalar::all(255),3,8);
+    }
+
+    //object
+    for(uint i=0;i<data->tracks.size();i++){
+        Rect_t r=data->tracks[i]->feature->rect;
+        Index_t trackIdx=data->tracks[i]->track_id;
+        string idxstr=boost::lexical_cast<string>(trackIdx);
+        string title="id="+idxstr;
+        yzbxlib::annotation(prev_input,r,title);
+        rectangle(prev_input,r,Scalar(0,0,255),3,8);
+        rectangle(prev_mask,r,Scalar::all(255),3,8);
+    }
+
+    Mat blob,object;
+    cvtColor(mask,mask,CV_GRAY2BGR);
+    hconcat(input,mask,blob);
+    cvtColor(prev_mask,prev_mask,CV_GRAY2BGR);
+    hconcat(prev_input,prev_mask,object);
+
+    Mat klt;
+    vconcat(object,blob,klt);
+    string title=boost::lexical_cast<string>(data->frameNum);
+    yzbxlib::annotation(klt,Point(20,20),title);
+
+    namedWindow("TrackingDump",WINDOW_NORMAL);
+    imshow("TrackingDump",klt);
+}

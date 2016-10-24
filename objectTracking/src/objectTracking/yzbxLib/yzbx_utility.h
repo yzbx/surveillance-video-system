@@ -55,8 +55,8 @@ track_t getRectGap(Rect_t ra,Rect_t rb);
 void drawMatch(cv::Mat &img,Point_t p1,Point_t p2,cv::Scalar color=cv::Scalar(0,0,255),int thickness=3);
 Rect_t getMergedRect(Rect_t ra,Rect_t rb);
 bool splitRect(const Rect_t &mergedRect,Rect_t &r1,Rect_t &r2);
-void annotation(cv::Mat showImg, Point p, const string title, cv::Scalar color=cv::Scalar(0.0,255));
-void annotation(cv::Mat showImg,Rect_t r,const string title="",cv::Scalar color=cv::Scalar(0,0,255));
+void annotation(cv::Mat &showImg, Point p, const string title, cv::Scalar color=cv::Scalar(0.0,255));
+void annotation(Mat &showImg, Rect_t r, const string title="", cv::Scalar color=cv::Scalar(0,0,255));
 
 //return the overlap area.
 track_t getOverlapArea(Rect_t ra,Rect_t rb);
