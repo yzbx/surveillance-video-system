@@ -80,9 +80,9 @@ private:
     bool configLoaded=false;
     double weight_hog,weight_color;
     double threshold;
-    std::map<Index_t,std::set<Index_t>> prevB2T;
-    std::map<Index_t,std::set<Index_t>> currB2T;
-    std::set<Index_t> deleteTSet;
+    std::map<Index_t,std::set<Id_t>> prevB2T;
+    std::map<Index_t,std::set<Id_t>> currB2T;
+    std::set<Id_t> deleteTSet;
     AssignmentVecSetMap t2b;
 
     void B2BDiscuss();
@@ -108,7 +108,12 @@ private:
     void T2BZeroToOne_Append(Index_t currIdx);
     void T2BReDetection();
 
+    void dumpBlobToTrack(const std::map<Index_t,std::set<Id_t>> &b2t);
+    void gatherMissedTrackSet();
+    Index_t id2index(Id_t id);
+    void id2index(const std::set<Id_t> &idset, std::set<Index_t> &idxset);
     void update();
+    void dumpToTxt();
     bool check();
 };
 

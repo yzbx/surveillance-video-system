@@ -35,7 +35,7 @@ void DataDriveTracker::run()
 }
 
 void DataDriveTracker::runAll(){
-    for(uint i=0;i<mainData->globalVideoList.size();i++){
+    for(int i=0;i<mainData->globalVideoList.size();i++){
         QString currentVideo=mainData->globalVideoList[i];
         mainData->setCurrentVideo(currentVideo);
         pipeline.clear();

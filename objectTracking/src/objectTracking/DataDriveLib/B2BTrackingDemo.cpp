@@ -27,7 +27,8 @@ void B2BTrackingDemo::run()
 
             if(!flag) break;
         }
-
+        cout<<"B2BTrackingDemo::run "
+           <<"frameNum="<<mainData->frameNum<<endl;
         int key=waitKey(30);
         if(key=='q'||key=='Q') break;
     }
@@ -35,5 +36,10 @@ void B2BTrackingDemo::run()
 
 void B2BTrackingDemo::runAll()
 {
-
+    for(int i=0;i<mainData->globalVideoList.size();i++){
+        QString currentVideo=mainData->globalVideoList[i];
+        mainData->setCurrentVideo(currentVideo);
+        pipeline.clear();
+        run();
+    }
 }
