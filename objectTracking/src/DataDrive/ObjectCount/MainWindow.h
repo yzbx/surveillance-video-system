@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "qyzbxlib.h"
+#include <qyzbxlib.h>
+#include <DataDrive.h>
 namespace Ui {
 class MainWindow;
 }

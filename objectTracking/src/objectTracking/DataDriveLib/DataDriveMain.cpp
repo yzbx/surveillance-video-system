@@ -39,6 +39,7 @@ void DataDriveMain::init()
     this->bgs.release();
     bgsFactory_yzbx fac;
     bgs.reset(fac.getBgsAlgorithm(bgsType));
+    blobFeatureDetector.params.minArea=param.MinBlobArea;
 
     this->blobIdxToPointSet[0].clear();
     this->blobIdxToPointSet[1].clear();
@@ -71,4 +72,5 @@ void DataDriveMain::init()
     this->trackToPrevBlob.clear();
     this->unmatchedBlobSet.clear();
     this->unmatchedTrackSet.clear();
+    this->BlobToBlob.clear();
 }

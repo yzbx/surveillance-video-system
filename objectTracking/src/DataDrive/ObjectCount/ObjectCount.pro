@@ -20,13 +20,9 @@ HEADERS  += MainWindow.h
 FORMS    += MainWindow.ui
 
 unix: CONFIG += link_pkgconfig
-unix: PKGCONFIG += opencv bgslibrary
+unix: PKGCONFIG += opencv bgslibrary yzbxlib DataDriveLib SVS-plugin
 
-YZBXLIB=/home/yzbx/build/build-objectTracking-Desktop_Qt_5_6_0_GCC_64bit-Debug
-YZBX_INCLUDE=/home/yzbx/git/surveillance-video-system/objectTracking/src/objectTracking
-LIBS += -L$$YZBXLIB/yzbxLib/ -lyzbxLib
-INCLUDEPATH += $$YZBX_INCLUDE/yzbxLib
-DEPENDPATH += $$YZBX_INCLUDE/yzbxLib
+INCLUDEPATH += `pkg-config --cflags yzbxlib DataDriveLib SVS-plugin`
 
 LIBS += \
     -lboost_system \

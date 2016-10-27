@@ -6,4 +6,5 @@
 #include "B2BTrackingDemo.h"
 #include "DataDriveMain.h"
 #include "DataDriveTracker.h"
+#include "ObjectCount.h"
 #endif // DATADRIVE_H

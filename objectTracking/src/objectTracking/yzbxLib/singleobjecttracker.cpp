@@ -227,6 +227,25 @@ void singleObjectTracker::NToOneUpdate(trackingObjectFeature &of, int frameNum)
     assert(lifetime==1+frameNum-frames[0]);
     assert(lifetime==(catch_frames+skipped_frames));
 }
+void singleObjectTracker::B2B_NToOneUpdate(trackingObjectFeature &of, int frameNum)
+{
+    KF.GetPrediction();
+    prediction = KF.Update(of.pos,true);
+
+    status=NToOne_STATUS;
+    vec_status.push_back(status);
+    frames.push_back(frameNum);
+
+    feature->copy(of);
+    rects.push_back(of.rect);
+    skipped_frames++;
+
+    trace.push_back(prediction);
+    lifetime++;
+
+    assert(lifetime==1+frameNum-frames[0]);
+    assert(lifetime==(catch_frames+skipped_frames));
+}
 
 void singleObjectTracker::PreUpdateForBiggestBlob(const trackingObjectFeature &of)
 {

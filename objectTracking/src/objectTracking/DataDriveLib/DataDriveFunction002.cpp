@@ -340,9 +340,27 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BOneToN()
     for(auto it=b2b.OneToNMap.begin();it!=b2b.OneToNMap.end();it++){
         Index_t prevIdx=it->first;
         std::set<Index_t> &currSet=it->second;
-        std::set<Id_t> trackset;
-        id2index(prevB2T[prevIdx],trackset);
-        ReHungarian(trackset,currSet);
+        std::set<Index_t> trackset,missset;
+        id2index(prevB2T[prevIdx],missset);
+
+        for(auto it=missset.begin();it!=missset.end();it++){
+            Index_t trackIdx=*it;
+            if(needReDetection(trackIdx)){
+                trackset.insert(trackIdx);
+            }
+            else{
+                deleteTSet.insert(data->tracks[trackIdx]->track_id);
+            }
+        }
+
+        if(trackset.empty()){
+            //add to 0-1
+            auto &set=data->BlobToBlob.ZeroToOneSet;
+            set.insert(currSet.begin(),currSet.end());
+        }
+        else{
+            ReHungarian(trackset,currSet);
+        }
     }
 }
 
@@ -459,9 +477,10 @@ double DataDrive::BlobToBlobAssignment_SplitMerge::getDistCost(Index_t trackIdx,
 
 bool DataDrive::BlobToBlobAssignment_SplitMerge::needReDetection(Index_t trackIdx)
 {
-    int lifetime=data->tracks[trackIdx]->get_lifetime();
+//    int lifetime=data->tracks[trackIdx]->get_lifetime();
+    int cacheTime=data->tracks[trackIdx]->get_catch_frames();
     bool onBoundary=data->tracks[trackIdx]->feature->onBoundary;
-    if(lifetime>(int)data->param.MaxFreshObjectLifeTime&&!onBoundary){
+    if(cacheTime>(int)data->param.MaxFreshObjectLifeTime&&!onBoundary){
         return true;
     }
 
@@ -477,11 +496,6 @@ bool DataDrive::BlobToBlobAssignment_SplitMerge::needRemove(Index_t trackIdx)
     else{
         return false;
     }
-}
-
-void DataDrive::BlobToBlobAssignment_SplitMerge::T2BOneToN()
-{
-
 }
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::T2BNToOne(const std::set<Index_t> &trackSet, Index_t currIdx)
@@ -516,8 +530,11 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BNToOne(const std::set<Index_
             of.rect=predict_rect;
             of.pos+=(predict_rect.tl()-rect.tl());
         }
-
-        data->tracks[trackIdx]->NToOneUpdate(of,data->frameNum);
+        //B2B_NToOneUpdate increate skip_frames but NToOneUpdate not.
+        //So to avoid delete object merged, we use the latter.
+        //But in B2B, we only delete missed/unmatched object
+        //the object merged will never be delete!!!
+        data->tracks[trackIdx]->B2B_NToOneUpdate(of,data->frameNum);
     }
 
     for(auto it=trackSet.begin();it!=trackSet.end();it++){
@@ -531,6 +548,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BNToOne(const std::set<Index_
 void DataDrive::BlobToBlobAssignment_SplitMerge::T2BOneToOne(Index_t trackIdx, Index_t currIdx)
 {
     const vector<trackingObjectFeature> &fv=data->fvlist.back();
+    assert(fv[currIdx].rect.area()>data->param.MinBlobArea);
     data->tracks[trackIdx]->NormalUpdate(fv[currIdx],data->frameNum,data->img_input);
     Id_t id=data->tracks[trackIdx]->track_id;
     currB2T[currIdx].insert(id);
@@ -615,6 +633,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::T2BReDetection()
 
     for(auto it=newSet.begin();it!=newSet.end();it++){
         Index_t currIdx=*it;
+        assert(fv[currIdx].rect.area()>data->param.MinBlobArea);
         data->tracks.push_back(std::make_unique<singleObjectTracker>(fv[currIdx],
                                                                      data->param.dt, data->param.Accel_noise_mag, data->NextTrackID++,data->frameNum,data->img_input.cols,data->img_input.rows));
 
@@ -760,6 +779,12 @@ bool DataDrive::BlobToBlobAssignment_SplitMerge::check()
     for(int i=0;i<data->tracks.size();i++){
         assert(data->frameNum>=data->tracks[i]->frames.back());
         assert(data->frameNum<=data->tracks[i]->frames.back());
+//        int lifetime=data->tracks[i]->get_lifetime();
+        int cacheTime=data->tracks[i]->get_catch_frames();
+        if(cacheTime>(int)data->param.MaxFreshObjectLifeTime){
+            assert(data->tracks[i]->status!=NEW_STATUS);
+            assert(data->tracks[i]->rect_last_normal.area()>=data->param.MinBlobArea);
+        }
     }
     return true;
 }

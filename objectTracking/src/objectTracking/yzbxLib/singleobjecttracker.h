@@ -63,6 +63,7 @@ public:
     void OneToNUpdateForBiggestBlob(const trackingObjectFeature &of,int frameNum);
     void OneToNUpdateForNewBlob();
     void NToOneUpdate(trackingObjectFeature &of,int frameNum);
+    void B2B_NToOneUpdate(trackingObjectFeature &of,int frameNum);
     void PreUpdateForBiggestBlob(const trackingObjectFeature &of);
     void AvoidUpdateTwice();
     Rect_t GetPredictRect();

@@ -63,7 +63,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
         rows=binaryImage0.rows;
         cols=binaryImage0.cols;
         maxObjectSize=0;
-        params.minArea=rows*cols/5000.0;
+//        params.minArea=rows*cols/5000.0;
     }
 
     //postprocessing for binaryImage
@@ -107,7 +107,7 @@ void BlobDetector::getBlobFeature(InputArray _image, InputArray _binaryImage, st
 //            maxObjectSize=area;
 //            params.minArea=std::max(params.minArea,(float)maxObjectSize/20);
 //        }
-        if (params.filterByArea&&(area < params.minArea || area >= params.maxArea)){
+        if (params.filterByArea&&(area < params.minArea || area > params.maxArea)){
             continue;
         }
 

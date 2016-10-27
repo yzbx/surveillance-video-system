@@ -23,6 +23,7 @@ public:
         whog=pt.get("ReDetection.HOG_Weight",0.5f);
         wcolor=pt.get("ReDetection.Color_Weight",0.5f);
         rr_threshold=pt.get("ReDetection.Threshold",5.0f);
+        MinBlobArea=pt.get("BlobDetector.MinBlobArea",200);
     }
 
     track_t dt=0.2f;
@@ -34,6 +35,7 @@ public:
     uint MaxFreshObjectLifeTime=3;
     uint MinDumpLifeTime=10;
     double whog,wcolor,rr_threshold;
+    uint MinBlobArea;
 };
 
 #endif // TRACKINGALGORITHMPARAMTER_H
