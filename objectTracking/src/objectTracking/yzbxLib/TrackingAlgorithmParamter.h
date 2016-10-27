@@ -24,6 +24,7 @@ public:
         wcolor=pt.get("ReDetection.Color_Weight",0.5f);
         rr_threshold=pt.get("ReDetection.Threshold",5.0f);
         MinBlobArea=pt.get("BlobDetector.MinBlobArea",200);
+        ReSize=pt.get("BlobDetector.ReSize",false);
     }
 
     track_t dt=0.2f;
@@ -36,6 +37,7 @@ public:
     uint MinDumpLifeTime=10;
     double whog,wcolor,rr_threshold;
     uint MinBlobArea;
+    bool ReSize;
 };
 
 #endif // TRACKINGALGORITHMPARAMTER_H

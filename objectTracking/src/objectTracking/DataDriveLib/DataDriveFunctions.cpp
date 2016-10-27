@@ -12,7 +12,7 @@ bool Input::run()
         Size size=data->img_input.size();
         int newW=480;
         int newH=round((double)newW*size.height/(double)size.width);
-        if(newW<size.width){
+        if(data->param.ReSize&&newW<size.width){
             resize(data->img_input,data->img_input,Size(newW,newH));
         }
         return true;
