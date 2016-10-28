@@ -330,8 +330,26 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::B2BNToOne()
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::B2BNToN()
 {
-    if(!data->BlobToBlob.NToNMap.empty())
-        qDebug()<<"NOTE: B2BNToN is ignored!!!";
+    if(!data->BlobToBlob.NToNMap.empty()){
+        //        qDebug()<<"NOTE: B2BNToN is ignored!!!";
+        qDebug()<<"do with B2BNToN";
+        for(auto it=data->BlobToBlob.NToNMap.begin();it!=data->BlobToBlob.NToNMap.end();it++){
+            Index_t prevIdx=it->first;
+            const std::set<Index_t> &currSet=it->second;
+            assert(data->BlobToBlob.AToB[prevIdx].size()>1);
+            if(data->BlobToBlob.OneToNMap.find(prevIdx)==data->BlobToBlob.OneToNMap.end()){
+                data->BlobToBlob.OneToZeroSet.insert(prevIdx);
+            }
+            for(auto it=currSet.begin();it!=currSet.end();it++){
+                Index_t currIdx=*it;
+                assert(data->BlobToBlob.BToA[currIdx].size()>1);
+                if(data->BlobToBlob.NToOneMap.find(currIdx)==data->BlobToBlob.NToOneMap.end()){
+                    data->BlobToBlob.ZeroToOneSet.insert(currIdx);
+                }
+            }
+        }
+    }
+
 }
 
 void DataDrive::BlobToBlobAssignment_SplitMerge::B2BOneToN()
@@ -769,6 +787,7 @@ void DataDrive::BlobToBlobAssignment_SplitMerge::dumpToTxt()
 
 bool DataDrive::BlobToBlobAssignment_SplitMerge::check()
 {
+//    data->BlobToBlob.checkAssignment();
     assert(t2b.OneToZeroSet.empty());
     assert(t2b.ZeroToOneSet.empty());
     t2b.checkAssignment();
